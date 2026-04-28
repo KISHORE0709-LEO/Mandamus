@@ -108,9 +108,25 @@ export default function Summarizer({ onTabChange }) {
   const [editMode, setEditMode] = useState(false);
   const [approved, setApproved] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
+  const [viewMode, setViewMode] = useState('lawyer'); // 'lawyer' | 'student'
   
   const fileInputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
+
+  // Auto-calculate pending duration if backend returns N/A
+  const computePendingDuration = (filing) => {
+    if (!filing || filing === 'N/A') return 'PENDING';
+    const match = filing.match(/(\d{4})/);
+    if (!match) return filing;
+    const year = parseInt(match[1]);
+    const diff = new Date().getFullYear() - year;
+    if (diff <= 0) return 'RECENT FILING';
+    return `${diff}Y PENDING`;
+  };
+
+  const pendingDisplay = (summaryData.pendingDuration && summaryData.pendingDuration !== 'N/A')
+    ? summaryData.pendingDuration
+    : computePendingDuration(summaryData.filing);
 
   const handleUpdateSummary = (updates) => {
     updateState({ summariser_output: { ...summaryData, ...updates } });
@@ -183,6 +199,7 @@ export default function Summarizer({ onTabChange }) {
                      petitionerCounsel: data.petitioner_counsel || 'UNKNOWN',
                      respondent: data.respondent || 'UNKNOWN',
                      respondentCounsel: data.respondent_counsel || 'UNKNOWN',
+                     plainSummary: data.plain_summary || '',
                      facts: data.key_facts || [],
                      legalQuestions: data.core_legal_questions || [],
                      ipcSections: data.ipc_sections || [],
@@ -190,6 +207,10 @@ export default function Summarizer({ onTabChange }) {
                      caseType: data.case_type || 'UNKNOWN',
                      isUndertrial: data.is_undertrial || false,
                      confidenceScore: data.confidence_score || 0,
+                     argumentStrength: data.argument_strength || {},
+                     proceduralPath: data.procedural_path || [],
+                     caseOutcomeAnalysis: data.case_outcome_analysis || {},
+                     studentMode: data.student_mode || null,
                      processingTime: data.processing_time || 0,
                      extractionMethod: data.extraction_method || ''
                    };
@@ -343,39 +364,20 @@ CONFIDENCE: ${summaryData.confidenceScore}%`;
 
   /* ─── RESULTS STATE ─── */
   if (phase === 'complete') {
+    // Pre-compute student mode content (avoids IIFE in JSX)
+    const studentFacts = summaryData.studentMode?.key_facts?.length
+      ? summaryData.studentMode.key_facts
+      : (summaryData.plainSummary
+          ? (summaryData.plainSummary.match(/[^.!?]+[.!?]+/g) || []).map(s => s.trim()).filter(Boolean)
+          : summaryData.facts || []);
+    const studentQuestions = summaryData.studentMode?.legal_questions?.length
+      ? summaryData.studentMode.legal_questions
+      : (summaryData.legalQuestions || []);
+    const studentOutcome = summaryData.studentMode?.outcome_explanation || summaryData.plainSummary || 'Analysis pending.';
+
     return (
       <div className="sr-page sr-complete-view">
-        {/* ── HUMAN-IN-THE-LOOP CONTROLS ── */}
-        <div className="sr-hitl-bar">
-          <div className="sr-hitl-status">
-            {approved ? (
-              <span className="sr-hitl-badge sr-hitl-approved"><CheckCircle2 size={13} /> APPROVED BY HUMAN</span>
-            ) : (
-              <span className="sr-hitl-badge sr-hitl-pending">⚠ AWAITING HUMAN REVIEW</span>
-            )}
-            <span className="sr-hitl-note">AI-generated output requires human verification before use.</span>
-          </div>
-          <div className="sr-hitl-actions">
-            <button
-              className={`sr-hitl-btn sr-hitl-edit ${editMode ? 'sr-hitl-btn-active' : ''}`}
-              onClick={() => setEditMode(!editMode)}
-            >
-              {editMode ? <><X size={14} /> EXIT EDIT</> : <><Edit3 size={14} /> EDIT SUMMARY</>}
-            </button>
-            <button
-              className={`sr-hitl-btn sr-hitl-approve ${approved ? 'sr-hitl-btn-active' : ''}`}
-              onClick={() => setApproved(!approved)}
-            >
-              <ThumbsUp size={14} /> {approved ? 'REVOKE APPROVAL' : 'APPROVE AI OUTPUT'}
-            </button>
-            <button className="sr-hitl-btn sr-hitl-reject" onClick={handleRegenerate}>
-              <RotateCcw size={14} /> REJECT & REGENERATE
-            </button>
-            <button className="sr-hitl-btn sr-hitl-reset" onClick={handleReinitialize}>
-              <FileUp size={14} /> SUMMARIZE ANOTHER PDF
-            </button>
-          </div>
-        </div>
+
 
         <div className="sr-layout-grid">
           {/* ── LEFT SIDEBAR ── */}
@@ -383,10 +385,10 @@ CONFIDENCE: ${summaryData.confidenceScore}%`;
             
             <div className="sr-sidebar-top">
               <div className="sr-tabs">
-                <div className="sr-tab sr-tab-active">LAWYER</div>
-                <div className="sr-tab">STUDENT</div>
+                <div className={`sr-tab ${viewMode === 'lawyer' ? 'sr-tab-active' : ''}`} onClick={() => setViewMode('lawyer')}>LAWYER</div>
+                <div className={`sr-tab ${viewMode === 'student' ? 'sr-tab-active' : ''}`} onClick={() => setViewMode('student')}>STUDENT</div>
               </div>
-              <div className="sr-risk-badge">● MODERATE RISK</div>
+              <div className="sr-risk-badge">● {summaryData.argumentStrength?.petitioner > 60 ? 'HIGH RISK' : 'MODERATE RISK'}</div>
             </div>
 
             <div className="sr-side-card sr-confidence-card">
@@ -401,16 +403,16 @@ CONFIDENCE: ${summaryData.confidenceScore}%`;
               <div className="sr-arg-row">
                 <div className="sr-arg-labels">
                   <span>PETITIONER</span>
-                  <span>65%</span>
+                  <span>{summaryData.argumentStrength?.petitioner || 65}%</span>
                 </div>
-                <div className="sr-arg-track"><div className="sr-arg-fill" style={{width: '65%', background: '#ff2a2a'}} /></div>
+                <div className="sr-arg-track"><div className="sr-arg-fill" style={{width: `${summaryData.argumentStrength?.petitioner || 65}%`, background: '#ff2a2a'}} /></div>
               </div>
               <div className="sr-arg-row" style={{marginTop: '15px'}}>
                 <div className="sr-arg-labels">
                   <span>RESPONDENT</span>
-                  <span>40%</span>
+                  <span>{summaryData.argumentStrength?.respondent || 40}%</span>
                 </div>
-                <div className="sr-arg-track"><div className="sr-arg-fill" style={{width: '40%', background: '#555'}} /></div>
+                <div className="sr-arg-track"><div className="sr-arg-fill" style={{width: `${summaryData.argumentStrength?.respondent || 40}%`, background: '#555'}} /></div>
               </div>
             </div>
 
@@ -444,6 +446,40 @@ CONFIDENCE: ${summaryData.confidenceScore}%`;
                 </div>
               </div>
             </div>
+
+            {/* ── EVIDENCE METADATA ── */}
+            <div className="sr-side-card sr-evidence-card">
+              <div className="sr-side-title">
+                <div className="sr-path-icon" /> EVIDENCE METADATA
+              </div>
+              <div className="sr-ev-list">
+                {(summaryData.evidence || []).length === 0 ? (
+                  <div className="sr-ev-empty">No evidence extracted.</div>
+                ) : (
+                  <>
+                    {(summaryData.evidence || []).map((ev, i) => {
+                      const name = typeof ev === 'string' ? ev : (ev.name || String(ev));
+                      const type = typeof ev === 'object' ? (ev.type || 'Document') : 'Document';
+                      return (
+                        <div className="sr-ev-row" key={i}>
+                          <div className="sr-ev-info">
+                            <div className="sr-ev-name">{name}</div>
+                            <div className="sr-ev-type-tag">{type}</div>
+                          </div>
+                          <div className="sr-ev-status">✓</div>
+                        </div>
+                      );
+                    })}
+                    {(summaryData.evidence || []).every(e => {
+                      const n = typeof e === 'string' ? e : (e.name || '');
+                      return n === 'Case Records' || n === 'Petition Documents';
+                    }) && (
+                      <div className="sr-ev-note">No physical evidence cited. Showing procedural records.</div>
+                    )}
+                  </>
+                )}
+              </div>
+            </div>
             
           </div>
 
@@ -467,17 +503,25 @@ CONFIDENCE: ${summaryData.confidenceScore}%`;
                   <h1 className="sr-main-title">{summaryData.caseName || 'STATE VS. MALHOTRA'}</h1>
                 )}
                 <div className="sr-header-icons">
-                  <span>🏛 {summaryData.jurisdiction || 'DELHI HIGH COURT'}</span>
-                  <span>📅 {summaryData.filing || '12-OCT-2021'}</span>
-                  <span style={{color: '#ff2a2a'}}>⏱ {summaryData.pendingDuration || '3Y PENDING'}</span>
+                  <span><span className="sr-icon-lbl">COURT</span>{summaryData.jurisdiction || 'DELHI HIGH COURT'}</span>
+                  <span className="sr-icon-sep">·</span>
+                  <span><span className="sr-icon-lbl">FILED</span>{summaryData.filing || '12-OCT-2021'}</span>
+                  <span className="sr-icon-sep">·</span>
+                  <span className="sr-pending-chip">⏱ {pendingDisplay}</span>
                 </div>
               </div>
               <div className="sr-header-actions">
-                <button className="sr-action-btn" onClick={handleDownload}>
-                  PDF EXPORT <Download size={14} style={{marginLeft: '8px', color: '#ff2a2a'}}/>
+                <button className="sr-action-btn" onClick={handleReinitialize}>
+                  <FileUp size={13} /> NEW PDF
                 </button>
-                <button className="sr-action-btn" onClick={() => handleFeatureNotReady('SHARE_PROTOCOL')}>
-                  TEAM SHARE <div className="sr-share-icon" />
+                <button className={`sr-action-btn ${editMode ? 'sr-action-btn-active' : ''}`} onClick={() => setEditMode(!editMode)}>
+                  <Edit3 size={13} /> {editMode ? 'DONE' : 'EDIT'}
+                </button>
+                <button className="sr-action-btn" onClick={handleDownload}>
+                  <Download size={13} /> PDF EXPORT
+                </button>
+                <button className={`sr-action-btn sr-action-approve ${approved ? 'sr-action-btn-approved' : ''}`} onClick={() => setApproved(!approved)}>
+                  <ThumbsUp size={13} /> {approved ? 'APPROVED' : 'APPROVE'}
                 </button>
               </div>
             </div>
@@ -522,76 +566,113 @@ CONFIDENCE: ${summaryData.confidenceScore}%`;
                     <ArrowRight size={24} color="#fff" style={{transform: 'rotate(-45deg)'}} />
                   </div>
                   <div>
-                    <div className="sr-outcome-title">FAVORABLE JUDGMENT</div>
-                    <div className="sr-outcome-sub">PROBABILITY: HIGH (84%)</div>
+                    <div className="sr-outcome-title">{summaryData.caseOutcomeAnalysis?.title || 'FAVORABLE JUDGMENT'}</div>
+                    <div className="sr-outcome-sub">PROBABILITY: {summaryData.caseOutcomeAnalysis?.probability_score ? `${summaryData.caseOutcomeAnalysis.probability_score}%` : 'HIGH (84%)'} — FAVOURS {summaryData.caseOutcomeAnalysis?.favours || summaryData.petitioner || 'PETITIONER'}</div>
                   </div>
                 </div>
                 <p className="sr-outcome-desc">
-                  AI synthesis of similar cyber-trespass precedents in {summaryData.jurisdiction || 'Delhi High Court'} suggests that interpretation favored the prosecution in 8 of the last 10 similar filings. <span className="sr-highlight">Key Insight: Precedent Applicability</span>
+                  {summaryData.caseOutcomeAnalysis?.description || `AI synthesis of similar precedents in ${summaryData.jurisdiction || 'Delhi High Court'} suggests interpretation favoured prosecution in similar filings.`} <span className="sr-highlight">{summaryData.caseOutcomeAnalysis?.key_insight || 'Key Insight: Precedent Applicability'}</span>
                 </p>
                 <div className="sr-outcome-bg-decor" />
               </div>
             </div>
 
-            {/* Row 2: Facts and Questions */}
-            <div className="sr-row-2">
-              <div className="sr-facts-card">
-                <div className="sr-card-heading">
-                  <CheckCircle2 size={14} color="#ff2a2a" style={{marginRight: '8px'}} /> KEY FACTS
-                </div>
-                <div className="sr-facts-list">
-                  {(summaryData.facts || []).map((txt, i) => (
-                    <div className="sr-fact-row" key={i}>
-                      <span className="sr-fact-num">0{i + 1}</span>
-                      {editMode ? (
-                        <textarea
-                          className="sr-edit-textarea"
-                          value={txt}
-                          onChange={e => {
-                            const f = [...summaryData.facts];
-                            f[i] = e.target.value;
-                            handleUpdateSummary({ facts: f });
-                          }}
-                        />
-                      ) : (
-                        <p className="sr-fact-txt">
-                          {txt}
-                          {i === (summaryData.facts || []).length - 1 && (
-                            <span className="sr-risk-point">RISK POINT</span>
-                          )}
-                        </p>
-                      )}
+            {/* Row 2: Facts and Questions — mode-aware */}
+            {viewMode === 'student' ? (
+              <div className="sr-student-banner">
+                <div className="sr-student-badge">📚 STUDENT MODE — SIMPLIFIED BREAKDOWN</div>
+                <div className="sr-row-2">
+                  <div className="sr-facts-card">
+                    <div className="sr-card-heading">
+                      <CheckCircle2 size={14} color="#ff2a2a" style={{marginRight: '8px'}} /> WHAT HAPPENED (SIMPLIFIED)
                     </div>
-                  ))}
+                    <div className="sr-facts-list">
+                      {studentFacts.map((txt, i) => (
+                        <div className="sr-fact-row" key={i}>
+                          <span className="sr-fact-num">{String(i + 1).padStart(2, '0')}</span>
+                          <p className="sr-fact-txt">{txt}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="sr-questions-card">
+                    <div className="sr-card-heading">
+                      <span style={{color: '#ff2a2a', marginRight: '8px', fontWeight: 'bold'}}>?</span> LEGAL QUESTIONS (PLAIN ENGLISH)
+                    </div>
+                    <div className="sr-questions-list">
+                      {studentQuestions.map((q, i) => (
+                        <div className="sr-question-row" key={i}>
+                          <span className="sr-q-icon">—</span>
+                          <p className="sr-q-txt">{q}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="sr-student-outcome">
+                      <div className="sr-student-outcome-lbl">WHAT THIS MEANS FOR COMMON PEOPLE</div>
+                      <p className="sr-fact-txt" style={{marginTop: '8px'}}>{studentOutcome}</p>
+                    </div>
+                  </div>
                 </div>
               </div>
-
-              <div className="sr-questions-card">
-                <div className="sr-card-heading">
-                  <span style={{color: '#ff2a2a', marginRight: '8px', fontWeight: 'bold'}}>?</span> LEGAL QUESTIONS
+            ) : (
+              <div className="sr-row-2">
+                <div className="sr-facts-card">
+                  <div className="sr-card-heading">
+                    <CheckCircle2 size={14} color="#ff2a2a" style={{marginRight: '8px'}} /> KEY FACTS
+                  </div>
+                  <div className="sr-facts-list">
+                    {(summaryData.facts || []).map((txt, i) => (
+                      <div className="sr-fact-row" key={i}>
+                        <span className="sr-fact-num">{String(i + 1).padStart(2, '0')}</span>
+                        {editMode ? (
+                          <textarea
+                            className="sr-edit-textarea"
+                            value={txt}
+                            onChange={e => {
+                              const f = [...summaryData.facts];
+                              f[i] = e.target.value;
+                              handleUpdateSummary({ facts: f });
+                            }}
+                          />
+                        ) : (
+                          <p className="sr-fact-txt">
+                            {txt}
+                            {i === (summaryData.facts || []).length - 1 && (
+                              <span className="sr-risk-point">RISK POINT</span>
+                            )}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="sr-questions-list">
-                  {(summaryData.legalQuestions || []).map((q, i) => (
-                    <div className="sr-question-row" key={i}>
-                      <span className="sr-q-icon">{i % 2 === 0 ? '!' : '?'}</span>
-                      {editMode ? (
-                        <textarea
-                          className="sr-edit-textarea"
-                          value={q}
-                          onChange={e => {
-                            const lq = [...summaryData.legalQuestions];
-                            lq[i] = e.target.value;
-                            handleUpdateSummary({ legalQuestions: lq });
-                          }}
-                        />
-                      ) : (
-                         <p className={`sr-q-txt ${i % 2 !== 0 ? 'sr-q-italic' : ''}`}>{q}</p>
-                      )}
-                    </div>
-                  ))}
+                <div className="sr-questions-card">
+                  <div className="sr-card-heading">
+                    <span style={{color: '#ff2a2a', marginRight: '8px', fontWeight: 'bold'}}>?</span> LEGAL QUESTIONS
+                  </div>
+                  <div className="sr-questions-list">
+                    {(summaryData.legalQuestions || []).map((q, i) => (
+                      <div className="sr-question-row" key={i}>
+                        <span className="sr-q-icon">—</span>
+                        {editMode ? (
+                          <textarea
+                            className="sr-edit-textarea"
+                            value={q}
+                            onChange={e => {
+                              const lq = [...summaryData.legalQuestions];
+                              lq[i] = e.target.value;
+                              handleUpdateSummary({ legalQuestions: lq });
+                            }}
+                          />
+                        ) : (
+                          <p className={`sr-q-txt ${i % 2 !== 0 ? 'sr-q-italic' : ''}`}>{q}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Row 3: Statutes */}
             <div className="sr-statutes-card">

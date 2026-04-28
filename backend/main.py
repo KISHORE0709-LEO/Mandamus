@@ -38,7 +38,15 @@ except Exception as e:
 # Enable CORS for localhost:5173
 origins = [
     "http://localhost:5173",
+    "http://localhost:5174",
+    "http://localhost:5175",
+    "http://localhost:5176",
+    "http://localhost:5177",
     "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+    "http://127.0.0.1:5175",
+    "http://127.0.0.1:5176",
+    "http://127.0.0.1:5177",
 ]
 
 app.add_middleware(
@@ -79,43 +87,91 @@ def get_bedrock_client():
 
 def summarise_with_bedrock(extracted_text: str) -> dict:
     bedrock = get_bedrock_client()
-    
-    system_prompt = (
-        "You are a legal document analyser for Indian courts. "
-        "Extract information and return ONLY a valid JSON object with no extra text, no markdown, no backticks. "
-        "Fields required: case_id (string), court_name (string), petitioner (string), petitioner_counsel (string), "
-        "respondent (string), respondent_counsel (string), filing_date (string), pending_duration (string), "
-        "key_facts (array of 3-5 strings), ipc_sections (array of objects with section and description fields), "
-        "core_legal_questions (array of strings), evidence (array of strings), case_type (string like CRIMINAL_PETITION), "
-        "is_undertrial (boolean), confidence_score (number between 0-100), "
-        "argument_strength (object with petitioner and respondent numeric values 0-100), "
-        "procedural_path (array of up to 3 objects with date and event strings), "
-        "case_outcome_analysis (object with title, probability_score number, description string, and key_insight string), "
-        "student_mode (object with key_facts array of simple strings, legal_questions array of simple strings, and outcome_explanation simple string)."
-    )
-    
+
+    # Send more text for better accuracy — keep top (parties/header) and bottom (orders/relief)
+    if len(extracted_text) > 10000:
+        text_to_send = extracted_text[:7000] + "\n...[middle section truncated]...\n" + extracted_text[-3000:]
+    else:
+        text_to_send = extracted_text
+
+    prompt = f"""You are a senior Indian legal analyst AI. Carefully read the court document below and return ONLY a single valid JSON object. No markdown. No backticks. No explanation. Start with {{ and end with }}.
+
+STRICT FIELD REQUIREMENTS — every field MUST be populated from the actual document text:
+
+1. case_id: exact case number from document (e.g. "W.P.(Crl.) 167/2012")
+2. court_name: full court name (e.g. "Supreme Court of India")
+3. petitioner: full name of petitioner/appellant
+4. petitioner_counsel: name of petitioner's advocate if mentioned, else "Not Mentioned"
+5. respondent: full name of respondent
+6. respondent_counsel: name of respondent's advocate if mentioned, else "Not Mentioned"
+7. filing_date: date of filing in DD-MMM-YYYY format (e.g. "15-JAN-2012"), extract from document
+8. pending_duration: calculate from filing_date to today's date as "X years Y months" (e.g. "11 years 3 months")
+9. plain_summary: 3-4 sentences in simple English explaining — what happened, who is fighting whom, why they are in court, and what relief is sought. Write as if explaining to a 16-year-old.
+10. key_facts: array of exactly 4-6 strings — each a single factual statement from the document (technical, for lawyers)
+11. ipc_sections: array of objects — extract EVERY law/section/article cited in the document. Each object: {{"section": "IPC Section 302", "description": "Punishment for murder"}}. If none explicitly cited, infer from case type and facts. NEVER return empty array.
+12. core_legal_questions: array of 3-5 strings — the actual legal issues the court must decide
+13. evidence: array of objects — list ONLY physical/digital evidence items mentioned: CCTV footage, call records, medical reports, witness statements, bank statements, forensic reports, photographs, seized weapons, documents. Each: {{"name": "short 2-3 word label", "type": "one of: CCTV Footage/Call Records/Witness Statement/Forensic Report/Medical Record/Financial Record/Digital Evidence/Physical Evidence/Photograph/Seized Document"}}. If no specific evidence mentioned, return [{{"name": "Case Records", "type": "Seized Document"}}, {{"name": "Petition Documents", "type": "Seized Document"}}]
+14. case_type: string like "CRIMINAL_PETITION", "WRIT_PETITION", "BAIL_APPLICATION", "CIVIL_APPEAL"
+15. is_undertrial: boolean — true if accused is in custody awaiting trial
+16. confidence_score: number 0-100 — your confidence in the extraction accuracy
+17. argument_strength: object with petitioner (number 0-100) and respondent (number 0-100) based on strength of legal position
+18. procedural_path: array of up to 3 objects with date (string) and event (string) — key milestones from the document
+19. case_outcome_analysis: object with: title (string, e.g. "FAVORABLE JUDGMENT"), probability_score (number 0-100), favours (string — name of party likely to win), description (2 sentences — AI prediction based on facts), key_insight (string — single most important legal insight)
+20. student_mode: object with THREE fields:
+    - key_facts: array of 4-5 strings — SAME facts as above but rewritten in extremely simple language, no legal jargon, as if explaining to a student who has never read a court case
+    - legal_questions: array of 3-4 strings — SAME legal questions rewritten simply, like "Can a person be kept in jail without a fair trial?" instead of technical phrasing
+    - outcome_explanation: single paragraph in plain English — what will likely happen, what it means for the common person, and why this case matters to society
+
+DOCUMENT:
+{text_to_send}"""
+
     try:
         response = bedrock.converse(
             modelId="us.amazon.nova-pro-v1:0",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [{"text": f"System Guidelines: {system_prompt}\n\nDocument Text:\n{extracted_text}"}]
-                }
-            ],
-            inferenceConfig={"maxTokens": 4096}
+            messages=[{"role": "user", "content": [{"text": prompt}]}],
+            inferenceConfig={"maxTokens": 4096, "temperature": 0.0}
         )
-        
-        result_text = response['output']['message']['content'][0]['text']
-        
-        # Clean up any potential markdown formatting
+
+        result_text = response['output']['message']['content'][0]['text'].strip()
+
+        # Strip markdown if present
         if result_text.startswith("```json"):
-            result_text = result_text.replace("```json\n", "").replace("\n```", "")
+            result_text = result_text.split("```json")[1].split("```")[0].strip()
         elif result_text.startswith("```"):
-            result_text = result_text.replace("```\n", "").replace("\n```", "")
-            
-        return json.loads(result_text.strip())
-        
+            result_text = result_text.split("```")[1].split("```")[0].strip()
+
+        # Find JSON boundaries in case there's surrounding text
+        start = result_text.find('{')
+        end = result_text.rfind('}')
+        if start != -1 and end != -1:
+            result_text = result_text[start:end+1]
+
+        parsed = json.loads(result_text)
+
+        # Enforce non-empty evidence fallback
+        if not parsed.get('evidence') or len(parsed.get('evidence', [])) == 0:
+            parsed['evidence'] = [
+                {"name": "Case Records", "type": "Seized Document"},
+                {"name": "Petition Documents", "type": "Seized Document"}
+            ]
+
+        # Enforce non-empty ipc_sections fallback
+        if not parsed.get('ipc_sections') or len(parsed.get('ipc_sections', [])) == 0:
+            parsed['ipc_sections'] = [
+                {"section": "Article 21", "description": "Protection of life and personal liberty"},
+                {"section": "Article 226", "description": "Power of High Courts to issue writs"}
+            ]
+
+        # Enforce student_mode fallback
+        if not parsed.get('student_mode'):
+            parsed['student_mode'] = {
+                "key_facts": parsed.get('key_facts', []),
+                "legal_questions": parsed.get('core_legal_questions', []),
+                "outcome_explanation": parsed.get('plain_summary', '')
+            }
+
+        return parsed
+
     except json.JSONDecodeError as e:
         logger.error(f"Failed to parse JSON from Bedrock response: {str(e)}")
         return {"error": "Failed to parse JSON response from the model."}
@@ -123,81 +179,56 @@ def summarise_with_bedrock(extracted_text: str) -> dict:
         logger.error(f"Error calling Bedrock: {str(e)}")
         return {"error": f"Failed to connect to AWS Bedrock: {str(e)}"}
 
-def extract_text(s3_key: str) -> str:
-    s3_client = get_s3_client()
-    bucket_name = "mandamus-cases"
-    
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-        temp_path = tmp_file.name
-    
+def extract_text_from_bytes(file_bytes: bytes) -> tuple:
+    """Extract text directly from PDF bytes — no S3 round-trip needed."""
+    import io
     try:
-        # Download from S3
-        s3_client.download_file(bucket_name, s3_key, temp_path)
-        
-        # Try PyMuPDF
-        extracted_text = ""
-        try:
-            doc = fitz.open(temp_path)
-            for page in doc:
-                extracted_text += page.get_text() + "\n"
-            doc.close()
-        except Exception as e:
-            logger.warning(f"PyMuPDF extraction failed: {e}")
-            
+        doc = fitz.open(stream=file_bytes, filetype="pdf")
+        extracted_text = "".join(page.get_text() + "\n" for page in doc)
+        doc.close()
         if len(extracted_text.strip()) >= 100:
-            logger.info("Extracted text using PyMuPDF")
+            logger.info("Extracted text using PyMuPDF (in-memory)")
             return extracted_text.strip(), "pymupdf"
-            
-        # Fall back to AWS Textract
-        logger.info("Falling back to AWS Textract")
-        textract_client = get_textract_client()
-        
-        response = textract_client.start_document_text_detection(
-            DocumentLocation={
-                'S3Object': {
-                    'Bucket': bucket_name,
-                    'Name': s3_key
-                }
-            }
-        )
-        
-        job_id = response['JobId']
-        
-        # Poll for completion
-        while True:
-            job_status = textract_client.get_document_text_detection(JobId=job_id)
-            status = job_status['JobStatus']
-            
-            if status in ['SUCCEEDED', 'FAILED']:
-                break
-            
-            time.sleep(2)
-            
-        if status == 'SUCCEEDED':
-            text_blocks = []
-            next_token = None
-            
-            while True:
-                if next_token:
-                    job_status = textract_client.get_document_text_detection(JobId=job_id, NextToken=next_token)
-                
-                for block in job_status.get('Blocks', []):
-                    if block['BlockType'] == 'LINE':
-                        text_blocks.append(block['Text'])
-                        
-                next_token = job_status.get('NextToken')
-                if not next_token:
-                    break
-                    
-            extracted_text = "\n".join(text_blocks)
-            logger.info("Extracted text using AWS Textract")
-            return extracted_text, "textract"
-        else:
-            raise Exception("AWS Textract job failed")
-            
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+    except Exception as e:
+        logger.warning(f"PyMuPDF in-memory extraction failed: {e}")
+
+    # Scanned PDF — must use Textract (requires S3)
+    return None, "needs_textract"
+
+def extract_text_via_textract(s3_key: str) -> tuple:
+    """Fallback: use Textract for scanned PDFs already uploaded to S3."""
+    textract_client = get_textract_client()
+    bucket_name = "mandamus-cases"
+
+    response = textract_client.start_document_text_detection(
+        DocumentLocation={'S3Object': {'Bucket': bucket_name, 'Name': s3_key}}
+    )
+    job_id = response['JobId']
+
+    while True:
+        job_status = textract_client.get_document_text_detection(JobId=job_id)
+        status = job_status['JobStatus']
+        if status in ['SUCCEEDED', 'FAILED']:
+            break
+        time.sleep(2)
+
+    if status != 'SUCCEEDED':
+        raise Exception("AWS Textract job failed")
+
+    text_blocks = []
+    next_token = None
+    while True:
+        if next_token:
+            job_status = textract_client.get_document_text_detection(JobId=job_id, NextToken=next_token)
+        for block in job_status.get('Blocks', []):
+            if block['BlockType'] == 'LINE':
+                text_blocks.append(block['Text'])
+        next_token = job_status.get('NextToken')
+        if not next_token:
+            break
+
+    logger.info("Extracted text using AWS Textract")
+    return "\n".join(text_blocks), "textract"
 
 @app.post("/upload")
 async def upload_pdf(file: UploadFile = File(...)):
@@ -239,61 +270,90 @@ async def summarise_document(file: UploadFile = File(...)):
     content_type = file.content_type
 
     async def generate():
+        import io
         start_time = time.time()
+        s3_key = None
         try:
             yield json.dumps({"processing_status": "uploading"}) + "\n"
-            
-            s3_client = get_s3_client()
-            bucket_name = "mandamus-cases"
-            unique_filename = f"{uuid.uuid4()}_{filename}"
-            s3_key = f"uploads/{unique_filename}"
-            
-            def upload():
-                import io
-                s3_client.upload_fileobj(
-                    io.BytesIO(file_bytes),
-                    bucket_name,
-                    s3_key,
-                    ExtraArgs={"ContentType": content_type or "application/pdf"}
-                )
-            await asyncio.to_thread(upload)
-            
+
+            # Step 1: Try in-memory extraction first (no S3 round-trip)
+            extracted_text, extraction_method = await asyncio.to_thread(extract_text_from_bytes, file_bytes)
+
             yield json.dumps({"processing_status": "extracting"}) + "\n"
-            extracted_text, extraction_method = await asyncio.to_thread(extract_text, s3_key)
-            
+
+            if extraction_method == "needs_textract":
+                # Scanned PDF: upload to S3 then run Textract
+                s3_client = get_s3_client()
+                unique_filename = f"{uuid.uuid4()}_{filename}"
+                s3_key = f"uploads/{unique_filename}"
+                await asyncio.to_thread(
+                    lambda: s3_client.upload_fileobj(
+                        io.BytesIO(file_bytes), "mandamus-cases", s3_key,
+                        ExtraArgs={"ContentType": content_type or "application/pdf"}
+                    )
+                )
+                extracted_text, extraction_method = await asyncio.to_thread(extract_text_via_textract, s3_key)
+            else:
+                # Digital PDF: upload to S3 in background (for audit trail) without blocking
+                s3_client = get_s3_client()
+                unique_filename = f"{uuid.uuid4()}_{filename}"
+                s3_key = f"uploads/{unique_filename}"
+                asyncio.create_task(asyncio.to_thread(
+                    lambda: s3_client.upload_fileobj(
+                        io.BytesIO(file_bytes), "mandamus-cases", s3_key,
+                        ExtraArgs={"ContentType": content_type or "application/pdf"}
+                    )
+                ))
+
             yield json.dumps({"processing_status": "summarising"}) + "\n"
             bedrock_result = await asyncio.to_thread(summarise_with_bedrock, extracted_text)
-            
+
             if "error" in bedrock_result:
                 raise Exception(f"Bedrock Error: {bedrock_result['error']}")
-                
+
             yield json.dumps({"processing_status": "structuring"}) + "\n"
-            
+
             processing_time = round(time.time() - start_time, 2)
             final_response = {
                 "processing_status": "complete",
                 **bedrock_result,
-                "s3_key": s3_key,
+                "s3_key": s3_key or "",
                 "extraction_method": extraction_method,
                 "processing_time": processing_time
             }
             yield json.dumps(final_response) + "\n"
-            
+
         except Exception as e:
             yield json.dumps({"processing_status": "failed", "error": str(e)}) + "\n"
 
     return StreamingResponse(generate(), media_type="application/x-ndjson")
 
-# Generate embeddings for precedents_db using AWS Titan
+# Generate embeddings for precedents_db using AWS Titan — cached to disk
+EMBEDDINGS_CACHE = "precedents_embeddings_cache.json"
 precedents_embeddings = []
-try:
+
+def _load_or_generate_embeddings():
+    global precedents_embeddings
+    # Check if cache exists and matches current db
+    if os.path.exists(EMBEDDINGS_CACHE):
+        try:
+            with open(EMBEDDINGS_CACHE, "r") as f:
+                cached = json.load(f)
+            if len(cached) == len(precedents_db):
+                precedents_embeddings = cached
+                logger.info(f"Loaded {len(cached)} embeddings from disk cache.")
+                return
+        except Exception:
+            pass
+
+    logger.info("Generating AWS Titan embeddings (first run — will cache to disk)...")
     bedrock_embed = boto3.client(
         "bedrock-runtime",
         aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
         aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
         region_name=os.getenv("AWS_REGION")
     )
-    logger.info("Generating AWS Titan embeddings for precedents database...")
+    results = []
     for c in precedents_db:
         text_to_embed = f"{c['case_name']} {c['full_text']} {' '.join(c.get('tags', []))}"
         response = bedrock_embed.invoke_model(
@@ -302,10 +362,15 @@ try:
             accept="application/json",
             contentType="application/json"
         )
-        response_body = json.loads(response.get('body').read())
-        embedding = response_body.get('embedding')
-        precedents_embeddings.append({"case": c, "embedding": embedding})
-    logger.info("Successfully generated embeddings for all cases.")
+        embedding = json.loads(response.get('body').read()).get('embedding')
+        results.append({"case": c, "embedding": embedding})
+    with open(EMBEDDINGS_CACHE, "w") as f:
+        json.dump(results, f)
+    precedents_embeddings = results
+    logger.info(f"Generated and cached {len(results)} embeddings.")
+
+try:
+    _load_or_generate_embeddings()
 except Exception as e:
     logger.error(f"Failed to generate AWS embeddings: {e}")
 
