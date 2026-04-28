@@ -61,7 +61,7 @@ A completely integrated and secured WebRTC virtual courtroom. Entry requires fac
 - IntersectionObserver API (zero-dependency scroll animations)
 
 **Backend / AI (Conceptualized Architecture)**:
-- **Storage**: Databricks Delta Lake (Scalable to 25,000+ judges / 55M+ records)
+- **Storage**: AWS Simple Storage Service (AWS S3) (Scalable to 25,000+ judges / 55M+ records)
 - **Compute**: Apache Spark (Distributed computing)
 - **Natural Language**: Spark NLP, Sentence Transformers, BART/Pegasus Models
 - **Search**: Databricks Vector Search
