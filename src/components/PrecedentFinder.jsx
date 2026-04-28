@@ -53,6 +53,7 @@ export default function PrecedentFinder({ onTabChange }) {
   const [activeTime, setActiveTime] = useState('HISTORICAL');
   const [expandedCard, setExpandedCard] = useState(null);
   const [cases, setCases] = useState([]);
+  const [allCases, setAllCases] = useState([]);
   const [graphData, setGraphData] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -103,16 +104,37 @@ export default function PrecedentFinder({ onTabChange }) {
     }
   }, [cases]);
 
-  // REAL-TIME FILTERING
+  // LOCAL FILTERING LOGIC
   useEffect(() => {
-    if (query && state.summariser_status === 'complete') {
-      searchPrecedents(query, state.summariser_output, true);
+    let filtered = [...allCases];
+    
+    // Filter by Court Level
+    if (activeLevel !== 'ALL') {
+      filtered = filtered.filter(c => {
+        const court = (c.court || '').toUpperCase();
+        if (activeLevel === 'SUPREME') return court.includes('SUPREME') || court === 'SC';
+        if (activeLevel === 'HIGH_COURT') return court.includes('HIGH COURT') || court === 'HC';
+        if (activeLevel === 'DISTRICT') return !court.includes('SUPREME') && !court.includes('HIGH COURT') && court !== 'SC' && court !== 'HC';
+        return true;
+      });
     }
-  }, [activeLevel, activeTime]);
 
-  const searchPrecedents = (q = query, ctx = state.summariser_output, isFilter = false) => {
+    // Filter by Time Window (last 5 years)
+    if (activeTime === 'LAST_5Y') {
+      const currentYear = new Date().getFullYear();
+      filtered = filtered.filter(c => (currentYear - (parseInt(c.year) || 0)) <= 5);
+    }
+
+    // Sort by Similarity Score (ensure it stays sorted)
+    filtered.sort((a, b) => (b.similarity_score || 0) - (a.similarity_score || 0));
+
+    setCases(filtered);
+  }, [allCases, activeLevel, activeTime]);
+
+  const searchPrecedents = (q = query, ctx = state.summariser_output, forceFresh = false) => {
+    if (!q) return;
     setLoading(true);
-    if (!isFilter) setCases([]); // Only clear results for new queries, not simple filters
+    if (forceFresh) setAllCases([]);
     
     fetch('http://localhost:8000/precedent/search', {
       method: 'POST',
@@ -129,7 +151,17 @@ export default function PrecedentFinder({ onTabChange }) {
     })
     .then(res => res.json())
     .then(data => {
-      setCases(data.results || []);
+      const newResults = data.results || [];
+      // Combine with existing cases to avoid re-fetching if we switch back
+      setAllCases(prev => {
+        const combined = [...prev];
+        newResults.forEach(nr => {
+          if (!combined.find(c => c.case_name === nr.case_name)) {
+            combined.push(nr);
+          }
+        });
+        return combined;
+      });
       setLoading(false);
     })
     .catch(err => {
@@ -204,10 +236,10 @@ export default function PrecedentFinder({ onTabChange }) {
           style={{ background: 'transparent', border: 'none', color: '#e02020', width: '100%', outline: 'none', fontFamily: 'Inter', fontSize: '0.8rem' }}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && searchPrecedents()}
+          onKeyDown={(e) => e.key === 'Enter' && searchPrecedents(query, state.summariser_output, true)}
           placeholder="Enter legal query, fact pattern, or IPC sections..."
         />
-        <button className="pf-reanalyze" onClick={searchPrecedents}>
+        <button className="pf-reanalyze" onClick={() => searchPrecedents(query, state.summariser_output, true)}>
           {loading ? 'SEARCHING...' : 'RE_ANALYZE'}
         </button>
       </div>
