@@ -1,51 +1,55 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signInWithPopup,
   updateProfile
 } from 'firebase/auth';
-import { auth, googleProvider } from '../lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, googleProvider, db } from '../lib/firebase';
 import './AuthPage.css';
+
+const ROLES = [
+  { value: 'judge',   label: 'Judge — Host' },
+  { value: 'lawyer',  label: 'Lawyer — Participant' },
+  { value: 'custody', label: 'Custody Node — Accused (Jail / Police)' },
+  { value: 'clerk',   label: 'Clerk — Observer' },
+];
+
+// Fire-and-forget — never awaited, never blocks navigation
+const saveUserRole = (uid, role, displayName, email) => {
+  setDoc(doc(db, 'users', uid), { displayName, email, role, updatedAt: new Date().toISOString() }, { merge: true })
+    .catch(e => console.warn('Firestore write skipped:', e.message));
+};
 
 const AuthPage = () => {
   const [authMode, setAuthMode] = useState('signin');
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-  
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    password: ''
-  });
-  
+  const [formData, setFormData] = useState({ fullName: '', email: '', password: '', role: '' });
   const [errors, setErrors] = useState({});
+  const navigate = useNavigate();
 
   const toggleMode = () => {
     setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
     setErrors({});
-    setFormData({ fullName: '', email: '', password: '' });
+    setFormData({ fullName: '', email: '', password: '', role: '' });
   };
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-    if (errors[e.target.name]) {
-      setErrors({ ...errors, [e.target.name]: '' });
-    }
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+    if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: '' });
   };
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     setErrors({});
     try {
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      saveUserRole(result.user.uid, formData.role || 'clerk', result.user.displayName, result.user.email);
       navigate('/dashboard');
     } catch (error) {
-      console.error("Google Sign-In Error:", error);
+      console.error('Google Sign-In Error:', error);
       setErrors({ google: 'Failed to sign in with Google. Please try again.' });
     } finally {
       setIsLoading(false);
@@ -58,38 +62,35 @@ const AuthPage = () => {
     if (authMode === 'signup' && !formData.fullName.trim()) newErrors.fullName = 'Full Name is required';
     if (!formData.email.trim()) newErrors.email = 'Email Address is required';
     if (!formData.password) newErrors.password = 'Password is required';
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+    if (!formData.role) newErrors.role = 'Please select your role.';
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
 
     setIsLoading(true);
     setErrors({});
 
     try {
       if (authMode === 'signup') {
-        const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-        await updateProfile(userCredential.user, {
-          displayName: formData.fullName
-        });
+        const cred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        await updateProfile(cred.user, { displayName: formData.fullName });
+        saveUserRole(cred.user.uid, formData.role, formData.fullName, formData.email);
       } else {
-        await signInWithEmailAndPassword(auth, formData.email, formData.password);
+        const cred = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+        saveUserRole(cred.user.uid, formData.role, cred.user.displayName, cred.user.email);
       }
       navigate('/dashboard');
     } catch (error) {
-      console.error("Auth Error:", error);
-      const errorCode = error.code;
-      if (errorCode === 'auth/user-not-found' || errorCode === 'auth/wrong-password' || errorCode === 'auth/invalid-credential') {
-        newErrors.auth = 'Invalid email or password';
-      } else if (errorCode === 'auth/email-already-in-use') {
-        newErrors.email = 'Email already in use';
-      } else if (errorCode === 'auth/weak-password') {
-        newErrors.password = 'Password should be at least 6 characters';
+      console.error('Auth Error:', error);
+      const errs = {};
+      if (['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential'].includes(error.code)) {
+        errs.auth = 'Invalid email or password';
+      } else if (error.code === 'auth/email-already-in-use') {
+        errs.email = 'Email already in use';
+      } else if (error.code === 'auth/weak-password') {
+        errs.password = 'Password should be at least 6 characters';
       } else {
-        newErrors.auth = 'An error occurred. Please try again.';
+        errs.auth = 'An error occurred. Please try again.';
       }
-      setErrors(newErrors);
+      setErrors(errs);
     } finally {
       setIsLoading(false);
     }
@@ -97,9 +98,7 @@ const AuthPage = () => {
 
   return (
     <div className="auth-page">
-      {/* Dynamic secure animated background effect */}
       <div className="secure-bg-grid"></div>
-      
       <button className="auth-back-btn" onClick={() => navigate('/')}>&larr; Back to Platform</button>
 
       <div className="auth-centered-container">
@@ -112,9 +111,7 @@ const AuthPage = () => {
             SECURE PORTAL
           </div>
 
-          <h2 className="auth-title">
-            {authMode === 'signin' ? 'Welcome Back' : 'Create an Account'}
-          </h2>
+          <h2 className="auth-title">{authMode === 'signin' ? 'Welcome Back' : 'Create an Account'}</h2>
           <p className="auth-subtitle">
             {authMode === 'signin' ? 'Sign in to access your Mandamus judicial workspace' : 'Join the secure AI judicial framework'}
           </p>
@@ -143,12 +140,9 @@ const AuthPage = () => {
             {authMode === 'signup' && (
               <div className="input-group">
                 <input
-                  type="text"
-                  name="fullName"
-                  placeholder="Full Name"
+                  type="text" name="fullName" placeholder="Full Name"
                   className={`auth-input ${errors.fullName ? 'input-error' : ''}`}
-                  value={formData.fullName}
-                  onChange={handleChange}
+                  value={formData.fullName} onChange={handleChange}
                 />
                 {errors.fullName && <div className="error-msg">{errors.fullName}</div>}
               </div>
@@ -156,32 +150,38 @@ const AuthPage = () => {
 
             <div className="input-group">
               <input
-                type="email"
-                name="email"
-                placeholder="Email Address"
+                type="email" name="email" placeholder="Email Address"
                 className={`auth-input ${errors.email ? 'input-error' : ''}`}
-                value={formData.email}
-                onChange={handleChange}
+                value={formData.email} onChange={handleChange}
               />
               {errors.email && <div className="error-msg">{errors.email}</div>}
             </div>
 
             <div className="input-group password-group">
               <input
-                type="password"
-                name="password"
-                placeholder="Password"
+                type="password" name="password" placeholder="Password"
                 className={`auth-input ${errors.password ? 'input-error' : ''}`}
-                value={formData.password}
-                onChange={handleChange}
+                value={formData.password} onChange={handleChange}
               />
               {errors.password && <div className="error-msg">{errors.password}</div>}
-              
               {authMode === 'signin' && (
-                <div className="forgot-password">
-                  <a href="#forgot">Forgot password?</a>
-                </div>
+                <div className="forgot-password"><a href="#forgot">Forgot password?</a></div>
               )}
+            </div>
+
+            <div className="input-group">
+              <select
+                name="role"
+                className={`auth-input auth-select ${errors.role ? 'input-error' : ''}`}
+                value={formData.role}
+                onChange={handleChange}
+              >
+                <option value="" disabled>Select your role…</option>
+                {ROLES.map(r => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </select>
+              {errors.role && <div className="error-msg">{errors.role}</div>}
             </div>
 
             <button type="submit" className="auth-submit-btn" disabled={isLoading}>
@@ -203,4 +203,3 @@ const AuthPage = () => {
 };
 
 export default AuthPage;
-
