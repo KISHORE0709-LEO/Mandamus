@@ -202,8 +202,12 @@ export default function Summarizer({ onTabChange }) {
                      plainSummary: data.plain_summary || '',
                      facts: data.key_facts || [],
                      legalQuestions: data.core_legal_questions || [],
-                     ipcSections: data.ipc_sections || [],
-                     evidence: data.evidence || [],
+                     ipcSections: (data.ipc_sections || []).sort((a, b) => (a.section || "").localeCompare(b.section || "", undefined, {numeric: true, sensitivity: 'base'})),
+                     evidence: (data.evidence || []).sort((a, b) => {
+                       const nameA = typeof a === 'string' ? a : (a.name || "");
+                       const nameB = typeof b === 'string' ? b : (b.name || "");
+                       return nameA.localeCompare(nameB);
+                     }),
                      caseType: data.case_type || 'UNKNOWN',
                      isUndertrial: data.is_undertrial || false,
                      confidenceScore: data.confidence_score || 0,
