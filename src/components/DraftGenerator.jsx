@@ -65,7 +65,7 @@ export default function DraftGenerator({ onTabChange }) {
   const handleValidateDraft = async (sections, summary, cases, currentDraftType) => {
     setIsValidating(true);
     try {
-      const res = await fetch('http://localhost:8000/draft/validate', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/draft/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -89,7 +89,7 @@ export default function DraftGenerator({ onTabChange }) {
   const handleGenerateDraft = async (q = query, cases = selectedCases, summary = fullSummary, dType = draftType) => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8000/draft/generate', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/draft/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
