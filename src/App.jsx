@@ -51,7 +51,7 @@ const Dashboard = () => {
       case 'draft':
         return <DraftGenerator />;
       case 'scheduler':
-        return <Scheduler />;
+        return <Scheduler onTabChange={setActiveFeature} />;
       case 'profile':
         return <ProfilePage />;
       case 'virtual':

@@ -78,13 +78,20 @@ export const getHearing = async (hearingId) => {
 };
 
 export const getHearingsByJudge = async (judgeId) => {
+  // Remove orderBy to avoid index requirement
   const q = query(
     collection(db, 'hearings'),
-    where('judgeId', '==', judgeId),
-    orderBy('scheduledDate', 'desc')
+    where('judgeId', '==', judgeId)
   );
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  const hearings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  
+  // Sort in JavaScript instead
+  return hearings.sort((a, b) => {
+    const dateA = a.scheduledDate || '';
+    const dateB = b.scheduledDate || '';
+    return dateB.localeCompare(dateA);
+  });
 };
 
 export const updateHearing = async (hearingId, updates) => {

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, FileText, Plus, CheckCircle2, ChevronRight, Download, Trash2, Paperclip } from 'lucide-react';
 import { useMandamus } from '../context/MandamusContext';
+import { useAuth } from '../context/AuthContext';
+import { createHearing, getHearingsByJudge, deleteHearing } from '../lib/firestoreHelpers';
 import './Scheduler.css';
 
 const today = new Date();
@@ -24,13 +26,12 @@ function buildAgenda(state) {
 
 export default function Scheduler({ onTabChange }) {
   const { state, updateState } = useMandamus();
+  const { user } = useAuth();
   const summary = state.summariser_output || {};
   const hasDraft = state.draft_status === 'approved' || !!state.draft_output;
 
-  const [meetings, setMeetings] = useState(() => {
-    try { return JSON.parse(sessionStorage.getItem('sc_meetings') || '[]'); }
-    catch { return []; }
-  });
+  const [meetings, setMeetings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [form, setForm] = useState({
     title: summary.caseName ? `Hearing — ${summary.caseName}` : '',
@@ -46,6 +47,22 @@ export default function Scheduler({ onTabChange }) {
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState({});
 
+  // Load hearings from Firestore
+  useEffect(() => {
+    if (user?.uid) {
+      setLoading(true);
+      getHearingsByJudge(user.uid)
+        .then(hearings => {
+          setMeetings(hearings);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Error loading hearings:', err);
+          setLoading(false);
+        });
+    }
+  }, [user]);
+
   // Re-fill form when case data arrives
   useEffect(() => {
     setForm(f => ({
@@ -58,10 +75,6 @@ export default function Scheduler({ onTabChange }) {
     }));
   }, [state.summariser_output, state.draft_output]);
 
-  useEffect(() => {
-    sessionStorage.setItem('sc_meetings', JSON.stringify(meetings));
-  }, [meetings]);
-
   const validate = () => {
     const e = {};
     if (!form.title.trim()) e.title = 'Title required';
@@ -71,23 +84,57 @@ export default function Scheduler({ onTabChange }) {
     return Object.keys(e).length === 0;
   };
 
-  const handleSchedule = () => {
+  const handleSchedule = async () => {
     if (!validate()) return;
-    const meeting = {
-      id: Date.now(),
-      ...form,
-      caseId: state.case_id || summary.caseId || '—',
-      createdAt: new Date().toISOString(),
-      draftAttached: form.attachDraft && hasDraft,
-    };
-    const updated = [meeting, ...meetings];
-    setMeetings(updated);
-    updateState({ scheduler_status: 'scheduled', scheduled_date: `${form.date} ${form.time}` });
-    setSubmitted(true);
+    if (!user?.uid) {
+      alert('Please login to schedule a hearing');
+      return;
+    }
+
+    try {
+      const hearingData = {
+        caseId: state.case_id || summary.caseId || 'CASE-' + Date.now(),
+        caseName: form.title,
+        judgeId: user.uid,
+        judgeName: user.displayName || 'Judge',
+        scheduledDate: form.date,
+        scheduledTime: form.time,
+        type: form.type,
+        parties: form.parties,
+        agenda: form.agenda,
+        draftAttached: form.attachDraft && hasDraft,
+        participants: [user.uid],
+        status: 'scheduled'
+      };
+
+      await createHearing(hearingData);
+      
+      // Reload hearings from Firestore
+      const updated = await getHearingsByJudge(user.uid);
+      setMeetings(updated);
+      
+      updateState({ 
+        scheduler_status: 'scheduled', 
+        scheduled_date: `${form.date} ${form.time}`,
+        last_hearing_id: hearingData.caseId
+      });
+      
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Error scheduling hearing:', error);
+      alert('Failed to schedule hearing. Please try again.');
+    }
   };
 
-  const handleDelete = (id) => {
-    setMeetings(m => m.filter(x => x.id !== id));
+  const handleDelete = async (id) => {
+    try {
+      await deleteHearing(id);
+      const updated = await getHearingsByJudge(user.uid);
+      setMeetings(updated);
+    } catch (error) {
+      console.error('Error deleting hearing:', error);
+      alert('Failed to delete hearing. Please try again.');
+    }
   };
 
   const handleExport = (m) => {
@@ -252,7 +299,12 @@ export default function Scheduler({ onTabChange }) {
         <div className="sc-list-col">
           <div className="sc-section-label"><FileText size={12} /> SCHEDULED MEETINGS ({meetings.length})</div>
 
-          {meetings.length === 0 ? (
+          {loading ? (
+            <div className="sc-empty">
+              <Clock size={28} className="sc-empty-icon" />
+              <div className="sc-empty-txt">Loading hearings...</div>
+            </div>
+          ) : meetings.length === 0 ? (
             <div className="sc-empty">
               <Calendar size={28} className="sc-empty-icon" />
               <div className="sc-empty-txt">No meetings scheduled yet.</div>
@@ -271,9 +323,9 @@ export default function Scheduler({ onTabChange }) {
                   </div>
                   <div className="sc-meeting-title">{m.title}</div>
                   <div className="sc-meeting-meta">
-                    <span><Calendar size={11} /> {m.date}</span>
+                    <span><Calendar size={11} /> {m.scheduledDate || m.date}</span>
                     <span className="sc-meta-sep">·</span>
-                    <span><Clock size={11} /> {m.time}</span>
+                    <span><Clock size={11} /> {m.scheduledTime || m.time}</span>
                     {m.caseId !== '—' && <><span className="sc-meta-sep">·</span><span>ID: {m.caseId}</span></>}
                   </div>
                   {m.parties && <div className="sc-meeting-parties">{m.parties}</div>}
