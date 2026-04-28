@@ -22,10 +22,10 @@ const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
     <div style={{ background: '#0d0d0d', border: '1px solid #2a2a2a', padding: '10px 14px', fontFamily: 'Inter, sans-serif' }}>
-      <div style={{ fontSize: '0.65rem', color: '#888', marginBottom: 6, letterSpacing: '0.06em' }}>{label}</div>
+      <div style={{ fontSize: '0.65rem', color: '#888', marginBottom: 6, letterSpacing: '0.06em' }}>YEAR: {label}</div>
       {payload.map(p => (
-        <div key={p.dataKey} style={{ fontSize: '0.72rem', color: p.color, marginBottom: 2 }}>
-          {p.name}: <strong>{p.value}</strong>
+        <div key={p.dataKey} style={{ fontSize: '0.72rem', color: p.color === '#888' ? '#e02020' : p.color, marginBottom: 2 }}>
+          {p.name}: <strong>{p.value}{p.name.includes('Similarity') ? '%' : ''}</strong>
         </div>
       ))}
     </div>
@@ -54,24 +54,31 @@ export default function PrecedentFinder({ onTabChange }) {
         searchPrecedents(q, parsed);
       }
     }
-    
-    // Fetch frequency data
-    fetch('http://localhost:8000/precedent/frequency')
-      .then(res => res.json())
-      .then(data => {
-        const formattedData = data.years.map((year, i) => ({
-          year: String(year),
-          all: data.courts.all_courts[i],
-          supreme: data.courts.supreme_court[i],
-          bombay: data.courts.bombay_hc[i],
-          delhi: data.courts.delhi_hc[i],
-          orissa: data.courts.orissa_hc[i],
-          patna: data.courts.patna_hc[i]
-        }));
-        setGraphData(formattedData);
-      })
-      .catch(err => console.error("Error fetching frequency data:", err));
   }, [state.summariser_status]);
+
+  useEffect(() => {
+    if (cases.length > 0) {
+      // Group by year and calculate avg similarity
+      const yearMap = {};
+      cases.forEach(c => {
+        const y = c.year || 'Unknown';
+        if (!yearMap[y]) yearMap[y] = { count: 0, totalScore: 0 };
+        yearMap[y].count += 1;
+        yearMap[y].totalScore += (c.similarity_score || 0);
+      });
+
+      const formattedData = Object.keys(yearMap)
+        .sort()
+        .map(y => ({
+          year: String(y),
+          count: yearMap[y].count,
+          avgSimilarity: parseFloat((yearMap[y].totalScore / yearMap[y].count).toFixed(1))
+        }));
+      setGraphData(formattedData);
+    } else {
+      setGraphData([]);
+    }
+  }, [cases]);
 
   const searchPrecedents = (q = query, ctx = state.summariser_output) => {
     setLoading(true);
@@ -209,33 +216,26 @@ export default function PrecedentFinder({ onTabChange }) {
       {/* PRECEDENT FREQUENCY GRAPH */}
       <div className="pf-graph-section">
         <div className="pf-graph-header">
-          <span className="pf-graph-title">PRECEDENT_FREQUENCY_ANALYSIS</span>
-          <span className="pf-graph-sub">CASE VOLUME BY COURT · TEMPORAL DISTRIBUTION</span>
+          <span className="pf-graph-title">PRECEDENT_RELEVANCE_HISTOGRAM</span>
+          <span className="pf-graph-sub">SEMANTIC_MATCH_DENSITY · TEMPORAL_DISTRIBUTION_OF_CITATIONS</span>
         </div>
         <div className="pf-legend">
           <div className="pf-legend-item">
-            <div className="pf-legend-line" />
-            <span>All Courts</span>
+            <div className="pf-legend-box" style={{ background: '#e02020', opacity: 0.85 }} />
+            <span>Case Count</span>
           </div>
-          {LEGEND.map(l => (
-            <div className="pf-legend-item" key={l.key}>
-              <div className="pf-legend-box" style={{ background: l.color }} />
-              <span>{l.label}</span>
-            </div>
-          ))}
+          <div className="pf-legend-item">
+            <div className="pf-legend-line" style={{ background: '#888' }} />
+            <span>Avg. Similarity (%)</span>
+          </div>
         </div>
-        <ResponsiveContainer width="100%" height={280}>
-          <ComposedChart data={graphData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+        <ResponsiveContainer width="100%" height={300}>
+          <ComposedChart data={graphData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }} barCategoryGap="15%">
             <CartesianGrid stroke="#1a1a1a" strokeDasharray="" vertical={true} />
             <XAxis dataKey="year" tick={{ fill: '#555', fontSize: 10, fontFamily: 'Inter' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: '#555', fontSize: 10, fontFamily: 'Inter' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: '#555', fontSize: 10, fontFamily: 'Inter' }} axisLine={false} tickLine={false} domain={[0, 100]} />
             <Tooltip content={<CustomTooltip />} />
-            {LEGEND.map(l => (
-              <Bar key={l.key} dataKey={l.key} name={l.label} stackId="a" fill={l.color} opacity={0.85} />
-            ))}
-            <Line type="monotone" dataKey="all" name="All Courts" stroke="#e02020"
-              strokeWidth={2} dot={{ r: 3, fill: '#e02020', strokeWidth: 0 }}
-              activeDot={{ r: 5, fill: '#e02020' }} />
+            <Bar dataKey="avgSimilarity" name="Avg. Similarity" fill="#e02020" opacity={0.85} />
           </ComposedChart>
         </ResponsiveContainer>
       </div>
