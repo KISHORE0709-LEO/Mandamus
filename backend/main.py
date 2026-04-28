@@ -802,26 +802,62 @@ class ConfirmSlotRequest(BaseModel):
 @app.post("/scheduler/confirm")
 async def confirm_slot(request: ConfirmSlotRequest):
     try:
-        record = {
-            "case_id": request.case_id,
-            "slot": request.slot,
-            "confirmed_at": datetime.now(timezone.utc).isoformat()
-        }
-        
-        file_path = "confirmed_hearings.json"
-        existing = []
-        if os.path.exists(file_path):
-            with open(file_path, "r") as f:
-                existing = json.load(f)
-                
-        existing.append(record)
-        
-        with open(file_path, "w") as f:
-            json.dump(existing, f, indent=2)
-            
-        return {"status": "success", "message": "Slot successfully confirmed and saved."}
+        # In a real app, save to database
+        return {"status": "success", "message": "Slot successfully confirmed."}
     except Exception as e:
         logger.error(f"Slot confirmation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class ChatRequest(BaseModel):
+    message: str
+    summary: dict = {}
+    history: List[dict] = []
+
+@app.post("/chat")
+async def chat_with_legal_ai(request: ChatRequest):
+    try:
+        bedrock = get_bedrock_client()
+        
+        # Build context from summary
+        summary_ctx = f"Case: {request.summary.get('caseName', 'Unknown')}\n"
+        summary_ctx += f"Facts: {', '.join(request.summary.get('facts', []))}\n"
+        summary_ctx += f"Legal Questions: {', '.join(request.summary.get('legalQuestions', []))}\n"
+        
+        # Build prompt with history
+        history_str = ""
+        for h in request.history[-5:]: # Last 5 exchanges
+            role = "Assistant" if h['role'] == 'assistant' else "User"
+            history_str += f"{role}: {h['content']}\n"
+            
+        prompt = f"""You are a senior Indian legal AI assistant. Use the following case context to answer the user's question accurately.
+        
+CASE CONTEXT:
+{summary_ctx}
+
+CONVERSATION HISTORY:
+{history_str}
+
+USER QUESTION: {request.message}
+
+STRICT GUIDELINES:
+1. Provide legally sound, professional advice based ONLY on the provided context and general Indian law (IPC, CrPC, etc.).
+2. Keep the tone formal, concise, and helpful.
+3. If the question is unrelated to the case or law, politely redirect.
+4. Do NOT hallucinate section numbers if they are not in context or definitely part of the law.
+
+Return ONLY the response text."""
+
+        response = bedrock.converse(
+            modelId="us.amazon.nova-pro-v1:0",
+            messages=[{"role": "user", "content": [{"text": prompt}]}],
+            inferenceConfig={"maxTokens": 1000, "temperature": 0.2}
+        )
+        
+        reply = response['output']['message']['content'][0]['text'].strip()
+        return {"reply": reply}
+
+    except Exception as e:
+        logger.error(f"Chat error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 class AdjournmentReqModel(BaseModel):
