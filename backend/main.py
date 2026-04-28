@@ -36,7 +36,7 @@ try:
 except Exception as e:
     logger.error(f"Could not load precedents_db.json: {e}")
 
-# Enable CORS for localhost:5173
+# Enable CORS - allow all origins for production deployment
 origins = [
     "http://localhost:5173",
     "http://localhost:5174",
@@ -48,6 +48,8 @@ origins = [
     "http://127.0.0.1:5175",
     "http://127.0.0.1:5176",
     "http://127.0.0.1:5177",
+    "https://*.vercel.app",  # Allow Vercel deployments
+    "https://*.netlify.app",  # Allow Netlify deployments
 ]
 
 app.add_middleware(
@@ -960,5 +962,6 @@ Return only valid JSON object."""
 
 if __name__ == "__main__":
     import uvicorn
-    # Run the server on port 8000
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    # Get port from environment variable (for cloud deployment) or default to 8000
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=False)
