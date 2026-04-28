@@ -4,6 +4,7 @@ import {
   ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
+import { Loader2 } from 'lucide-react';
 import { useMandamus } from '../context/MandamusContext';
 import './PrecedentFinder.css';
 
@@ -32,6 +33,17 @@ const CustomTooltip = ({ active, payload, label }) => {
     </div>
   );
 };
+
+const PrecedentLoadingOverlay = () => (
+  <div className="pf-loading-overlay">
+    <div className="pf-loading-box">
+      <div className="pf-loading-scanner" />
+      <Loader2 size={32} className="pf-spin" />
+      <span className="pf-loading-text">NEURAL_SEARCH_ACTIVE</span>
+      <span className="pf-loading-sub">Scanning 10,000+ precedents for semantic alignment...</span>
+    </div>
+  </div>
+);
 
 export default function PrecedentFinder({ onTabChange }) {
   const { state, updateState } = useMandamus();
@@ -274,7 +286,8 @@ export default function PrecedentFinder({ onTabChange }) {
       <div className="pf-divider" />
 
       {/* CASE CARDS */}
-      <div className="pf-cases">
+      <div className="pf-cases" style={{ position: 'relative', minHeight: '300px' }}>
+        {loading && <PrecedentLoadingOverlay />}
         {cases.map(c => (
           <div key={c.case_id} className={`pf-card ${selected.has(c.case_id) ? 'pf-card-selected' : ''}`}>
             <div className="pf-card-main">
@@ -361,6 +374,13 @@ export default function PrecedentFinder({ onTabChange }) {
             </div>
           </div>
         ))}
+        {!loading && cases.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '60px 20px', border: '1px solid #1a1a1a', background: '#050505', width: '100%' }}>
+            <Terminal size={32} style={{ color: '#333', marginBottom: '15px' }} />
+            <h3 style={{ color: '#888', fontSize: '0.9rem', marginBottom: '10px', fontFamily: 'monospace' }}>NO_PRECEDENTS_FOUND</h3>
+            <p style={{ color: '#444', fontSize: '0.75rem' }}>Try adjusting your search query or expanding the temporal window.</p>
+          </div>
+        )}
       </div>
 
       {/* BOTTOM BAR — only shows when cases selected */}
