@@ -21,16 +21,16 @@
   margin-bottom: 28px;
 }
 .dg-title {
-  font-size: 2rem;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  margin: 0 0 7px 0;
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  margin: 0 0 6px 0;
   line-height: 1;
 }
 .dg-sub {
-  font-size: 0.6rem;
-  color: #666;
-  letter-spacing: 0.07em;
+  font-size: 0.58rem;
+  color: #555;
+  letter-spacing: 0.08em;
   line-height: 1.55;
   margin: 0;
 }

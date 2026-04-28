@@ -46,6 +46,14 @@ export default function VirtualHearing() {
 
   return (
     <div className="vh-page">
+      {/* ── HEADER ── */}
+      <div className="vh-header">
+        <div>
+          <h1 className="vh-title">VIRTUAL_HEARING</h1>
+          <p className="vh-sub">ENCRYPTED TELEPRESENCE · REAL-TIME TRANSCRIPTION · JUDICIAL PROTOCOL</p>
+        </div>
+      </div>
+
       <div className="vh-grid">
 
         {/* COL 1 — MAIN VIDEO */}

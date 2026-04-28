@@ -9,6 +9,28 @@
   zoom: 1.2;
 }
 
+/* ── HEADER ── */
+.pf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #1a1a1a;
+  padding-bottom: 20px;
+  margin-bottom: 28px;
+}
+.pf-title {
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  margin: 0 0 6px;
+  line-height: 1;
+}
+.pf-sub {
+  font-size: 0.58rem;
+  color: #555;
+  letter-spacing: 0.08em;
+}
+
 /* SEARCH BAR */
 .pf-search-bar {
   display: flex;

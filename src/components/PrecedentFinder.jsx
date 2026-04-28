@@ -136,6 +136,14 @@ export default function PrecedentFinder({ onTabChange }) {
 
   return (
     <div className="pf-page">
+      {/* ── HEADER ── */}
+      <div className="pf-header">
+        <div>
+          <h1 className="pf-title">PRECEDENT_FINDER</h1>
+          <p className="pf-sub">NEURAL SEARCH · SEMANTIC CASE MATCHING · CITATION ANALYSIS</p>
+        </div>
+      </div>
+
       {/* AUTO POPULATED BANNER */}
       <div style={{ background: 'rgba(224, 32, 32, 0.1)', border: '1px solid #e02020', padding: '8px 15px', color: '#e02020', fontSize: '0.7rem', fontFamily: 'monospace', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#e02020', borderRadius: '50%' }} />

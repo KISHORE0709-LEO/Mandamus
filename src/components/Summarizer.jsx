@@ -301,7 +301,7 @@ CONFIDENCE: ${summaryData.confidenceScore}%`;
       <div className="sr-page">
         <div className="sr-header">
           <div>
-            <h1 className="sr-title">NEURAL_INGEST</h1>
+            <h1 className="sr-title">NEURAL_SUMMARIZER</h1>
             <p className="sr-sub">ASYNCHRONOUS DEEP-PARSING PROTOCOL V4.02 — UPLOAD CASE FILES FOR MULTI-LAYERED ANALYSIS.</p>
           </div>
           <svg className="sr-brain" viewBox="0 0 64 64" fill="none">
@@ -345,7 +345,7 @@ CONFIDENCE: ${summaryData.confidenceScore}%`;
       <div className="sr-page">
         <div className="sr-header">
           <div>
-            <h1 className="sr-title">NEURAL_INGEST</h1>
+            <h1 className="sr-title">NEURAL_SUMMARIZER</h1>
             <p className="sr-sub">ASYNCHRONOUS DEEP-PARSING PROTOCOL V4.02 — PROCESSING IN PROGRESS.</p>
           </div>
           <svg className="sr-brain" viewBox="0 0 64 64" fill="none">

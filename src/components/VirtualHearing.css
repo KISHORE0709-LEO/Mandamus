@@ -7,6 +7,28 @@
   zoom: 1.2;
 }
 
+/* ── HEADER ── */
+.vh-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid #1a1a1a;
+  padding-bottom: 20px;
+  margin-bottom: 28px;
+}
+.vh-title {
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  margin: 0 0 6px;
+  line-height: 1;
+}
+.vh-sub {
+  font-size: 0.58rem;
+  color: #555;
+  letter-spacing: 0.08em;
+}
+
 .vh-grid {
   display: grid;
   grid-template-columns: 2fr 1.4fr 1.6fr;
