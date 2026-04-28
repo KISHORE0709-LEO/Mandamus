@@ -8,6 +8,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../lib/firebase';
+import { useAuth } from '../context/AuthContext';
 import './AuthPage.css';
 
 const ROLES = [
@@ -28,6 +29,7 @@ const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({ fullName: '', email: '', password: '', role: '' });
   const [errors, setErrors] = useState({});
+  const { setRole } = useAuth();
   const navigate = useNavigate();
 
   const toggleMode = () => {
@@ -47,6 +49,7 @@ const AuthPage = () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       saveUserRole(result.user.uid, formData.role || 'clerk', result.user.displayName, result.user.email);
+      setRole(formData.role || 'clerk');
       navigate('/dashboard');
     } catch (error) {
       console.error('Google Sign-In Error:', error);
@@ -77,6 +80,7 @@ const AuthPage = () => {
         const cred = await signInWithEmailAndPassword(auth, formData.email, formData.password);
         saveUserRole(cred.user.uid, formData.role, cred.user.displayName, cred.user.email);
       }
+      setRole(formData.role);
       navigate('/dashboard');
     } catch (error) {
       console.error('Auth Error:', error);
