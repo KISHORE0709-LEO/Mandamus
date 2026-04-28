@@ -399,9 +399,15 @@ export default function DraftGenerator({ onTabChange }) {
               <div className="dg-final-actions">
                 <button className="dg-final-btn dg-final-secondary" onClick={handlePrint}>EXPORT AS PDF</button>
                 <button className="dg-final-btn dg-final-secondary" onClick={handleSaveDraft}>SAVE DRAFT</button>
-                <button className="dg-final-btn dg-final-primary" onClick={handleSubmitForReview}>
-                  SUBMIT FOR REVIEW <ChevronRight size={16} />
-                </button>
+                {state.draft_status === 'approved' ? (
+                  <button className="dg-final-btn dg-final-primary" onClick={() => onTabChange && onTabChange('scheduler')}>
+                    SCHEDULE HEARING <ChevronRight size={16} />
+                  </button>
+                ) : (
+                  <button className="dg-final-btn dg-final-primary" onClick={handleSubmitForReview}>
+                    SUBMIT FOR REVIEW <ChevronRight size={16} />
+                  </button>
+                )}
               </div>
 
             </div>
