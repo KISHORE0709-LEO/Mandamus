@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Printer, Share2, Plus, Edit2, SlidersHorizontal, ChevronRight, Save, RotateCw, Loader2 } from 'lucide-react';
+import { FileText, Printer, Share2, Plus, Edit2, SlidersHorizontal, ChevronRight, Save, RotateCw, Loader2, Send, MessageSquare, Bot, User, X } from 'lucide-react';
 import { useMandamus } from '../context/MandamusContext';
 import './DraftGenerator.css';
+import LegalChat from './LegalChat';
 
 const reviewItems = [
   'Verify case facts against primary upload.',
@@ -29,6 +30,8 @@ const DraftProcessingOverlay = () => (
     </div>
   </div>
 );
+
+
 
 export default function DraftGenerator({ onTabChange }) {
   const { state, updateState } = useMandamus();
@@ -309,21 +312,8 @@ export default function DraftGenerator({ onTabChange }) {
           </div>
 
           <div className="dg-left-section">
-            <div className="dg-sec-label">STATUTORY_INTEGRATION</div>
-            <div className="dg-statute-tags">
-              {['IPC', 'CRPC', 'IT_ACT'].map(s => <span className="dg-statute-tag" key={s}>{s}</span>)}
-            </div>
-            <div className="dg-statute-map-visual">
-              <div className="dg-map-grid">
-                {Array.from({length: 48}).map((_, i) => (
-                  <div key={i} className={`dg-map-cell ${[5,11,12,17,18,23,24,29,30,35].includes(i) ? 'dg-map-cell-active' : ''} ${[6,13,19,25,31].includes(i) ? 'dg-map-cell-mid' : ''}`} />
-                ))}
-              </div>
-              <div className="dg-map-footer">
-                <span>MAPPING_ACTIVE</span>
-                <span>SIGNAL: 100%</span>
-              </div>
-            </div>
+            <div className="dg-sec-label">LEGAL_INTELLIGENCE_CHAT</div>
+            <LegalChat summary={fullSummary} context="draft" />
           </div>
         </div>
 

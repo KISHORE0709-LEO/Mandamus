@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FileUp, CheckCircle2, Search, ChevronRight, Download, Edit3, ThumbsUp, RotateCcw, FileText, Save, ArrowRight, X } from 'lucide-react';
 import { useMandamus } from '../context/MandamusContext';
 import './Summarizer.css';
+import LegalChat from './LegalChat';
 
 /* ─── PROCESSING STAGES ─── */
 const STAGES = [
@@ -714,6 +715,14 @@ CONFIDENCE: ${summaryData.confidenceScore}%`;
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Row 4: Help Assistant Chat */}
+            <div className="sr-chat-card" style={{ width: '100%', marginBottom: '24px' }}>
+              <div className="sr-card-heading">
+                 HELP_ASSISTANT
+              </div>
+              <LegalChat summary={summaryData} context="analysis" />
             </div>
 
             {/* CTAs */}
