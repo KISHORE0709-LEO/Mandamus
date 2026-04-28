@@ -394,7 +394,10 @@ async def search_precedent(request: PrecedentSearchRequest):
     try:
         bedrock = get_bedrock_client()
         
-        # Construct richer query if structured data is provided
+        # Construct richer query and add strict filtering instructions
+        court_filter = f"STRICTLY return ONLY cases from {request.court_level} level." if request.court_level != "ALL" else ""
+        time_filter = "STRICTLY return ONLY cases from the LAST 5 YEARS (2019-2025)." if request.temporal_window == "LAST_5Y" else ""
+        
         rich_query = request.query
         if request.case_type or request.key_facts or request.ipc_sections or request.core_legal_questions:
             facts = " ".join(request.key_facts) if request.key_facts else ""
@@ -402,9 +405,13 @@ async def search_precedent(request: PrecedentSearchRequest):
             questions = " ".join(request.core_legal_questions) if request.core_legal_questions else ""
             rich_query = f"Case type: {request.case_type}. Facts: {facts}. Relevant laws: {laws}. Legal questions: {questions}"
 
-        prompt = f"""You are a senior Indian legal expert with knowledge of all Supreme Court and High Court judgments. Given this case summary: {rich_query}
+        prompt = f"""You are a senior Indian legal expert. Given this case context: {rich_query}
 
-Return ONLY a valid JSON array of exactly 5 real Indian court cases most legally similar to this case. No fake cases. Only real judgments that exist.
+SEARCH FILTERS:
+1. COURT LEVEL: {request.court_level} ({court_filter if court_filter else "Any level: Supreme, High Court, or District"})
+2. TIME WINDOW: {request.temporal_window} ({time_filter if time_filter else "Any year"})
+
+Return ONLY a valid JSON array of exactly 5 real Indian court cases that match the context AND follow the SEARCH FILTERS strictly. No fake cases.
 
 For each case return:
 - case_name (exact real case name)
@@ -412,15 +419,15 @@ For each case return:
 - court (Supreme Court / High Court name)
 - year (real year as number)
 - outcome_summary (one sentence — what court decided)
-- reason_for_match (one sentence — specifically why this matches the query case — mention shared IPC sections, similar facts, or matching legal concepts)
+- reason_for_match (one sentence — specifically why this matches the query case)
 - ipc_sections (array of relevant IPC/CrPC/IT Act sections)
-- tags (array of 3-4 legal concept tags in uppercase like ASSET_DIVERSION, FIDUCIARY_BREACH)
-- similarity_score (number 85-99, assign higher score to closer matches)
+- tags (array of 3-4 legal concept tags)
+- similarity_score (number 85-99)
 - semantic_match (number 85-99)
 - full_text_match (number 70-95)
 
 Sort by similarity_score descending.
-Return only the JSON array. No explanation. No markdown. No backticks."""
+Return only the JSON array. No explanation. No markdown."""
 
         response = bedrock.converse(
             modelId="us.amazon.nova-pro-v1:0",
