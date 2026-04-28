@@ -17,7 +17,7 @@ const STATUS_MAP = {
   rejected:   { icon: <XCircle size={14} />,      label: 'Rejected',                color: '#f28b82' },
 };
 
-const WaitingRoom = ({ role, caseData, onStart }) => {
+const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
   const [participants, setParticipants] = useState(INITIAL_PARTICIPANTS);
 
   const admit  = (id) => setParticipants(p => p.map(x => x.id === id ? { ...x, status: 'admitted' } : x));
@@ -34,6 +34,11 @@ const WaitingRoom = ({ role, caseData, onStart }) => {
 
         <h2 className="vh-panel-title">{caseData?.name}</h2>
         <p className="vh-panel-sub">Room: {caseData?.room} &nbsp;|&nbsp; {caseData?.time}</p>
+        {roomId && (
+          <div style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#e02020', background: 'rgba(224,32,32,0.07)', border: '1px solid rgba(224,32,32,0.2)', padding: '0.4rem 0.9rem', marginBottom: '1rem', letterSpacing: '0.1em' }}>
+            🔗 ROOM ID: {roomId}
+          </div>
+        )}
 
         <div className="vh-participants-list">
           {participants.map(p => {

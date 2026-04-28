@@ -1,68 +1,142 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Mic, MicOff, Video, VideoOff, PhoneOff,
-  MessageSquare, FileText, Shield, Disc, Users, Download
+  MessageSquare, FileText, Shield, Disc, Users, Download, Wifi, WifiOff
 } from 'lucide-react';
-
-const PARTICIPANTS = [
-  { id: 'p1', name: 'Hon. Justice R. Vance', role: 'Judge',   isJudge: true,  initials: 'JV', color: '#e02020' },
-  { id: 'p2', name: 'Adv. Priya Nair',       role: 'Lawyer',  isJudge: false, initials: 'PN', color: '#4285f4' },
-  { id: 'p3', name: 'Adv. S. Chatterjee',    role: 'Lawyer',  isJudge: false, initials: 'SC', color: '#34a853' },
-  { id: 'p4', name: 'Arjun Mehta',           role: 'Accused', isJudge: false, initials: 'AM', color: '#fbbc04' },
-];
+import { useWebRTC } from './useWebRTC';
 
 const DOCS = [
-  { name: 'Case_Summary_MH-HC-2024-4471.pdf', tag: 'PRIMARY DOC' },
-  { name: 'Bank_Statements_Jan_Aug_2021.pdf',  tag: 'EXHIBIT A'   },
-  { name: 'Digital_Forensics_Report.pdf',      tag: 'EXHIBIT B'   },
-  { name: 'Witness_Depositions.pdf',           tag: 'EXHIBIT C'   },
+  { name: 'Case_Summary.pdf',              tag: 'PRIMARY DOC' },
+  { name: 'Bank_Statements_Jan_Aug.pdf',   tag: 'EXHIBIT A'   },
+  { name: 'Digital_Forensics_Report.pdf',  tag: 'EXHIBIT B'   },
+  { name: 'Witness_Depositions.pdf',       tag: 'EXHIBIT C'   },
 ];
 
 const MOCK_TRANSCRIPT = [
-  { speaker: 'System',               text: 'End-to-end encrypted session initiated. All participants verified.', system: true },
-  { speaker: 'Hon. Justice R. Vance', text: 'This court is now in session. Counsel, you may proceed with opening statements.' },
-  { speaker: 'Adv. Priya Nair',       text: 'Thank you, Your Honour. The petitioner contends that the accused misappropriated ₹4.2 Cr under IPC §406…' },
+  { speaker: 'System', text: 'End-to-end encrypted session initiated. All participants verified.', system: true },
+  { speaker: 'Hon. Justice R. Vance', text: 'This court is now in session. Counsel, you may proceed.' },
+  { speaker: 'Adv. Priya Nair', text: 'Thank you, Your Honour. The petitioner contends that the accused misappropriated ₹4.2 Cr under IPC §406…' },
 ];
 
 const LIVE_LINES = [
-  { speaker: 'Hon. Justice R. Vance',  text: 'Counsel, please present the digital evidence referenced in Exhibit B.' },
-  { speaker: 'Adv. S. Chatterjee',     text: 'Objection, Your Honour — the evidence was obtained without a valid warrant under the IT Act §65.' },
+  { speaker: 'Hon. Justice R. Vance',  text: 'Counsel, please present the digital evidence in Exhibit B.' },
+  { speaker: 'Adv. S. Chatterjee',     text: 'Objection — the evidence was obtained without a valid warrant under IT Act §65.' },
   { speaker: 'Hon. Justice R. Vance',  text: 'Objection noted. We will address admissibility after a short recess.' },
-  { speaker: 'Adv. Priya Nair',        text: 'Your Honour, the forensic logs clearly show 47 falsified transactions originating from the accused\'s device.' },
 ];
 
-const LiveRoom = ({ role, caseData, setStage }) => {
+// STATUS PILL
+const STATUS_COLORS = { connected: '#81c995', connecting: '#fcc934', disconnected: '#f28b82', idle: '#555' };
+const STATUS_LABELS = { connected: '🟢 Connected', connecting: '🟡 Connecting…', disconnected: '🔴 Disconnected', idle: '⚪ Idle' };
+
+// Video tile — shows real stream or initials fallback
+const VideoTile = ({ stream, name, role, isLocal, isJudge, isSpeaking, color }) => {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  const initials = name ? name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() : '??';
+
+  return (
+    <div className={`lr-tile ${isJudge ? 'lr-spotlight' : ''} ${isSpeaking ? 'lr-speaking' : ''}`}
+         style={isJudge ? { flex: 1 } : {}}>
+      {stream ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted={isLocal}
+          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'inherit' }}
+        />
+      ) : (
+        <div className="lr-avatar-wrap">
+          <div className="lr-avatar" style={{ background: color || '#333' }}>{initials}</div>
+        </div>
+      )}
+      <div className={`lr-nametag ${isJudge ? '' : 'lr-nametag-sm'}`}>
+        <span className="lr-nametag-name">{name}{isLocal ? ' (You)' : ''}</span>
+        <span className="lr-nametag-role">{role}</span>
+        {isJudge && <span className="lr-nametag-verified">✓ Verified</span>}
+      </div>
+      <div className="lr-mic-indicator"><Mic size={isJudge ? 12 : 11} /></div>
+    </div>
+  );
+};
+
+const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
   const [micOn,          setMicOn]          = useState(true);
   const [cameraOn,       setCameraOn]       = useState(true);
-  const [recording,      setRecording]      = useState(false);
   const [activeTab,      setActiveTab]      = useState('transcript');
   const [panelOpen,      setPanelOpen]      = useState(true);
   const [transcript,     setTranscript]     = useState(MOCK_TRANSCRIPT);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
-  const [speaking,       setSpeaking]       = useState('p1');
   const transcriptEndRef = useRef(null);
+
+  const {
+    localStream,
+    peers,
+    connectionStatus,
+    isRecording,
+    toggleMic,
+    toggleCamera,
+    startRecording,
+    stopRecording,
+    downloadRecording,
+  } = useWebRTC({
+    roomId:  roomId || 'demo-room',
+    userId,
+    name:    userName || role,
+    role,
+    enabled: true,
+  });
 
   // Auto-scroll transcript
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [transcript]);
 
-  // Simulate live transcript when recording
+  // Simulate transcript lines when recording
   useEffect(() => {
-    if (!recording) return;
+    if (!isRecording) return;
     let i = 0;
     const iv = setInterval(() => {
-      if (i < LIVE_LINES.length) {
-        setTranscript(p => [...p, LIVE_LINES[i]]);
-        setSpeaking(['p1','p3','p1','p2'][i] || 'p1');
-        i++;
-      } else clearInterval(iv);
+      if (i < LIVE_LINES.length) { setTranscript(p => [...p, LIVE_LINES[i]]); i++; }
+      else clearInterval(iv);
     }, 4000);
     return () => clearInterval(iv);
-  }, [recording]);
+  }, [isRecording]);
 
-  const judge     = PARTICIPANTS.find(p => p.isJudge);
-  const others    = PARTICIPANTS.filter(p => !p.isJudge);
+  // Wire mic/camera toggles to real tracks
+  const handleMicToggle = () => {
+    toggleMic();
+    setMicOn(v => !v);
+  };
+
+  const handleCameraToggle = () => {
+    toggleCamera();
+    setCameraOn(v => !v);
+  };
+
+  const handleRecordToggle = () => {
+    if (isRecording) { stopRecording(); }
+    else             { startRecording(); }
+  };
+
+  // Build participant tiles: local + remote peers
+  const ROLE_COLORS = { judge: '#e02020', lawyer: '#4285f4', custody: '#fbbc04', clerk: '#34a853' };
+  const localColor  = ROLE_COLORS[role] || '#555';
+
+  const localParticipant = { stream: localStream, name: userName || role, role, isLocal: true, color: localColor };
+
+  // Judge tile is always first / spotlight
+  const isJudge      = role === 'judge';
+  const judgeData    = isJudge ? localParticipant : peers.find(p => p.role === 'judge');
+  const othersData   = isJudge
+    ? peers
+    : [localParticipant, ...peers.filter(p => p.role !== 'judge')];
 
   return (
     <div className="lr-root">
@@ -72,9 +146,11 @@ const LiveRoom = ({ role, caseData, setStage }) => {
         <div className="vh-confirm-overlay">
           <div className="vh-confirm-box">
             <h3>End Session?</h3>
-            <p>This will close the hearing for all participants and seal the session record. This cannot be undone.</p>
+            <p>This will close the hearing for all participants and seal the session record.</p>
             <div className="vh-confirm-actions">
-              <button className="vh-btn-danger" onClick={() => setStage('post-hearing')}>Yes, End Session</button>
+              <button className="vh-btn-danger" onClick={() => { if (isRecording) stopRecording(); setStage('post-hearing'); }}>
+                Yes, End Session
+              </button>
               <button className="vh-btn-secondary" onClick={() => setShowEndConfirm(false)}>Cancel</button>
             </div>
           </div>
@@ -88,13 +164,18 @@ const LiveRoom = ({ role, caseData, setStage }) => {
           <div className="lr-case-name">{caseData?.name}</div>
         </div>
         <div className="lr-topbar-center">
-          {recording && (
-            <div className="lr-rec-pill"><span className="lr-rec-dot" /> REC · LIVE</div>
-          )}
+          {isRecording && <div className="lr-rec-pill"><span className="lr-rec-dot" /> REC · LIVE</div>}
         </div>
         <div className="lr-topbar-right">
+          {/* Connection status */}
+          <div className="lr-conn-status" style={{ color: STATUS_COLORS[connectionStatus] }}>
+            {connectionStatus === 'connected'
+              ? <Wifi size={13} />
+              : <WifiOff size={13} />}
+            {STATUS_LABELS[connectionStatus]}
+          </div>
+          {roomId && <div className="lr-room-pill">{roomId}</div>}
           <div className="lr-e2ee"><Shield size={13} /> E2EE</div>
-          <div className="lr-time" id="lr-clock">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
         </div>
       </div>
 
@@ -104,33 +185,40 @@ const LiveRoom = ({ role, caseData, setStage }) => {
         {/* ── VIDEO AREA ── */}
         <div className="lr-video-area">
 
-          {/* Judge — large spotlight tile */}
-          <div className={`lr-spotlight ${speaking === judge.id ? 'lr-speaking' : ''}`}>
-            <div className="lr-avatar-wrap">
-              <div className="lr-avatar" style={{ background: judge.color }}>{judge.initials}</div>
+          {/* Judge spotlight */}
+          {judgeData ? (
+            <VideoTile
+              stream={judgeData.stream}
+              name={judgeData.name}
+              role={judgeData.role || 'Judge'}
+              isLocal={judgeData.isLocal}
+              isJudge={true}
+              color={ROLE_COLORS.judge}
+            />
+          ) : (
+            <div className="lr-spotlight lr-tile-empty">
+              <span style={{ color: '#333', fontSize: '0.85rem' }}>Waiting for Judge…</span>
             </div>
-            <div className="lr-nametag">
-              <span className="lr-nametag-name">{judge.name}</span>
-              <span className="lr-nametag-role">{judge.role}</span>
-              <span className="lr-nametag-verified">✓ Verified</span>
-            </div>
-            <div className="lr-mic-indicator">
-              <Mic size={12} />
-            </div>
-          </div>
+          )}
 
-          {/* Others — strip of equal tiles */}
+          {/* Others strip */}
           <div className="lr-strip">
-            {others.map(p => (
-              <div key={p.id} className={`lr-tile ${speaking === p.id ? 'lr-speaking' : ''}`}>
-                <div className="lr-avatar lr-avatar-sm" style={{ background: p.color }}>{p.initials}</div>
-                <div className="lr-nametag lr-nametag-sm">
-                  <span className="lr-nametag-name">{p.name}</span>
-                  <span className="lr-nametag-role">{p.role}</span>
-                </div>
-                <div className="lr-mic-indicator"><Mic size={11} /></div>
-              </div>
+            {othersData.map((p, i) => (
+              <VideoTile
+                key={p.socketId || (p.isLocal ? 'local' : i)}
+                stream={p.stream}
+                name={p.name}
+                role={p.role}
+                isLocal={p.isLocal}
+                isJudge={false}
+                color={ROLE_COLORS[p.role] || '#555'}
+              />
             ))}
+            {othersData.length === 0 && (
+              <div className="lr-tile lr-tile-empty">
+                <span style={{ color: '#333', fontSize: '0.78rem' }}>Waiting for participants…</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -138,28 +226,18 @@ const LiveRoom = ({ role, caseData, setStage }) => {
         {panelOpen && (
           <div className="lr-side">
             <div className="lr-side-tabs">
-              <button
-                className={`lr-side-tab ${activeTab === 'transcript' ? 'active' : ''}`}
-                onClick={() => setActiveTab('transcript')}
-              >
+              <button className={`lr-side-tab ${activeTab === 'transcript' ? 'active' : ''}`} onClick={() => setActiveTab('transcript')}>
                 <MessageSquare size={14} /> Transcript
               </button>
-              <button
-                className={`lr-side-tab ${activeTab === 'docs' ? 'active' : ''}`}
-                onClick={() => setActiveTab('docs')}
-              >
+              <button className={`lr-side-tab ${activeTab === 'docs' ? 'active' : ''}`} onClick={() => setActiveTab('docs')}>
                 <FileText size={14} /> Documents
               </button>
-              <button
-                className={`lr-side-tab ${activeTab === 'people' ? 'active' : ''}`}
-                onClick={() => setActiveTab('people')}
-              >
+              <button className={`lr-side-tab ${activeTab === 'people' ? 'active' : ''}`} onClick={() => setActiveTab('people')}>
                 <Users size={14} /> People
               </button>
             </div>
 
             <div className="lr-side-body">
-              {/* TRANSCRIPT */}
               {activeTab === 'transcript' && (
                 <>
                   {transcript.map((msg, i) => (
@@ -168,7 +246,7 @@ const LiveRoom = ({ role, caseData, setStage }) => {
                       <div className="lr-msg-text">{msg.text}</div>
                     </div>
                   ))}
-                  {recording && (
+                  {isRecording && (
                     <div className="lr-transcribing">
                       <span className="lr-rec-dot" style={{ width: 6, height: 6 }} /> Transcribing live…
                     </div>
@@ -177,7 +255,6 @@ const LiveRoom = ({ role, caseData, setStage }) => {
                 </>
               )}
 
-              {/* DOCUMENTS */}
               {activeTab === 'docs' && (
                 <div className="lr-docs-list">
                   {DOCS.map((d, i) => (
@@ -193,19 +270,37 @@ const LiveRoom = ({ role, caseData, setStage }) => {
                 </div>
               )}
 
-              {/* PEOPLE */}
               {activeTab === 'people' && (
                 <div className="lr-people-list">
-                  {PARTICIPANTS.map(p => (
-                    <div key={p.id} className="lr-person-row">
-                      <div className="lr-avatar lr-avatar-xs" style={{ background: p.color }}>{p.initials}</div>
+                  {/* Local user */}
+                  <div className="lr-person-row">
+                    <div className="lr-avatar lr-avatar-xs" style={{ background: localColor }}>
+                      {(userName || role).slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="lr-person-info">
+                      <div className="lr-person-name">{userName || role} (You)</div>
+                      <div className="lr-person-role">{role}</div>
+                    </div>
+                    <span className="lr-person-verified">✓</span>
+                  </div>
+                  {/* Remote peers */}
+                  {peers.map(p => (
+                    <div key={p.socketId} className="lr-person-row">
+                      <div className="lr-avatar lr-avatar-xs" style={{ background: ROLE_COLORS[p.role] || '#555' }}>
+                        {(p.name || p.role).slice(0, 2).toUpperCase()}
+                      </div>
                       <div className="lr-person-info">
-                        <div className="lr-person-name">{p.name}</div>
+                        <div className="lr-person-name">{p.name || 'Participant'}</div>
                         <div className="lr-person-role">{p.role}</div>
                       </div>
                       <span className="lr-person-verified">✓</span>
                     </div>
                   ))}
+                  {peers.length === 0 && (
+                    <div style={{ color: '#444', fontSize: '0.82rem', textAlign: 'center', marginTop: '1rem' }}>
+                      No other participants yet
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -215,69 +310,56 @@ const LiveRoom = ({ role, caseData, setStage }) => {
 
       {/* ── BOTTOM BAR ── */}
       <div className="lr-bottombar">
-        {/* Left — room info */}
         <div className="lr-bottom-left">
           <span className="lr-room-code">{caseData?.room}</span>
           <span className="lr-room-sep">·</span>
-          <span className="lr-room-code">{PARTICIPANTS.length} participants</span>
+          <span className="lr-room-code">{1 + peers.length} participant{peers.length !== 0 ? 's' : ''}</span>
         </div>
 
-        {/* Center — main controls */}
         <div className="lr-controls">
           <div className="lr-ctrl-group">
-            <button
-              className={`lr-ctrl-btn ${!micOn ? 'lr-ctrl-off' : ''}`}
-              onClick={() => setMicOn(!micOn)}
-              title={micOn ? 'Mute' : 'Unmute'}
-            >
+            <button className={`lr-ctrl-btn ${!micOn ? 'lr-ctrl-off' : ''}`} onClick={handleMicToggle}>
               {micOn ? <Mic size={20} /> : <MicOff size={20} />}
             </button>
             <span className="lr-ctrl-label">{micOn ? 'Mute' : 'Unmute'}</span>
           </div>
 
           <div className="lr-ctrl-group">
-            <button
-              className={`lr-ctrl-btn ${!cameraOn ? 'lr-ctrl-off' : ''}`}
-              onClick={() => setCameraOn(!cameraOn)}
-              title={cameraOn ? 'Stop Video' : 'Start Video'}
-            >
+            <button className={`lr-ctrl-btn ${!cameraOn ? 'lr-ctrl-off' : ''}`} onClick={handleCameraToggle}>
               {cameraOn ? <Video size={20} /> : <VideoOff size={20} />}
             </button>
             <span className="lr-ctrl-label">{cameraOn ? 'Camera' : 'No Video'}</span>
           </div>
 
           {role === 'judge' && (
-            <div className="lr-ctrl-group">
-              <button
-                className={`lr-ctrl-btn ${recording ? 'lr-ctrl-rec' : ''}`}
-                onClick={() => setRecording(!recording)}
-                title={recording ? 'Stop Recording' : 'Start Recording'}
-              >
-                <Disc size={20} />
-              </button>
-              <span className="lr-ctrl-label">{recording ? 'Stop Rec' : 'Record'}</span>
-            </div>
+            <>
+              <div className="lr-ctrl-group">
+                <button className={`lr-ctrl-btn ${isRecording ? 'lr-ctrl-rec' : ''}`} onClick={handleRecordToggle}>
+                  <Disc size={20} />
+                </button>
+                <span className="lr-ctrl-label">{isRecording ? 'Stop Rec' : 'Record'}</span>
+              </div>
+              {!isRecording && peers.length === 0 && (
+                <div className="lr-ctrl-group">
+                  <button className="lr-ctrl-btn" onClick={downloadRecording} title="Download Recording">
+                    <Download size={20} />
+                  </button>
+                  <span className="lr-ctrl-label">Download</span>
+                </div>
+              )}
+            </>
           )}
 
           <div className="lr-ctrl-group">
-            <button
-              className="lr-ctrl-btn lr-ctrl-end"
-              onClick={() => setShowEndConfirm(true)}
-              title="End Session"
-            >
+            <button className="lr-ctrl-btn lr-ctrl-end" onClick={() => setShowEndConfirm(true)}>
               <PhoneOff size={20} />
             </button>
             <span className="lr-ctrl-label">End</span>
           </div>
         </div>
 
-        {/* Right — panel toggle */}
         <div className="lr-bottom-right">
-          <button
-            className={`lr-panel-toggle ${panelOpen ? 'active' : ''}`}
-            onClick={() => setPanelOpen(!panelOpen)}
-            title="Toggle Panel"
-          >
+          <button className={`lr-panel-toggle ${panelOpen ? 'active' : ''}`} onClick={() => setPanelOpen(!panelOpen)}>
             <MessageSquare size={18} />
           </button>
         </div>

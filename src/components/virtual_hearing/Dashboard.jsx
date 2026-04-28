@@ -1,87 +1,117 @@
 import React from 'react';
-import { Scale, Users, Lock, ClipboardList, ChevronRight, Clock } from 'lucide-react';
+import { Scale, Users, Lock, ClipboardList, ChevronRight, Clock, MapPin, Calendar, FileText } from 'lucide-react';
 
 const MOCK_CASES = [
-  { id: 'MH-HC-2024-4471', name: 'State of Maharashtra vs. Arjun Mehta', time: '10:00 AM', room: 'COURT-7A', status: 'Scheduled', date: '25 Jul 2025' },
-  { id: 'DL-HC-2024-1192', name: 'Union of India vs. Priya Sharma', time: '12:30 PM', room: 'COURT-3B', status: 'Pending Docs', date: '25 Jul 2025' },
-  { id: 'KA-HC-2024-8823', name: 'Rajan Exports vs. HDFC Bank Ltd.', time: '03:00 PM', room: 'COURT-12C', status: 'Ready', date: '25 Jul 2025' },
+  { id: 'MH-HC-2024-4471', name: 'State of Maharashtra vs. Arjun Mehta', time: '10:00 AM', room: 'COURT-7A',  status: 'Scheduled',   date: '25 Jul 2025', type: 'Criminal' },
+  { id: 'DL-HC-2024-1192', name: 'Union of India vs. Priya Sharma',       time: '12:30 PM', room: 'COURT-3B',  status: 'Pending Docs', date: '25 Jul 2025', type: 'Civil'    },
+  { id: 'KA-HC-2024-8823', name: 'Rajan Exports vs. HDFC Bank Ltd.',      time: '03:00 PM', room: 'COURT-12C', status: 'Ready',        date: '25 Jul 2025', type: 'Commercial' },
 ];
 
-const STATUS_COLOR = {
-  'Scheduled': '#fcc934',
-  'Pending Docs': '#f28b82',
-  'Ready': '#81c995',
+const STATUS_CONFIG = {
+  'Scheduled':   { color: '#fcc934', bg: 'rgba(252,201,52,0.08)',  dot: '#fcc934' },
+  'Pending Docs':{ color: '#f28b82', bg: 'rgba(242,139,130,0.08)', dot: '#f28b82' },
+  'Ready':       { color: '#81c995', bg: 'rgba(129,201,149,0.08)', dot: '#81c995' },
 };
 
-const roleConfig = {
-  judge: {
-    icon: <Scale size={28} />,
-    title: "Judge's Hearing Dashboard",
-    subtitle: "Today's scheduled hearings. Select a case to begin.",
-    btnLabel: 'Start Hearing',
-  },
-  lawyer: {
-    icon: <Users size={28} />,
-    title: 'Assigned Cases',
-    subtitle: 'Your assigned hearings for today. Select a case to join.',
-    btnLabel: 'Join Hearing',
-  },
-  custody: {
-    icon: <Lock size={28} />,
-    title: 'Custody Node — Secure Access',
-    subtitle: 'Accused hearing access via secure facility terminal.',
-    btnLabel: 'Join Secure Hearing',
-  },
-  clerk: {
-    icon: <ClipboardList size={28} />,
-    title: "Clerk's Hearing Log",
-    subtitle: 'Observer access to scheduled hearings.',
-    btnLabel: 'Observe Hearing',
-  },
+const TYPE_COLOR = {
+  'Criminal':   '#f28b82',
+  'Civil':      '#8ab4f8',
+  'Commercial': '#fcc934',
+};
+
+const ROLE_CONFIG = {
+  judge:   { icon: <Scale size={22} />,       title: "Judge's Hearing Dashboard",    subtitle: "Today's scheduled hearings",         btn: 'Start Hearing'       },
+  lawyer:  { icon: <Users size={22} />,       title: 'Assigned Cases',               subtitle: 'Your hearings for today',            btn: 'Join Hearing'        },
+  custody: { icon: <Lock size={22} />,        title: 'Custody Node — Secure Access', subtitle: 'Accused hearing access',             btn: 'Join Secure Hearing' },
+  clerk:   { icon: <ClipboardList size={22}/>, title: "Clerk's Hearing Log",          subtitle: 'Observer access to hearings',        btn: 'Observe Hearing'     },
 };
 
 const Dashboard = ({ role, onCaseSelect }) => {
-  const cfg = roleConfig[role] || roleConfig.clerk;
+  const cfg = ROLE_CONFIG[role] || ROLE_CONFIG.clerk;
+  const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
-    <div className="vh-dashboard">
-      <div className="vh-dashboard-header">
-        <div className="vh-dashboard-icon">{cfg.icon}</div>
-        <div>
-          <h1 className="vh-dashboard-title">{cfg.title}</h1>
-          <p className="vh-dashboard-sub">{cfg.subtitle}</p>
+    <div className="vhd-root">
+
+      {/* ── HEADER ── */}
+      <div className="vhd-header">
+        <div className="vhd-header-left">
+          <div className="vhd-header-icon">{cfg.icon}</div>
+          <div>
+            <h1 className="vhd-title">{cfg.title}</h1>
+            <p className="vhd-sub">{cfg.subtitle} · <span className="vhd-date">{today}</span></p>
+          </div>
         </div>
-        {role === 'custody' && (
-          <div className="vh-custody-badge">🔒 ACCESS VIA SECURE FACILITY</div>
-        )}
+        <div className="vhd-header-right">
+          {role === 'custody' && <div className="vhd-custody-pill">🔒 SECURE FACILITY ACCESS</div>}
+          <div className="vhd-count-pill">
+            <FileText size={13} /> {MOCK_CASES.length} Hearings Today
+          </div>
+        </div>
       </div>
 
-      <div className="vh-case-list">
-        {MOCK_CASES.map(c => (
-          <div key={c.id} className="vh-case-card">
-            <div className="vh-case-left">
-              <div className="vh-case-id">{c.id}</div>
-              <div className="vh-case-name">{c.name}</div>
-              <div className="vh-case-meta">
-                <span><Clock size={12} /> {c.time}</span>
-                <span>📍 {c.room}</span>
-                <span>📅 {c.date}</span>
-              </div>
-              {role === 'custody' && (
-                <div className="vh-custody-note">Accused: Arjun Mehta &nbsp;|&nbsp; Facility: Arthur Road Jail</div>
-              )}
-            </div>
-            <div className="vh-case-right">
-              <span className="vh-status-badge" style={{ color: STATUS_COLOR[c.status], borderColor: STATUS_COLOR[c.status] }}>
-                ● {c.status}
-              </span>
-              <button className="vh-btn-primary" onClick={() => onCaseSelect(c)}>
-                {cfg.btnLabel} <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        ))}
+      {/* ── TABLE HEADER ── */}
+      <div className="vhd-table-head">
+        <div className="vhd-col-time">Time</div>
+        <div className="vhd-col-case">Case</div>
+        <div className="vhd-col-room">Courtroom</div>
+        <div className="vhd-col-status">Status</div>
+        <div className="vhd-col-action"></div>
       </div>
+
+      {/* ── ROWS ── */}
+      <div className="vhd-rows">
+        {MOCK_CASES.map((c, i) => {
+          const sc = STATUS_CONFIG[c.status];
+          return (
+            <div key={c.id} className="vhd-row" onClick={() => onCaseSelect(c)}>
+
+              {/* Time */}
+              <div className="vhd-col-time">
+                <div className="vhd-time">{c.time}</div>
+                <div className="vhd-sno">#{String(i + 1).padStart(2, '0')}</div>
+              </div>
+
+              {/* Case */}
+              <div className="vhd-col-case">
+                <div className="vhd-case-top">
+                  <span className="vhd-case-id">{c.id}</span>
+                  <span className="vhd-type-tag" style={{ color: TYPE_COLOR[c.type], borderColor: TYPE_COLOR[c.type] }}>
+                    {c.type}
+                  </span>
+                </div>
+                <div className="vhd-case-name">{c.name}</div>
+                {role === 'custody' && (
+                  <div className="vhd-custody-note">Accused: Arjun Mehta · Arthur Road Jail</div>
+                )}
+              </div>
+
+              {/* Room */}
+              <div className="vhd-col-room">
+                <div className="vhd-room-name"><MapPin size={12} /> {c.room}</div>
+                <div className="vhd-room-date"><Calendar size={12} /> {c.date}</div>
+              </div>
+
+              {/* Status */}
+              <div className="vhd-col-status">
+                <div className="vhd-status-pill" style={{ color: sc.color, background: sc.bg, borderColor: sc.color }}>
+                  <span className="vhd-status-dot" style={{ background: sc.dot }} />
+                  {c.status}
+                </div>
+              </div>
+
+              {/* Action */}
+              <div className="vhd-col-action">
+                <button className="vhd-btn" onClick={(e) => { e.stopPropagation(); onCaseSelect(c); }}>
+                  {cfg.btn} <ChevronRight size={15} />
+                </button>
+              </div>
+
+            </div>
+          );
+        })}
+      </div>
+
     </div>
   );
 };
