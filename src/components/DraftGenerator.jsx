@@ -188,23 +188,39 @@ export default function DraftGenerator({ onTabChange }) {
 
   if (state.summariser_status !== 'complete' || !state.summariser_output) {
     return (
-      <div className="dg-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+    <div className="dg-page">
+      <div className="dg-header">
+        <div>
+          <h1 className="dg-title">DRAFT_GENERATOR</h1>
+          <p className="dg-sub">RAG PIPELINE · STRUCTURED JUDGMENT DRAFTING · IMMUTABLE AUDIT TRAIL</p>
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
         <div style={{ textAlign: 'center', padding: '40px', border: '1px solid #333', background: '#0a0a0a' }}>
           <h2 style={{ color: '#e02020', marginBottom: '15px', fontFamily: 'monospace', letterSpacing: '0.1em' }}>SUMMARISER OUTPUT MISSING</h2>
           <p style={{ color: '#888', fontSize: '0.85rem' }}>Please complete the Summariser first before generating a draft.</p>
         </div>
       </div>
+    </div>
     );
   }
 
   if (!selectedCases || selectedCases.length === 0) {
     return (
-      <div className="dg-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+    <div className="dg-page">
+      <div className="dg-header">
+        <div>
+          <h1 className="dg-title">DRAFT_GENERATOR</h1>
+          <p className="dg-sub">RAG PIPELINE · STRUCTURED JUDGMENT DRAFTING · IMMUTABLE AUDIT TRAIL</p>
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
         <div style={{ textAlign: 'center', padding: '40px', border: '1px solid #333', background: '#0a0a0a' }}>
           <h2 style={{ color: '#e02020', marginBottom: '15px', fontFamily: 'monospace', letterSpacing: '0.1em' }}>NO PRECEDENTS SELECTED</h2>
           <p style={{ color: '#888', fontSize: '0.85rem' }}>Please select precedents in the Precedent Finder before drafting.</p>
         </div>
       </div>
+    </div>
     );
   }
 

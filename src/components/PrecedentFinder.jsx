@@ -125,17 +125,33 @@ export default function PrecedentFinder({ onTabChange }) {
 
   if (state.summariser_status !== 'complete' || !state.summariser_output) {
     return (
-      <div className="pf-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+    <div className="pf-page">
+      <div className="pf-header">
+        <div>
+          <h1 className="pf-title">PRECEDENT_FINDER</h1>
+          <p className="pf-sub">NEURAL SEARCH · SEMANTIC CASE MATCHING · CITATION ANALYSIS</p>
+        </div>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
         <div style={{ textAlign: 'center', padding: '40px', border: '1px solid #333', background: '#0a0a0a' }}>
           <h2 style={{ color: '#e02020', marginBottom: '15px', fontFamily: 'monospace', letterSpacing: '0.1em' }}>PREREQUISITE REQUIRED</h2>
           <p style={{ color: '#888', fontSize: '0.85rem' }}>Please complete the Summariser first before searching precedents.</p>
         </div>
       </div>
+    </div>
     );
   }
 
   return (
     <div className="pf-page">
+      {/* ── HEADER ── */}
+      <div className="pf-header">
+        <div>
+          <h1 className="pf-title">PRECEDENT_FINDER</h1>
+          <p className="pf-sub">NEURAL SEARCH · SEMANTIC CASE MATCHING · CITATION ANALYSIS</p>
+        </div>
+      </div>
+
       {/* AUTO POPULATED BANNER */}
       <div style={{ background: 'rgba(224, 32, 32, 0.1)', border: '1px solid #e02020', padding: '8px 15px', color: '#e02020', fontSize: '0.7rem', fontFamily: 'monospace', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <span style={{ display: 'inline-block', width: '6px', height: '6px', background: '#e02020', borderRadius: '50%' }} />

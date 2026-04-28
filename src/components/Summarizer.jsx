@@ -301,7 +301,7 @@ CONFIDENCE: ${summaryData.confidenceScore}%`;
       <div className="sr-page">
         <div className="sr-header">
           <div>
-            <h1 className="sr-title">NEURAL_INGEST</h1>
+            <h1 className="sr-title">NEURAL_SUMMARIZER</h1>
             <p className="sr-sub">ASYNCHRONOUS DEEP-PARSING PROTOCOL V4.02 — UPLOAD CASE FILES FOR MULTI-LAYERED ANALYSIS.</p>
           </div>
           <svg className="sr-brain" viewBox="0 0 64 64" fill="none">
@@ -345,7 +345,7 @@ CONFIDENCE: ${summaryData.confidenceScore}%`;
       <div className="sr-page">
         <div className="sr-header">
           <div>
-            <h1 className="sr-title">NEURAL_INGEST</h1>
+            <h1 className="sr-title">NEURAL_SUMMARIZER</h1>
             <p className="sr-sub">ASYNCHRONOUS DEEP-PARSING PROTOCOL V4.02 — PROCESSING IN PROGRESS.</p>
           </div>
           <svg className="sr-brain" viewBox="0 0 64 64" fill="none">
@@ -377,6 +377,20 @@ CONFIDENCE: ${summaryData.confidenceScore}%`;
 
     return (
       <div className="sr-page sr-complete-view">
+        <div className="sr-header">
+          <div>
+            <h1 className="sr-title">NEURAL_SUMMARIZER</h1>
+            <p className="sr-sub">ANALYSIS_PROTOCOL_COMPLETE · CASE_ID: {summaryData.caseId || 'UNKNOWN'} · JURISDICTION: {summaryData.jurisdiction || 'NOT_SPECIFIED'}</p>
+          </div>
+          <svg className="sr-brain" viewBox="0 0 64 64" fill="none">
+            <circle cx="29" cy="21" r="14" fill="#e02020"/>
+            <path d="M11 58c0-9.94 8.06-18 18-18s18 8.06 18 18" fill="#e02020"/>
+            <circle cx="48" cy="17" r="9" fill="#0d0d0d"/>
+            <path d="M48 10v2M48 22v2M41 17h2M53 17h2M43.1 12.1l1.4 1.4M51.5 20.5l1.4 1.4M43.1 21.9l1.4-1.4M51.5 13.5l1.4-1.4"
+              stroke="#e02020" strokeWidth="1.4" strokeLinecap="round"/>
+            <circle cx="48" cy="17" r="3.2" fill="#e02020"/>
+          </svg>
+        </div>
 
 
         <div className="sr-layout-grid">

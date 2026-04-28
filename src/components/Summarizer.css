@@ -22,7 +22,7 @@
   margin-bottom: 28px;
 }
 .sr-title {
-  font-size: 1.75rem;
+  font-size: 1.6rem;
   font-weight: 900;
   letter-spacing: 0.06em;
   margin-bottom: 6px;
@@ -31,7 +31,7 @@
 .sr-sub {
   font-size: 0.58rem;
   color: #555;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.08em;
   line-height: 1.6;
 }
 .sr-brain { width: 44px; height: 44px; flex-shrink: 0; }
