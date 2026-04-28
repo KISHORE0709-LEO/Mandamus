@@ -411,7 +411,7 @@ SEARCH FILTERS:
 1. COURT LEVEL: {request.court_level} ({court_filter if court_filter else "Any level: Supreme, High Court, or District"})
 2. TIME WINDOW: {request.temporal_window} ({time_filter if time_filter else "Any year"})
 
-Return ONLY a valid JSON array of exactly 5 real Indian court cases that match the context AND follow the SEARCH FILTERS strictly. No fake cases.
+Return ONLY a valid JSON array of exactly 10 real Indian court cases that match the context AND follow the SEARCH FILTERS strictly. No fake cases.
 
 For each case return:
 - case_name (exact real case name)
