@@ -160,7 +160,7 @@ export default function Summarizer({ onTabChange }) {
     formData.append('file', selectedFile);
 
     try {
-      const response = await fetch('http://localhost:8000/summarise', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/summarise`, {
         method: 'POST',
         body: formData,
       });

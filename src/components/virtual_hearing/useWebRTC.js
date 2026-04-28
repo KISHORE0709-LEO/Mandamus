@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
-const SIGNALING_URL = import.meta.env.VITE_SIGNALING_URL || 'http://localhost:4000';
+const SIGNALING_URL = import.meta.env.VITE_SIGNALING_URL || import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const ICE_SERVERS = {
   iceServers: [

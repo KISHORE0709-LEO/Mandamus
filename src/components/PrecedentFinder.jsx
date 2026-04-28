@@ -136,7 +136,7 @@ export default function PrecedentFinder({ onTabChange }) {
     setLoading(true);
     if (forceFresh) setAllCases([]);
     
-    fetch('http://localhost:8000/precedent/search', {
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/precedent/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 

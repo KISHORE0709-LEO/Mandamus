@@ -1,4 +1,5 @@
 import os
+import socketio
 import uuid
 import tempfile
 import time
@@ -51,11 +52,68 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"], # Allow all for production flex
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ─── SOCKET.IO SIGNALING SERVER (For Virtual Hearings) ───
+sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
+socket_app = socketio.ASGIApp(sio)
+app.mount("/socket.io", socket_app)
+
+# Room storage: { roomId: { socketId: { userId, role, name } } }
+rooms = {}
+
+@sio.event
+async def connect(sid, environ):
+    logger.info(f"SIGNALING: Client connected {sid}")
+
+@sio.event
+async def join_room(sid, data):
+    room_id = data.get('roomId')
+    user_id = data.get('userId')
+    role = data.get('role')
+    name = data.get('name')
+    
+    if room_id not in rooms:
+        rooms[room_id] = {}
+    
+    # Notify others in the room
+    await sio.emit('user-joined', {'socketId': sid, 'name': name, 'role': role}, room=room_id, skip_sid=sid)
+    
+    # Tell new user who is already there
+    existing = []
+    for other_sid, info in rooms[room_id].items():
+        existing.append({'socketId': other_sid, 'name': info['name'], 'role': info['role']})
+    
+    rooms[room_id][sid] = {'userId': user_id, 'role': role, 'name': name}
+    sio.enter_room(sid, room_id)
+    await sio.emit('room-users', existing, to=sid)
+    logger.info(f"SIGNALING: User {name} ({role}) joined room {room_id}")
+
+@sio.event
+async def offer(sid, data):
+    await sio.emit('offer', {'from': sid, 'offer': data['offer']}, to=data['to'])
+
+@sio.event
+async def answer(sid, data):
+    await sio.emit('answer', {'from': sid, 'answer': data['answer']}, to=data['to'])
+
+@sio.event
+async def ice_candidate(sid, data):
+    await sio.emit('ice-candidate', {'from': sid, 'candidate': data['candidate']}, to=data['to'])
+
+@sio.event
+async def disconnect(sid):
+    for r_id, users in rooms.items():
+        if sid in users:
+            await sio.emit('user-disconnected', {'socketId': sid}, room=r_id)
+            del users[sid]
+            break
+    logger.info(f"SIGNALING: Client disconnected {sid}")
+
 
 @app.get("/")
 def health_check():

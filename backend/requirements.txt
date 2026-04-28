@@ -4,3 +4,5 @@ python-multipart
 boto3
 pymupdf
 python-dotenv
+python-socketio
+uvicorn[standard]
