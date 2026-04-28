@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Scale, Users, Lock, ClipboardList, ChevronRight, Clock, MapPin, Calendar, FileText } from 'lucide-react';
+import { getHearingsByJudge } from '../../lib/firestoreHelpers';
+import { useAuth } from '../../context/AuthContext';
 
 const MOCK_CASES = [
   { id: 'MH-HC-2024-4471', name: 'State of Maharashtra vs. Arjun Mehta', time: '10:00 AM', room: 'COURT-7A',  status: 'Scheduled',   date: '25 Jul 2025', type: 'Criminal' },
@@ -27,8 +29,48 @@ const ROLE_CONFIG = {
 };
 
 const Dashboard = ({ role, onCaseSelect }) => {
+  const { user } = useAuth();
+  const [cases, setCases] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
   const cfg = ROLE_CONFIG[role] || ROLE_CONFIG.clerk;
   const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  // Load hearings from Firestore
+  useEffect(() => {
+    if (user?.uid) {
+      setLoading(true);
+      getHearingsByJudge(user.uid)
+        .then(hearings => {
+          // Transform Firestore hearings to match expected format
+          const transformed = hearings.map((h, idx) => ({
+            id: h.caseId || h.id,
+            name: h.caseName || 'Untitled Case',
+            time: h.scheduledTime || '10:00 AM',
+            room: `COURT-${Math.floor(Math.random() * 20) + 1}${String.fromCharCode(65 + Math.floor(Math.random() * 3))}`,
+            status: h.status === 'scheduled' ? 'Scheduled' : h.status === 'active' ? 'Ready' : 'Pending Docs',
+            date: h.scheduledDate ? new Date(h.scheduledDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBD',
+            type: h.type?.includes('Criminal') ? 'Criminal' : h.type?.includes('Civil') ? 'Civil' : 'Commercial',
+            hearingId: h.id,
+            parties: h.parties,
+            agenda: h.agenda,
+            draftAttached: h.draftAttached
+          }));
+          setCases(transformed);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error('Error loading hearings:', err);
+          // Fallback to mock data if error
+          setCases(MOCK_CASES);
+          setLoading(false);
+        });
+    } else {
+      // Not logged in, show mock data
+      setCases(MOCK_CASES);
+      setLoading(false);
+    }
+  }, [user]);
 
   return (
     <div className="vhd-root">
@@ -45,7 +87,7 @@ const Dashboard = ({ role, onCaseSelect }) => {
         <div className="vhd-header-right">
           {role === 'custody' && <div className="vhd-custody-pill">🔒 SECURE FACILITY ACCESS</div>}
           <div className="vhd-count-pill">
-            <FileText size={13} /> {MOCK_CASES.length} Hearings Today
+            <FileText size={13} /> {cases.length} Hearings Today
           </div>
         </div>
       </div>
@@ -61,55 +103,68 @@ const Dashboard = ({ role, onCaseSelect }) => {
 
       {/* ── ROWS ── */}
       <div className="vhd-rows">
-        {MOCK_CASES.map((c, i) => {
-          const sc = STATUS_CONFIG[c.status];
-          return (
-            <div key={c.id} className="vhd-row" onClick={() => onCaseSelect(c)}>
+        {loading ? (
+          <div className="vhd-loading">
+            <Clock size={32} style={{ opacity: 0.3 }} />
+            <div style={{ marginTop: '12px', opacity: 0.6 }}>Loading hearings...</div>
+          </div>
+        ) : cases.length === 0 ? (
+          <div className="vhd-loading">
+            <Calendar size={32} style={{ opacity: 0.3 }} />
+            <div style={{ marginTop: '12px', opacity: 0.6 }}>No hearings scheduled</div>
+            <div style={{ marginTop: '8px', fontSize: '13px', opacity: 0.4 }}>Schedule a hearing from the Scheduler tab</div>
+          </div>
+        ) : (
+          cases.map((c, i) => {
+            const sc = STATUS_CONFIG[c.status];
+            return (
+              <div key={c.id} className="vhd-row" onClick={() => onCaseSelect(c)}>
 
-              {/* Time */}
-              <div className="vhd-col-time">
-                <div className="vhd-time">{c.time}</div>
-                <div className="vhd-sno">#{String(i + 1).padStart(2, '0')}</div>
-              </div>
-
-              {/* Case */}
-              <div className="vhd-col-case">
-                <div className="vhd-case-top">
-                  <span className="vhd-case-id">{c.id}</span>
-                  <span className="vhd-type-tag" style={{ color: TYPE_COLOR[c.type], borderColor: TYPE_COLOR[c.type] }}>
-                    {c.type}
-                  </span>
+                {/* Time */}
+                <div className="vhd-col-time">
+                  <div className="vhd-time">{c.time}</div>
+                  <div className="vhd-sno">#{String(i + 1).padStart(2, '0')}</div>
                 </div>
-                <div className="vhd-case-name">{c.name}</div>
-                {role === 'custody' && (
-                  <div className="vhd-custody-note">Accused: Arjun Mehta · Arthur Road Jail</div>
-                )}
-              </div>
 
-              {/* Room */}
-              <div className="vhd-col-room">
-                <div className="vhd-room-name"><MapPin size={12} /> {c.room}</div>
-                <div className="vhd-room-date"><Calendar size={12} /> {c.date}</div>
-              </div>
-
-              {/* Status */}
-              <div className="vhd-col-status">
-                <div className="vhd-status-pill" style={{ color: sc.color, background: sc.bg, borderColor: sc.color }}>
-                  <span className="vhd-status-dot" style={{ background: sc.dot }} />
-                  {c.status}
+                {/* Case */}
+                <div className="vhd-col-case">
+                  <div className="vhd-case-top">
+                    <span className="vhd-case-id">{c.id}</span>
+                    <span className="vhd-type-tag" style={{ color: TYPE_COLOR[c.type], borderColor: TYPE_COLOR[c.type] }}>
+                      {c.type}
+                    </span>
+                  </div>
+                  <div className="vhd-case-name">{c.name}</div>
+                  {role === 'custody' && (
+                    <div className="vhd-custody-note">Accused: Arjun Mehta · Arthur Road Jail</div>
+                  )}
                 </div>
-              </div>
 
-              {/* Action */}
-              <div className="vhd-col-action">
-                <button className="vhd-btn" onClick={(e) => { e.stopPropagation(); onCaseSelect(c); }}>
-                  {cfg.btn} <ChevronRight size={15} />
-                </button>
-              </div>
+                {/* Room */}
+                <div className="vhd-col-room">
+                  <div className="vhd-room-name"><MapPin size={12} /> {c.room}</div>
+                  <div className="vhd-room-date"><Calendar size={12} /> {c.date}</div>
+                </div>
 
-            </div>
-          );
-        })}
+                {/* Status */}
+                <div className="vhd-col-status">
+                  <div className="vhd-status-pill" style={{ color: sc.color, background: sc.bg, borderColor: sc.color }}>
+                    <span className="vhd-status-dot" style={{ background: sc.dot }} />
+                    {c.status}
+                  </div>
+                </div>
+
+                {/* Action */}
+                <div className="vhd-col-action">
+                  <button className="vhd-btn" onClick={(e) => { e.stopPropagation(); onCaseSelect(c); }}>
+                    {cfg.btn} <ChevronRight size={15} />
+                  </button>
+                </div>
+
+              </div>
+            );
+          })
+        )}
       </div>
 
     </div>
