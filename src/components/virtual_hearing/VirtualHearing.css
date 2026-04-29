@@ -287,6 +287,25 @@
   font-weight: 700;
 }
 
+.lr-msg-interim {
+  opacity: 1;
+  border-left: 2px solid #8ab4f8 !important;
+  background: rgba(138, 180, 248, 0.05) !important;
+}
+
+.lr-msg-interim .lr-msg-text {
+  font-style: italic;
+  color: #8ab4f8;
+  animation: lr-pulse-blue 2s infinite;
+}
+
+@keyframes lr-pulse-blue {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+
+
 /* ── PRE-HEARING ── */
 .vh-pre-badge {
   display: inline-flex;

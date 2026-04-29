@@ -14,8 +14,6 @@ const DOCS = [
 
 const MOCK_TRANSCRIPT = [
   { speaker: 'System', text: 'End-to-end encrypted session initiated. All participants verified.', system: true },
-  { speaker: 'Hon. Justice R. Vance', text: 'This court is now in session. Counsel, you may proceed.' },
-  { speaker: 'Adv. Priya Nair', text: 'Thank you, Your Honour. The petitioner contends that the accused misappropriated ₹4.2 Cr under IPC §406…' },
 ];
 
 const LIVE_LINES = [
@@ -98,9 +96,11 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [transcript]);
 
+  const [interimText, setInterimText] = useState('');
+
   // ── SPEECH RECOGNITION (LIVE TRANSCRIPT) ──
   useEffect(() => {
-    if (!('webkitSpeechRecognition' in window) || !isRecording) return;
+    if (!('webkitSpeechRecognition' in window) || !micOn) return;
 
     const recognition = new window.webkitSpeechRecognition();
     recognition.continuous = true;
@@ -108,39 +108,48 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
     recognition.lang = 'en-IN';
 
     recognition.onresult = (event) => {
-      let interimTranscript = '';
+      let interim = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
           const text = event.results[i][0].transcript;
-          const newEntry = { speaker: userName || role, text, timestamp: new Date().toLocaleTimeString() };
+          const newEntry = { 
+            speaker: userName || role, 
+            text: text.trim(), 
+            timestamp: new Date().toLocaleTimeString(),
+            isFinal: true 
+          };
           
-          // Add to local state
           setTranscript(prev => [...prev, newEntry]);
+          setInterimText('');
           
-          // BROADCAST to others (via WebRTC/Socket)
-          if (peers.length > 0) {
-            // This would normally go through the data channel or socket
-            // For now we simulate the local update
-          }
-          
-          // TRIGGER AI DETECTION (Mock for UI)
-          if (text.toLowerCase().includes('objection') || text.toLowerCase().includes('contradict')) {
+          // AI DETECTION
+          if (text.toLowerCase().includes('objection') || text.toLowerCase().includes('contradict') || text.toLowerCase().includes('wrong')) {
             setTranscript(prev => [...prev, { 
               speaker: 'AI_COMMAND_CENTER', 
-              text: `⚠️ POTENTIAL INCONSISTENCY DETECTED: Statement contradicts Exhibit B (Digital Forensics Report).`, 
+              text: `⚠️ POTENTIAL INCONSISTENCY DETECTED: Statement differs from official record.`, 
               system: true,
               type: 'alert' 
             }]);
           }
         } else {
-          interimTranscript += event.results[i][0].transcript;
+          interim += event.results[i][0].transcript;
         }
+      }
+      setInterimText(interim);
+    };
+
+    recognition.onend = () => {
+      if (micOn) {
+        try { recognition.start(); } catch (e) { console.log("Recognition restart suppressed"); }
       }
     };
 
     recognition.start();
-    return () => recognition.stop();
-  }, [isRecording, userName, role]);
+    return () => {
+      recognition.onend = null;
+      recognition.stop();
+    };
+  }, [micOn, userName, role]);
 
   const handleDownloadTranscript = () => {
     const text = transcript.map(m => `[${m.speaker}] ${m.text}`).join('\n');
@@ -296,6 +305,12 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
                         <div className="lr-msg-text">{msg.text}</div>
                       </div>
                     ))}
+                    {interimText && (
+                      <div className="lr-msg lr-msg-interim">
+                        <div className="lr-msg-speaker">{userName || role}</div>
+                        <div className="lr-msg-text">{interimText}...</div>
+                      </div>
+                    )}
                     {isRecording && (
                       <div className="lr-transcribing">
                         <span className="lr-rec-dot" style={{ width: 6, height: 6 }} /> Listening and transcribing...
