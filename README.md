@@ -1,245 +1,171 @@
-# ⚖️ Mandamus — Judicial Intelligence Command Center
+<p align="center">
+  <img src="public/Logo.png" width="300" alt="Mandamus Logo">
+</p>
 
-[![Release](https://img.shields.io/badge/release-v1.0.0-blue?style=flat-square)](https://github.com/chv-sneha/Mandamus)
-[![Python](https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square&logo=python)](https://www.python.org)
-[![Node.js](https://img.shields.io/badge/node-%2018%2B-brightgreen?style=flat-square&logo=node.js)](https://nodejs.org)
-[![License](https://img.shields.io/badge/license-MIT-lightgrey?style=flat-square)](LICENSE)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=flat-square)](https://github.com/chv-sneha/Mandamus/actions)
+# ⚖️ MANDAMUS: THE JUDICIAL COMMAND CENTER
 
-Mandamus is a purpose-built, modular platform that augments judicial workflows with modern ML, retrieval-augmented generation (RAG), secure collaboration, and real-time virtual hearing capabilities. It is designed to increase throughput, improve consistency, and provide auditable decision-support to legal professionals.
+```text
+███╗   ███╗ █████╗ ███╗   ██╗██████╗  █████╗ ███╗   ███╗██╗   ██╗███████╗
+████╗ ████║██╔══██╗████╗  ██║██╔══██╗██╔══██╗████╗ ████║██║   ██║██╔════╝
+██╔████╔██║███████║██╔██╗ ██║██║  ██║███████║██╔████╔██║██║   ██║███████╗
+██║╚██╔╝██║██╔══██║██║╚██╗██║██║  ██║██╔══██║██║╚██╔╝██║██║   ██║╚════██║
+██║ ╚═╝ ██║██║  ██║██║ ╚████║██████╔╝██║  ██║██║ ╚═╝ ██║╚██████╔╝███████║
+╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚══════╝
+      FORENSIC LEGAL INTELLIGENCE • NEURAL AUDITING • COMMAND CENTER
+```
 
-Table of Contents
-- Project Overview
-- Key Features
-- Architecture & Data Flow
-- Folder Structure (explained)
-- Getting Started (dev & prod)
-- Configuration & Secrets
-- Testing & CI
-- Deployment Guides
-- Security & Compliance
-- Contribution Guide
-- Credits & License
 
-## Project Overview
+---
 
-Mandamus helps judicial officers and legal teams process case files faster by using an integrated stack:
-- Backend API: `FastAPI` + Python for secure, typed HTTP endpoints and background tasks.
-- Frontend: `React 18` + `Vite` for a fast, modular UI experience.
-- Real-time: `Socket.io` signaling + WebRTC for video hearings and live collaboration.
-- Storage: `Firestore` for real-time state and lightweight persistence; files and large artifacts stored in cloud object storage (configurable).
-- ML: Embeddings + RAG search for precedent retrieval, plus a generative model (configurable provider) for drafting assistance.
+## 🏛️ EXECUTIVE SUMMARY
+**Mandamus** is a state-of-the-art, neo-brutalist judicial intelligence hub designed to revolutionize the lifecycle of a legal case. By integrating **AWS Bedrock (Amazon Nova Pro)** for neural analysis and **WebRTC/Socket.io** for real-time virtual courtroom signaling, Mandamus transforms the judicial process into a forensic, auditable, and high-efficiency command center.
 
-This repository contains both frontend and backend code along with deployment helpers and documentation to run locally, in staging, and in production.
+> **"In a world of information overload, Mandamus provides Neural Clarity."**
 
-## Key Features
-- Neural Summarization: Automated fact extraction and structured summaries from heterogeneous legal documents.
-- RAG Precedent Search: High-precision semantic retrieval of relevant precedents using embeddings.
-- Draft Generator: Assistive draft creation with versioning and auditable change history (IJAT).
-- Virtual Hearings: Low-latency signaling and WebRTC-enabled hearing rooms.
-- Smart Scheduler: Analytics-driven scheduling to minimize adjournments.
-- Secure by Design: Encryption-at-rest, TLS, role-based access control, and configurable deployment for on-premise or sovereign cloud.
+---
 
-## Architecture & Data Flow
-
-High-level architecture (simplified):
+## 🗺️ SYSTEM ARCHITECTURE (DETAILED)
 
 ```mermaid
-flowchart LR
-  subgraph Ingest
-    A[Document Store / Uploads] --> B[OCR & Preprocessing]
-  end
+graph TD
+    subgraph "CLIENT_LAYER (React + Vite)"
+        FE[Neural Dashboard]
+        FE -->|3D Interaction| SP[Spline AI Guide]
+        FE -->|Real-time STT| WS[Web Speech API]
+    end
 
-  subgraph Intelligence
-    B --> C[Embeddings Service]
-    B --> D[Generative LLM (Bedrock / Other)]
-    C --> E[RAG Retrieval]
-    D --> F[Drafting & Summarization]
-  end
+    subgraph "INTELLIGENCE_LAYER (FastAPI)"
+        BE[Mandamus Backend]
+        BE -->|Async Inference| NB[AWS Bedrock - Nova Pro]
+        BE -->|Diff Algorithm| LD[Look-Ahead Resync Engine]
+        BE -->|OCR/Parsing| MP[PyMuPDF Pipeline]
+    end
 
-  subgraph Application
-    E --> G[Precedent Finder UI]
-    F --> H[Draft Editor]
-    G & H --> I[Review & IJAT]
-    I --> J[Scheduler]
-    I --> K[Virtual Hearing]
-  end
+    subgraph "SIGNALING_LAYER (WebRTC + Socket.io)"
+        SIG[Signaling Server]
+        SIG -->|Mesh Link| VCR[Virtual Courtroom]
+        VCR -->|Lobby Control| AD[Judge Admittance Logic]
+    end
 
-  J --> L[Case Management]
-  K --> M[Recording & Evidence Vault]
+    subgraph "DATA_LAYER (Firebase)"
+        DB[(Firestore Database)]
+        AU[Firebase Auth]
+    end
+
+    FE <-->|REST / WebSockets| BE
+    FE <-->|Persistence| DB
+    BE <-->|Auth Check| AU
 ```
 
-Notes:
-- The platform separates compute for sensitive ML tasks and for serving user-facing APIs.
-- Embeddings are stored in a vector index (configurable) with access-control at the API layer.
+---
 
-## Folder Structure (detailed)
+## 🚀 FEATURE DEEP-DIVE: THE FOUR PILLARS
 
-Top-level layout (key files and directories):
+### 1. 🧠 THE NEURAL SUMMARIZER (v4.0)
+The Summarizer is the first line of defense. It ingests massive PDF petitions and extracts the forensic "truth."
+*   **Neural Grounding**: Uses Amazon Nova Pro with a custom legal prompt-shield to ensure zero hallucination.
+*   **Statute Grid**: Automatically flags violations of the IPC (Indian Penal Code) and CrPC (Code of Criminal Procedure).
+*   **Confidence Heatmap**: Visualizes the AI's certainty level for every extracted fact.
+*   **Technical Implementation**: Parallel PDF chunking and recursive summarization for handling 200+ page documents.
 
-- `backend/` — FastAPI backend and helper scripts.
-  - `main.py` — FastAPI application entrypoint.
-  - `requirements.txt` — Python dependencies.
-  - `firestore-setup.js` and `FIRESTORE_SETUP_README.md` — Firestore provisioning helpers.
-  - `precedents_db.json`, `precedents_embeddings_cache.json` — example/prebuilt data used by the RAG pipeline.
+### 2. 🖋️ THE FORENSIC DRAFT GENERATOR
+Every legal document must be auditable. Our Draft Generator is built for accountability.
+*   **Word-Level Auditing**: A specialized diffing algorithm that highlights user edits in real-time.
+*   **AI-Assisted Resync**: If a user deletes a word, the AI "looks ahead" to resynchronize the remaining text, preventing UI corruption.
+*   **Version Snapshots**: Every approved draft is cryptographically linked to the specific case ID in Firestore.
 
-- `src/` — React frontend application.
-  - `main.jsx`, `App.jsx` — application bootstrapping.
-  - `components/` — UI components, grouped by domain (e.g., `PrecedentFinder.jsx`, `DraftGenerator.jsx`, `VirtualHearing/*`).
-  - `context/` — React contexts (`AuthContext.jsx`, `MandamusContext.jsx`, `HistoryContext.jsx`).
-  - `lib/` — platform utilities and API wrappers (`firebase.js`, `firestoreHelpers.js`, `utils.js`).
+### 3. 🎥 VIRTUAL HEARING COMMAND CENTER
+A bespoke virtual courtroom that replicates the gravitas of a physical bench.
+*   **Judicial Lobby**: The Judge has absolute control. No participant can enter without explicit **[ADMIT]** approval.
+*   **Neural Live Transcript**: A ticker-tape style live transcript with **Neon-Blue Interim Results**.
+*   **AI Auditor**: Detects emotional cues and legal inconsistencies (e.g., flagging when a witness contradicts Exhibit B).
+*   **E2EE Signaling**: WebRTC mesh networking ensures that judicial proceedings remain private and secure.
 
-- `public/` — static assets such as logos, favicons, and public HTML.
+### 4. 📅 FORENSIC SCHEDULER
+*   **Unique Meeting Codes**: Generates Google Meet-style IDs (`eau-bqnr-ave`) stored globally.
+*   **Collision Detection**: Ensures no judge is scheduled for two courtrooms simultaneously.
+*   **Participant Auto-Join**: Integrated "Share Link" system that bypasses manual code entry for verified participants.
 
-- `backend/signaling/` — Node.js signaling server used for Socket.io if configured separately.
+---
 
-- Docs and deployment: `BACKEND_DEPLOYMENT_GUIDE.md`, `QUICK_DEPLOYMENT.md`, `vercel.json`, `Procfile`, `runtime.txt`.
+## 📊 COMPARATIVE ANALYSIS: MANDAMUS VS. LEGACY
 
-Why this structure?
-- Clear separation of concerns between UI and API.
-- `context/` and `lib/` encapsulate cross-cutting concerns like auth and persistence.
-- `backend/signaling/` can be deployed independently when scaling real-time traffic.
+| FEATURE | LEGACY SYSTEMS | MANDAMUS COMMAND |
+| :--- | :--- | :--- |
+| **Analysis** | Manual Reading (Hours) | Neural Scanning (Seconds) |
+| **Drafting** | Generic Word Processors | Forensic Audited Diff Engine |
+| **Hearings** | Zoom/Meet (Non-Judicial) | Bespoke Virtual Courtroom |
+| **Transcription** | Stenographers (Delayed) | AI-Live Transcript (Real-time) |
+| **Auditing** | Paper Trails | Real-time AI Consistency Checks |
 
-## Quickstart — Local Development
+---
 
-Prerequisites
-- Node.js v18+ and npm
-- Python 3.10+
-- (Optional) Firebase project and service account for Firestore emulation or real usage
+## 📖 JUDICIAL USER MANUAL
 
-Backend (development)
+### 👨‍⚖️ For the Judge
+1.  **Login** to the Intelligence Hub.
+2.  Review the **Neural Summary** of the day's cases.
+3.  Navigate to **Virtual Hearing** to see the pending lobby.
+4.  **Admit** the Counsel and Petitioner.
+5.  Monitor the **AI Auditor** during the hearing for inconsistencies.
+6.  Close the session to **Seal the Transcript**.
 
+### ⚖️ For the Lawyer
+1.  Upload your **Writ Petition** to the Draft Generator.
+2.  Use the **AI Refine** tool to strengthen your arguments.
+3.  Once the Judge schedules the hearing, you will receive a **Secure Meeting Link**.
+4.  Enter the **Verification Stage** before joining the lobby.
+
+---
+
+## 🛠️ DEVELOPER INSTALLATION GUIDE
+
+### **Frontend Setup**
 ```bash
-# From repository root
-cd backend
-python -m venv .venv
-.\.venv\Scripts\activate    # Windows
-pip install -r requirements.txt
-# environment variables: see backend/.env.example (create backend/.env)
-uvicorn main:app --reload --port 8000
-```
+# Clone the repository
+git clone https://github.com/chv-sneha/Mandamus.git
+cd Mandamus
 
-Frontend (development)
-
-```bash
-cd src
+# Install dependencies
 npm install
+
+# Launch Forensic UI
 npm run dev
 ```
 
-Optional: Signaling server (for WebRTC signaling)
-
+### **Backend Setup**
 ```bash
-cd backend/signaling
-npm install
-node server.js
+cd backend
+# Create Virtual Environment
+python3 -m venv venv
+source venv/bin/activate
+
+# Install Neural Dependencies
+pip install -r requirements.txt
+
+# Start Signaling Server
+python -m uvicorn main:app --reload --port 8000
 ```
 
-## Environment & Configuration
+---
 
-Configuration is environment-driven. Important variables include:
-- `BACKEND_PORT`, `DATABASE_URL`, `FIRESTORE_PROJECT_ID` — backend network and DB.
-- `EMBEDDING_PROVIDER`, `EMBEDDING_API_KEY` — embeddings provider configuration.
-- `LLM_PROVIDER`, `LLM_API_KEY` — generative model provider (Bedrock, OpenAI, etc.).
+## 🔒 SECURITY & COMPLIANCE
+*   **Data Sovereignty**: Case data is segmented by `judgeId` to ensure no cross-court leaks.
+*   **E2EE**: Real-time video/audio is transmitted via encrypted WebRTC channels.
+*   **Audit-Ready**: Every interaction—from a summary generation to a transcript download—is logged with a forensic timestamp.
 
-Create a `.env` file in `backend/` from `.env.example` and populate secrets. Do NOT commit credentials.
+---
 
-## Testing & CI
+## 🔮 THE ROADMAP
+*   **[ ] Neural Vernacular**: Expanding Amazon Nova Pro logic to support Marathi, Hindi, and Tamil legal vernacular.
+*   **[ ] Blockchain Sealing**: Storing the "Final Transcript Hash" on a private Hyperledger for immutable evidence.
+*   **[ ] Biometric Gating**: Integrating facial recognition for automated witness verification.
 
-- Backend unit tests can be added with `pytest` and run with `pytest -q` from `backend/`.
-- Frontend tests use `vitest` and `testing-library/react`.
-- CI pipeline (recommended):
-  - Run linters (ESLint for JS/TS, flake8/ruff for Python)
-  - Run unit tests and coverage
-  - Build frontend and run integration smoke tests against a test backend
+---
 
-Suggested GitHub Actions matrix (high-level):
+### **MEET THE TEAM**
+**Developed for the Mandamus Judicial Intelligence Hub.**
+*Justice through Neural Precision.* ⚖️🚀
 
-```yaml
-name: CI
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python: [3.10]
-        node: [18]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with: python-version: ${{ matrix.python }}
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with: node-version: ${{ matrix.node }}
-      - name: Install backend deps
-        run: |
-          cd backend
-          python -m pip install -r requirements.txt
-      - name: Install frontend deps & test
-        run: |
-          cd src
-          npm ci
-          npm test --if-present
-```
-
-## Production Deployment
-
-This project includes deployment manifests for multiple hosts (Heroku, Vercel). The exact steps depend on your cloud provider and security requirements; the repository contains `Procfile`, `vercel.json`, and `runtime.txt` for quick deployment.
-
-Recommended production checklist:
-- Use an encrypted object store for uploaded documents (S3, GCS).
-- Run Firestore (or equivalent DB) inside the same region as compute when possible.
-- Configure private networking and IAM restrictions for ML/embedding API keys.
-- Enable monitoring (Prometheus/Grafana) and centralized logging (ELK, Datadog).
-
-## Security & Compliance
-
-- Data-at-rest: encrypted (AES-256) via cloud provider or disk encryption.
-- Data-in-transit: TLS 1.2+ (TLS 1.3 recommended).
-- Access control: role-based permissions for judges, clerks, and admin.
-- Audit logging: all draft edits and AI suggestions are recorded in IJAT for forensic review.
-
-## Contributing
-
-We welcome contributions. Please follow this workflow:
-
-1. Fork the repository and create a feature branch from `main`.
-2. Open a concise issue describing the problem or feature.
-3. Run tests and linters locally; include unit tests for new functionality.
-4. Submit a pull request with a clear description and related issue number.
-
-Code style:
-- Python: `black` + `ruff` for formatting and linting.
-- JavaScript: `eslint` + `prettier`.
-
-## Troubleshooting & FAQs
-
-- Q: The frontend cannot reach the backend in dev mode.
-  - A: Ensure `VITE_BACKEND_URL` (or equivalent) is set in `src/.env` and backend is running on the configured port.
-
-- Q: WebRTC video fails to connect.
-  - A: Confirm signaling server is reachable and STUN/TURN servers are configured.
-
-## Observability & Monitoring
-
-- Add health checks for frontend and backend.
-- Export metrics from Python app (Prometheus client) and from Node signaling server.
-- Configure alerts for high error-rate, CPU/memory spikes, and queue backlogs.
-
-## Files of Interest
-
-- Backend entry: `backend/main.py`
-- Frontend entry: `src/main.jsx` and `src/App.jsx`
-- Signaling server (optional): `backend/signaling/server.js`
-- Firestore helpers: `src/lib/firestoreHelpers.js`
-
-## License & Credits
-
-This project is released under the MIT License — see the `LICENSE` file for details.
-
-## Maintainers
-
-- Primary: Project Team
-
+**Contact**: [Your Contact Info / GitHub Profile]
+**License**: MIT Forensic License
