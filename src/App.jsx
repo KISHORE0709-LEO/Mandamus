@@ -12,6 +12,7 @@ import PrecedentFinder from './components/PrecedentFinder';
 import DraftGenerator from './components/DraftGenerator';
 import Scheduler from './components/Scheduler';
 import ProfilePage from './components/ProfilePage';
+import MandamusGuide from './components/MandamusGuide';
 import FeaturesNavbar from './components/FeaturesNavbar';
 import HowItWorksPage from './pages/HowItWorksPage';
 import AboutPage from './pages/AboutPage';
@@ -40,9 +41,7 @@ const LandingPage = () => (
   </>
 );
 
-const Dashboard = () => {
-  const [activeFeature, setActiveFeature] = React.useState('summariser');
-
+const Dashboard = ({ activeFeature, setActiveFeature }) => {
   const renderContent = () => {
     switch (activeFeature) {
       case 'summariser':
@@ -78,6 +77,8 @@ const Dashboard = () => {
 };
 
 function App() {
+  const [activeFeature, setActiveFeature] = React.useState('summariser');
+
   return (
     <AuthProvider>
       <HistoryProvider>
@@ -100,12 +101,14 @@ function App() {
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <Dashboard activeFeature={activeFeature} setActiveFeature={setActiveFeature} />
                   </ProtectedRoute>
                 } />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </div>
+            
+            <MandamusGuide activeFeature={activeFeature} />
           </div>
         </Router>
       </MandamusProvider>
