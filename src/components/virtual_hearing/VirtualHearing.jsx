@@ -16,16 +16,13 @@ const generateRoomId = () => {
   return `${seg(3)}-${seg(4)}-${seg(3)}`;
 };
 
-import { useParams } from 'react-router-dom';
-
-const VirtualHearing = () => {
-  const { roomId: urlRoomId } = useParams();
+const VirtualHearing = ({ initialRoomId }) => {
   const { role: authRole, user } = useAuth();
   const role = authRole || 'judge';
 
-  const [stage,        setStage]        = useState('dashboard');
+  const [stage,        setStage]        = useState(initialRoomId ? 'pre-hearing' : 'dashboard');
   const [selectedCase, setSelectedCase] = useState(null);
-  const [roomId,       setRoomId]       = useState(urlRoomId || null);
+  const [roomId,       setRoomId]       = useState(initialRoomId || null);
   const [hearings,     setHearings]     = useState([]);
 
   // Load hearings from Firestore
@@ -37,12 +34,12 @@ const VirtualHearing = () => {
     }
   }, [user]);
 
-  // Handle URL Room ID on mount
+  // Auto-load hearing if initialRoomId is provided
   useEffect(() => {
-    if (urlRoomId) {
-      handleJoinByCode(urlRoomId);
+    if (initialRoomId && !selectedCase) {
+      handleJoinByCode(initialRoomId);
     }
-  }, [urlRoomId]);
+  }, [initialRoomId]);
 
   const handleCaseSelect = (c) => { 
     setSelectedCase(c); 
@@ -66,7 +63,16 @@ const VirtualHearing = () => {
         setRoomId(code);
         setStage('pre-hearing');
       } else {
-        alert('Invalid meeting code. Please check and try again.');
+        // Create a minimal case object for unknown codes
+        setSelectedCase({
+          id: code,
+          name: 'Virtual Hearing Session',
+          room: 'Virtual Chamber',
+          time: new Date().toLocaleTimeString(),
+          roomId: code
+        });
+        setRoomId(code);
+        setStage('pre-hearing');
       }
     } catch (error) {
       console.error('Error joining by code:', error);

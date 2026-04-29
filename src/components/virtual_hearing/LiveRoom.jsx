@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Mic, MicOff, Video, VideoOff, PhoneOff,
-  MessageSquare, FileText, Shield, Disc, Users, Download, Wifi, WifiOff
+  MessageSquare, FileText, Shield, Disc, Users, Download, Wifi, WifiOff, Copy, Check, Link as LinkIcon
 } from 'lucide-react';
 import { useWebRTC } from './useWebRTC';
 
@@ -71,7 +71,11 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
   const [panelOpen,      setPanelOpen]      = useState(true);
   const [transcript,     setTranscript]     = useState(MOCK_TRANSCRIPT);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const [copiedCode,     setCopiedCode]     = useState(false);
+  const [copiedLink,     setCopiedLink]     = useState(false);
+  const [showCodeMenu,   setShowCodeMenu]   = useState(false);
   const transcriptEndRef = useRef(null);
+  const codeMenuRef = useRef(null);
 
   const {
     localStream,
@@ -91,11 +95,25 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
     enabled: true,
   });
 
+  // Close code menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (codeMenuRef.current && !codeMenuRef.current.contains(event.target)) {
+        setShowCodeMenu(false);
+      }
+    };
+    if (showCodeMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showCodeMenu]);
+
   // Auto-scroll transcript
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [transcript]);
 
+<<<<<<< Updated upstream
   const [interimText, setInterimText] = useState('');
 
   // ── SPEECH RECOGNITION (LIVE TRANSCRIPT) ──
@@ -160,6 +178,18 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
     a.download = `transcript_${caseData?.id || 'hearing'}.txt`;
     a.click();
   };
+=======
+  // Simulate transcript lines when recording
+  useEffect(() => {
+    if (!isRecording) return;
+    let i = 0;
+    const iv = setInterval(() => {
+      if (i < LIVE_LINES.length) { setTranscript(p => [...p, LIVE_LINES[i]]); i++; }
+      else clearInterval(iv);
+    }, 4000);
+    return () => clearInterval(iv);
+  }, [isRecording]);
+>>>>>>> Stashed changes
 
   // Wire mic/camera toggles to real tracks
   const handleMicToggle = () => {
@@ -175,6 +205,19 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
   const handleRecordToggle = () => {
     if (isRecording) { stopRecording(); }
     else             { startRecording(); }
+  };
+
+  const copyMeetingCode = () => {
+    navigator.clipboard.writeText(roomId);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const copyMeetingLink = () => {
+    const link = `${window.location.origin}/hearing/${roomId}`;
+    navigator.clipboard.writeText(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
   };
 
   // Build participant tiles: local + remote peers
@@ -217,6 +260,94 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
         </div>
         <div className="lr-topbar-center">
           {isRecording && <div className="lr-rec-pill"><span className="lr-rec-dot" /> REC · LIVE</div>}
+          {roomId && (
+            <div style={{ position: 'relative' }} ref={codeMenuRef}>
+              <button 
+                onClick={() => setShowCodeMenu(!showCodeMenu)}
+                style={{ 
+                  background: 'rgba(224,32,32,0.15)', 
+                  border: '1px solid rgba(224,32,32,0.3)', 
+                  color: '#e02020', 
+                  padding: '0.4rem 0.9rem', 
+                  borderRadius: '4px', 
+                  fontFamily: 'monospace', 
+                  fontSize: '0.8rem', 
+                  fontWeight: '600', 
+                  cursor: 'pointer',
+                  letterSpacing: '0.1em',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  transition: 'all 0.2s'
+                }}
+                title="Meeting Code"
+              >
+                {roomId}
+                <Copy size={12} />
+              </button>
+              {showCodeMenu && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  marginTop: '0.5rem',
+                  background: '#1a1a1a',
+                  border: '1px solid #333',
+                  borderRadius: '6px',
+                  padding: '0.5rem',
+                  minWidth: '200px',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                  zIndex: 1000
+                }}>
+                  <div style={{ fontSize: '0.7rem', color: '#888', marginBottom: '0.5rem', textAlign: 'center' }}>SHARE MEETING</div>
+                  <button
+                    onClick={() => { copyMeetingCode(); setShowCodeMenu(false); }}
+                    style={{
+                      width: '100%',
+                      background: copiedCode ? '#81c995' : '#e02020',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '0.5rem',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      marginBottom: '0.4rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.4rem',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {copiedCode ? <><Check size={12} /> CODE COPIED</> : <><Copy size={12} /> COPY CODE</>}
+                  </button>
+                  <button
+                    onClick={() => { copyMeetingLink(); setShowCodeMenu(false); }}
+                    style={{
+                      width: '100%',
+                      background: copiedLink ? '#81c995' : 'rgba(224,32,32,0.2)',
+                      color: copiedLink ? '#fff' : '#e02020',
+                      border: '1px solid rgba(224,32,32,0.3)',
+                      padding: '0.5rem',
+                      borderRadius: '4px',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      fontWeight: '600',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.4rem',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    {copiedLink ? <><Check size={12} /> LINK COPIED</> : <><LinkIcon size={12} /> COPY LINK</>}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <div className="lr-topbar-right">
           {/* Connection status */}
@@ -226,7 +357,6 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
               : <WifiOff size={13} />}
             {STATUS_LABELS[connectionStatus]}
           </div>
-          {roomId && <div className="lr-room-pill">{roomId}</div>}
           <div className="lr-e2ee"><Shield size={13} /> E2EE</div>
         </div>
       </div>
@@ -291,6 +421,7 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
 
             <div className="lr-side-body">
               {activeTab === 'transcript' && (
+<<<<<<< Updated upstream
                 <div className="lr-transcript-container">
                   <div className="lr-transcript-header">
                     <span>LIVE_TRANSCRIPT_v2.0</span>
@@ -319,6 +450,22 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
                     <div ref={transcriptEndRef} />
                   </div>
                 </div>
+=======
+                <>
+                  {transcript.map((msg, i) => (
+                    <div key={i} className={`lr-msg ${msg.system ? 'lr-msg-system' : ''}`}>
+                      {!msg.system && <div className="lr-msg-speaker">{msg.speaker}</div>}
+                      <div className="lr-msg-text">{msg.text}</div>
+                    </div>
+                  ))}
+                  {isRecording && (
+                    <div className="lr-transcribing">
+                      <span className="lr-rec-dot" style={{ width: 6, height: 6 }} /> Transcribing live…
+                    </div>
+                  )}
+                  <div ref={transcriptEndRef} />
+                </>
+>>>>>>> Stashed changes
               )}
 
               {activeTab === 'docs' && (

@@ -1,8 +1,13 @@
+<<<<<<< Updated upstream
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Clock, XCircle, CheckCircle, ChevronRight, Copy, UserPlus } from 'lucide-react';
 import { addParticipant, subscribeToParticipantsByRoom, updateParticipantStatus } from '../../lib/firestoreHelpers';
 import { useAuth } from '../../context/AuthContext';
 
+=======
+import React, { useState } from 'react';
+import { ShieldCheck, Clock, XCircle, CheckCircle, ChevronRight, Copy, Check, Link as LinkIcon } from 'lucide-react';
+>>>>>>> Stashed changes
 
 const INITIAL_PARTICIPANTS = [
   { id: 'p1', name: 'Hon. Justice R. Vance', role: 'Judge',   status: 'verified' },
@@ -21,9 +26,28 @@ const STATUS_MAP = {
 };
 
 const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
+<<<<<<< Updated upstream
   const { user } = useAuth();
   const [participants, setParticipants] = useState([]);
   const [myParticipantId, setMyParticipantId] = useState(null);
+=======
+  const [participants, setParticipants] = useState(INITIAL_PARTICIPANTS);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const copyMeetingCode = () => {
+    navigator.clipboard.writeText(roomId);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const copyMeetingLink = () => {
+    const link = `${window.location.origin}/hearing/${roomId}`;
+    navigator.clipboard.writeText(link);
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+>>>>>>> Stashed changes
 
   // 1. Register self and listen to participants
   useEffect(() => {
@@ -88,27 +112,31 @@ const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
         <h2 className="vh-panel-title">{caseData?.name}</h2>
         <p className="vh-panel-sub">Room: {caseData?.room} &nbsp;|&nbsp; {caseData?.time}</p>
         {roomId && (
-          <div className="vh-meeting-share vh-share-prominent">
-            <div className="vh-share-header">
-              <div className="vh-share-label">SHARE_HEARING_LINK</div>
-              <div className="vh-status-pill vh-pill-code">ENTRY_VIA_CODE</div>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#888', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>
+              MEETING CODE
             </div>
-            <div className="vh-share-box">
-              <span className="vh-share-url">{window.location.origin}/hearing/{roomId}</span>
-              <div className="vh-share-actions">
-                <button 
-                  className="vh-copy-btn-large" 
-                  onClick={() => {
-                    navigator.clipboard.writeText(`${window.location.origin}/hearing/${roomId}`);
-                    alert('⚖️ MANDAMUS: Hearing Link Copied to Clipboard!');
-                  }}
-                  title="Copy Link"
-                >
-                  <Copy size={16} /> COPY_LINK
-                </button>
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(224,32,32,0.07)', border: '1px solid rgba(224,32,32,0.2)', padding: '0.7rem 1rem', borderRadius: '4px' }}>
+              <span style={{ fontFamily: 'monospace', fontSize: '1.1rem', color: '#e02020', fontWeight: '600', letterSpacing: '0.15em', flex: 1 }}>
+                {roomId}
+              </span>
+              <button 
+                onClick={copyMeetingCode}
+                style={{ background: copiedCode ? '#81c995' : '#e02020', color: '#fff', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '3px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.3rem', transition: 'all 0.2s' }}
+                title="Copy Code"
+              >
+                {copiedCode ? <><Check size={12} /> COPIED</> : <><Copy size={12} /> COPY</>}
+              </button>
             </div>
-            <p className="vh-share-hint">Send this link to other participants to join this hearing instantly.</p>
+            <button 
+              onClick={copyMeetingLink}
+              style={{ marginTop: '0.5rem', width: '100%', background: copiedLink ? '#81c995' : 'rgba(224,32,32,0.1)', color: copiedLink ? '#fff' : '#e02020', border: '1px solid rgba(224,32,32,0.3)', padding: '0.5rem', borderRadius: '3px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: '600', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', transition: 'all 0.2s' }}
+            >
+              {copiedLink ? <><Check size={13} /> LINK COPIED</> : <><LinkIcon size={13} /> COPY JOIN LINK</>}
+            </button>
+            <div style={{ marginTop: '0.6rem', fontSize: '0.7rem', color: '#666', textAlign: 'center' }}>
+              Share this code or link with participants to join
+            </div>
           </div>
         )}
 
