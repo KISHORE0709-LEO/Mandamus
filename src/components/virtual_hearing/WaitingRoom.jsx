@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, Clock, XCircle, CheckCircle, ChevronRight } from 'lucide-react';
+import { ShieldCheck, Clock, XCircle, CheckCircle, ChevronRight, Copy } from 'lucide-react';
 
 const INITIAL_PARTICIPANTS = [
   { id: 'p1', name: 'Hon. Justice R. Vance', role: 'Judge',   status: 'verified' },
@@ -35,8 +35,27 @@ const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
         <h2 className="vh-panel-title">{caseData?.name}</h2>
         <p className="vh-panel-sub">Room: {caseData?.room} &nbsp;|&nbsp; {caseData?.time}</p>
         {roomId && (
-          <div style={{ fontFamily: 'monospace', fontSize: '0.82rem', color: '#e02020', background: 'rgba(224,32,32,0.07)', border: '1px solid rgba(224,32,32,0.2)', padding: '0.4rem 0.9rem', marginBottom: '1rem', letterSpacing: '0.1em' }}>
-            🔗 ROOM ID: {roomId}
+          <div className="vh-meeting-share vh-share-prominent">
+            <div className="vh-share-header">
+              <div className="vh-share-label">SHARE_HEARING_LINK</div>
+              <div className="vh-status-pill vh-pill-code">ENTRY_VIA_CODE</div>
+            </div>
+            <div className="vh-share-box">
+              <span className="vh-share-url">{window.location.origin}/hearing/{roomId}</span>
+              <div className="vh-share-actions">
+                <button 
+                  className="vh-copy-btn-large" 
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/hearing/${roomId}`);
+                    alert('⚖️ MANDAMUS: Hearing Link Copied to Clipboard!');
+                  }}
+                  title="Copy Link"
+                >
+                  <Copy size={16} /> COPY_LINK
+                </button>
+              </div>
+            </div>
+            <p className="vh-share-hint">Send this link to other participants to join this hearing instantly.</p>
           </div>
         )}
 

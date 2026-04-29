@@ -104,6 +104,11 @@ function App() {
                     <Dashboard activeFeature={activeFeature} setActiveFeature={setActiveFeature} />
                   </ProtectedRoute>
                 } />
+                <Route path="/hearing/:roomId" element={
+                  <ProtectedRoute>
+                    <Dashboard activeFeature="virtual" setActiveFeature={setActiveFeature} />
+                  </ProtectedRoute>
+                } />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </div>

@@ -98,16 +98,59 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [transcript]);
 
-  // Simulate transcript lines when recording
+  // ── SPEECH RECOGNITION (LIVE TRANSCRIPT) ──
   useEffect(() => {
-    if (!isRecording) return;
-    let i = 0;
-    const iv = setInterval(() => {
-      if (i < LIVE_LINES.length) { setTranscript(p => [...p, LIVE_LINES[i]]); i++; }
-      else clearInterval(iv);
-    }, 4000);
-    return () => clearInterval(iv);
-  }, [isRecording]);
+    if (!('webkitSpeechRecognition' in window) || !isRecording) return;
+
+    const recognition = new window.webkitSpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-IN';
+
+    recognition.onresult = (event) => {
+      let interimTranscript = '';
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          const text = event.results[i][0].transcript;
+          const newEntry = { speaker: userName || role, text, timestamp: new Date().toLocaleTimeString() };
+          
+          // Add to local state
+          setTranscript(prev => [...prev, newEntry]);
+          
+          // BROADCAST to others (via WebRTC/Socket)
+          if (peers.length > 0) {
+            // This would normally go through the data channel or socket
+            // For now we simulate the local update
+          }
+          
+          // TRIGGER AI DETECTION (Mock for UI)
+          if (text.toLowerCase().includes('objection') || text.toLowerCase().includes('contradict')) {
+            setTranscript(prev => [...prev, { 
+              speaker: 'AI_COMMAND_CENTER', 
+              text: `⚠️ POTENTIAL INCONSISTENCY DETECTED: Statement contradicts Exhibit B (Digital Forensics Report).`, 
+              system: true,
+              type: 'alert' 
+            }]);
+          }
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+    };
+
+    recognition.start();
+    return () => recognition.stop();
+  }, [isRecording, userName, role]);
+
+  const handleDownloadTranscript = () => {
+    const text = transcript.map(m => `[${m.speaker}] ${m.text}`).join('\n');
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transcript_${caseData?.id || 'hearing'}.txt`;
+    a.click();
+  };
 
   // Wire mic/camera toggles to real tracks
   const handleMicToggle = () => {
@@ -239,20 +282,28 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
 
             <div className="lr-side-body">
               {activeTab === 'transcript' && (
-                <>
-                  {transcript.map((msg, i) => (
-                    <div key={i} className={`lr-msg ${msg.system ? 'lr-msg-system' : ''}`}>
-                      {!msg.system && <div className="lr-msg-speaker">{msg.speaker}</div>}
-                      <div className="lr-msg-text">{msg.text}</div>
-                    </div>
-                  ))}
-                  {isRecording && (
-                    <div className="lr-transcribing">
-                      <span className="lr-rec-dot" style={{ width: 6, height: 6 }} /> Transcribing live…
-                    </div>
-                  )}
-                  <div ref={transcriptEndRef} />
-                </>
+                <div className="lr-transcript-container">
+                  <div className="lr-transcript-header">
+                    <span>LIVE_TRANSCRIPT_v2.0</span>
+                    <button className="lr-transcript-dl" onClick={handleDownloadTranscript} title="Download Full Transcript">
+                      <Download size={14} /> DOWNLOAD
+                    </button>
+                  </div>
+                  <div className="lr-transcript-list">
+                    {transcript.map((msg, i) => (
+                      <div key={i} className={`lr-msg ${msg.system ? 'lr-msg-system' : ''} ${msg.type === 'alert' ? 'lr-msg-alert' : ''}`}>
+                        {!msg.system && <div className="lr-msg-speaker">{msg.speaker}</div>}
+                        <div className="lr-msg-text">{msg.text}</div>
+                      </div>
+                    ))}
+                    {isRecording && (
+                      <div className="lr-transcribing">
+                        <span className="lr-rec-dot" style={{ width: 6, height: 6 }} /> Listening and transcribing...
+                      </div>
+                    )}
+                    <div ref={transcriptEndRef} />
+                  </div>
+                </div>
               )}
 
               {activeTab === 'docs' && (

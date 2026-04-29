@@ -362,27 +362,37 @@ export default function Scheduler({ onTabChange }) {
                   )}
                   
                   {/* Meeting Code Section */}
-                  {m.roomId && (
-                    <div className="sc-meeting-code-section">
-                      <div className="sc-meeting-code-label">Meeting Code:</div>
-                      <div className="sc-meeting-code-box">
-                        <span className="sc-meeting-code">{m.roomId}</span>
+                  {(() => {
+                    const roomCode = m.roomId || (m.id ? m.id.substring(0, 10) : 'none');
+                    return (
+                      <div className="sc-meeting-code-section">
+                        <div className="sc-meeting-code-label">
+                          {m.roomId ? 'Meeting Code:' : 'Fallback Code (Legacy):'}
+                        </div>
+                        <div className="sc-meeting-code-box">
+                          <span className="sc-meeting-code">{roomCode}</span>
+                          <button 
+                            className="sc-copy-btn" 
+                            onClick={() => copyMeetingCode(roomCode)}
+                            title="Copy Code"
+                          >
+                            {copiedCode === roomCode ? <Check size={13} /> : <Copy size={13} />}
+                          </button>
+                        </div>
                         <button 
-                          className="sc-copy-btn" 
-                          onClick={() => copyMeetingCode(m.roomId)}
-                          title="Copy Code"
+                          className="sc-copy-link-btn" 
+                          onClick={() => copyMeetingLink(roomCode)}
                         >
-                          {copiedCode === m.roomId ? <Check size={13} /> : <Copy size={13} />}
+                          {copiedCode === `link-${roomCode}` ? '✓ Link Copied' : 'Copy Join Link'}
                         </button>
+                        {!m.roomId && (
+                          <div className="sc-legacy-hint">
+                            * This is a legacy hearing. Use the code above to join.
+                          </div>
+                        )}
                       </div>
-                      <button 
-                        className="sc-copy-link-btn" 
-                        onClick={() => copyMeetingLink(m.roomId)}
-                      >
-                        {copiedCode === `link-${m.roomId}` ? '✓ Link Copied' : 'Copy Join Link'}
-                      </button>
-                    </div>
-                  )}
+                    );
+                  })()}
                   
                   <button
                     className="sc-join-btn"

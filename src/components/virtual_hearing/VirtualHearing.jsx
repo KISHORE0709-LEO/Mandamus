@@ -16,13 +16,16 @@ const generateRoomId = () => {
   return `${seg(3)}-${seg(4)}-${seg(3)}`;
 };
 
+import { useParams } from 'react-router-dom';
+
 const VirtualHearing = () => {
+  const { roomId: urlRoomId } = useParams();
   const { role: authRole, user } = useAuth();
   const role = authRole || 'judge';
 
   const [stage,        setStage]        = useState('dashboard');
   const [selectedCase, setSelectedCase] = useState(null);
-  const [roomId,       setRoomId]       = useState(null);
+  const [roomId,       setRoomId]       = useState(urlRoomId || null);
   const [hearings,     setHearings]     = useState([]);
 
   // Load hearings from Firestore
@@ -33,6 +36,13 @@ const VirtualHearing = () => {
         .catch(err => console.error('Error loading hearings:', err));
     }
   }, [user]);
+
+  // Handle URL Room ID on mount
+  useEffect(() => {
+    if (urlRoomId) {
+      handleJoinByCode(urlRoomId);
+    }
+  }, [urlRoomId]);
 
   const handleCaseSelect = (c) => { 
     setSelectedCase(c); 
