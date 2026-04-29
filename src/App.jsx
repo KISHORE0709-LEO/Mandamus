@@ -41,9 +41,7 @@ const LandingPage = () => (
   </>
 );
 
-const Dashboard = () => {
-  const [activeFeature, setActiveFeature] = React.useState('summariser');
-
+const Dashboard = ({ activeFeature, setActiveFeature }) => {
   const renderContent = () => {
     switch (activeFeature) {
       case 'summariser':
@@ -74,12 +72,13 @@ const Dashboard = () => {
       <style>{`.dynamic-bg { display: none !important; }`}</style>
       <FeaturesNavbar onSelectFeature={setActiveFeature} activeFeature={activeFeature} />
       {renderContent()}
-      <MandamusGuide activeFeature={activeFeature} />
     </div>
   );
 };
 
 function App() {
+  const [activeFeature, setActiveFeature] = React.useState('summariser');
+
   return (
     <AuthProvider>
       <HistoryProvider>
@@ -102,12 +101,14 @@ function App() {
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/dashboard" element={
                   <ProtectedRoute>
-                    <Dashboard />
+                    <Dashboard activeFeature={activeFeature} setActiveFeature={setActiveFeature} />
                   </ProtectedRoute>
                 } />
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </div>
+            
+            <MandamusGuide activeFeature={activeFeature} />
           </div>
         </Router>
       </MandamusProvider>

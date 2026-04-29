@@ -1,8 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Spline from '@splinetool/react-spline';
 import './MandamusGuide.css';
 
 const guideMessages = {
+  // LANDING CONTEXTS
+  landing: {
+    title: "WELCOME_TO_MANDAMUS",
+    text: "I am your judicial intelligence assistant. We are here to accelerate justice. Scroll down to see how we solve the case pendency crisis.",
+    next: "Login to access the Intelligence Enclave."
+  },
+  login: {
+    title: "SECURE_ACCESS",
+    text: "Please enter your credentials. Our platform uses enterprise-grade encryption to protect sensitive legal data.",
+    next: "Accessing the dashboard..."
+  },
+  about: {
+    title: "OUR_MISSION",
+    text: "Mandamus is built on the 'Judge-in-the-Loop' philosophy. We augment human legal reasoning, we don't replace it.",
+    next: "Explore our Neural Architecture."
+  },
+  // DASHBOARD CONTEXTS
   summariser: {
     title: "NEURAL_SUMMARISER",
     text: "Welcome! Upload your case PDF here. My neural engine will distill it into a structured brief in under 60 seconds. Efficiency is justice.",
@@ -32,19 +50,26 @@ const guideMessages = {
 
 const MandamusGuide = ({ activeFeature }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const [message, setMessage] = useState(guideMessages.summariser);
+  const [message, setMessage] = useState(guideMessages.landing);
+  const location = useLocation();
 
   useEffect(() => {
-    // Proactive guidance on tab change
-    if (guideMessages[activeFeature]) {
-      setMessage(guideMessages[activeFeature]);
+    // Determine context based on route + activeFeature
+    let context = 'landing';
+    const path = location.pathname;
+
+    if (path === '/login') context = 'login';
+    else if (path === '/about') context = 'about';
+    else if (path === '/dashboard') context = activeFeature || 'summariser';
+
+    if (guideMessages[context]) {
+      setMessage(guideMessages[context]);
       setIsVisible(true);
       
-      // Auto-hide bubble after 8 seconds of inactivity
       const timer = setTimeout(() => setIsVisible(false), 8000);
       return () => clearTimeout(timer);
     }
-  }, [activeFeature]);
+  }, [location.pathname, activeFeature]);
 
   return (
     <div className="mandamus-guide-container">
