@@ -15,15 +15,39 @@ export const computeDiff = (oldStr = '', newStr = '') => {
       i++;
       j++;
     } else {
-      // Very basic diff logic for hackathon speed:
-      // If words don't match, we show a removal and an addition
-      if (i < oldWords.length) {
-        diff.push({ type: 'removed', value: oldWords[i] });
-        i++;
+      // Look ahead to see if we can find a match later in the strings (Resync)
+      let foundMatch = false;
+      for (let lookAhead = 1; lookAhead < 10; lookAhead++) {
+        if (i + lookAhead < oldWords.length && oldWords[i + lookAhead] === newWords[j]) {
+          // Found a match in the old string later, so everything in between was removed
+          for (let k = 0; k < lookAhead; k++) {
+            diff.push({ type: 'removed', value: oldWords[i + k] });
+          }
+          i += lookAhead;
+          foundMatch = true;
+          break;
+        }
+        if (j + lookAhead < newWords.length && oldWords[i] === newWords[j + lookAhead]) {
+          // Found a match in the new string later, so everything in between was added
+          for (let k = 0; k < lookAhead; k++) {
+            diff.push({ type: 'added', value: newWords[j + k] });
+          }
+          j += lookAhead;
+          foundMatch = true;
+          break;
+        }
       }
-      if (j < newWords.length) {
-        diff.push({ type: 'added', value: newWords[j] });
-        j++;
+
+      if (!foundMatch) {
+        // No match found in lookahead, treat as a direct replacement
+        if (i < oldWords.length) {
+          diff.push({ type: 'removed', value: oldWords[i] });
+          i++;
+        }
+        if (j < newWords.length) {
+          diff.push({ type: 'added', value: newWords[j] });
+          j++;
+        }
       }
     }
   }
