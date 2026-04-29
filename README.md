@@ -1,90 +1,99 @@
+# ⚖️ MANDAMUS: THE JUDICIAL INTELLIGENCE ENCLAVE
+
 <div align="center">
-  <img src="./public/Logo.png" alt="Mandamus Logo" width="100">
+  <img src="./public/Logo.png" alt="Mandamus Logo" width="160">
   <br/>
-  <h1>MANDAMUS</h1>
-  <strong>Judicial AI Platform | Justice Delayed is Justice Denied.</strong>
+  <h3><b>"Justice Delayed is Justice Denied."</b></h3>
+  <p><i>The next-generation command center for a modern, AI-accelerated judiciary.</i></p>
+  
+  [![Tech Stack](https://img.shields.io/badge/Stack-AWS_Bedrock_%7C_FastAPI_%7C_React-red?style=for-the-badge)](https://github.com/chv-sneha/Mandamus)
+  [![Security](https://img.shields.io/badge/Security-AES--256_Enclave-00ff00?style=for-the-badge)](https://github.com/chv-sneha/Mandamus)
+  [![Status](https://img.shields.io/badge/Status-Hackathon_Ready-blue?style=for-the-badge)](https://github.com/chv-sneha/Mandamus)
 </div>
 
-<br/>
+---
 
-## The Crisis
-India’s courts are overwhelmed. Every judge handles hundreds of cases concurrently with minimal to **zero** AI assistance.
-- **500+ pages** per case file, read manually every single time.
-- **1,80,000+ cases** pending for over 30 years without resolution.
-- **2%+ GDP** lost annually due to judicial delays drastically impacting businesses and individuals alike.
+## 🚩 THE CRISIS: JUDICIAL STAGNATION
 
-## The Solution
-**Mandamus** is a state-of-the-art, secure Judicial AI Platform that gives judges the exact tools they need to significantly reduce their massive workload, whilst ensuring the judge remains fully in control. *AI assists — judges decide.*
+The Indian legal system is currently facing an unprecedented "Processing Debt." The numbers are staggering:
 
-Our platform uses a Databricks-native enterprise-grade infrastructure to safely and immutably secure court data and accelerate judicial review workflows via natural language processing (NLP), Vector Searching, and Retrieval Augmented Generation (RAG).
+*   🔴 **5.1 CRORE+** cases are currently pending in Indian courts.
+*   🔴 **1,80,000+** cases have been stagnant for **over 30 years**.
+*   🔴 **2% GDP LOSS** annually due to judicial friction and case backlogs.
+*   🔴 **500+ PAGES** of manual reading required per case file before a single hearing.
 
 ---
 
-## 🏛️ Five Systems. One Mission.
-Every feature is carefully purpose-built to accelerate the judicial pipeline:
+## ⚡ THE SOLUTION: MANDAMUS
 
-### 01. Smart Case Summariser
-Instead of manually processing 500-page charge sheets, FIRs, and witness statements, our AI condenses vast case archives into a readable **1-page brief in under 60 seconds**. (Powered by OCR + BART/Pegasus NLP models).
+**Mandamus** isn't just an app; it's a **Forensic Intelligence Layer** that sits between a judge and a mountain of data. We don't replace the judge; we give them **Exoskeletal Intelligence** to process cases at 10x speed with 100% security.
 
-### 02. Intelligent Precedent Finder
-Semantic vector searches across lakhs of Indian judgments. Utilizing **Sentence Transformers**, judges receive the Top 5 most contextually relevant past cases in under 15 seconds, complete with similarity matching scores and outcome summaries.
+### 🏛️ CORE INTELLIGENCE MODULES
 
-### 03. Judgment Draft Generator
-A secure RAG pipeline meshes the case summary, precedents, and the IPC/CrPC into a structured draft (Facts &rarr; Arguments &rarr; Legal Analysis &rarr; Order). Routine drafting time is reduced by up to 80%.
+#### 01. NEURAL SUMMARISER (AES-256 SECURE)
+> *Process 500 pages in 60 seconds.*  
+Transforms massive FIRs, charge sheets, and witness statements into a high-fidelity **1-page intelligence brief**.
+*   **Tech**: AWS Bedrock (Nova Pro) + OCR Pipeline.
+*   **Output**: Facts, Flagged Statutes, and Evidence Metadata.
 
-### 04. Smart Hearing Scheduler
-Directly interfaces with NJDG data to analyze case readiness (document completeness, party notifications). Hearings are only scheduled if a case reaches a 100% readiness threshold, intelligently eliminating unnecessary adjournments.
+#### 02. RAG-DRIVEN PRECEDENT FINDER
+> *Lakhs of judgments. 15 seconds search.*  
+Semantic vector search that finds contextually similar cases (Supreme/High Court) with **Similarity Matching Scores**.
+*   **Tech**: Vector Embeddings + RAG (Retrieval Augmented Generation).
 
-### 05. Secure Virtual Hearing + Biometric Verification
-A completely integrated and secured WebRTC virtual courtroom. Entry requires facial recognition and voice biometric verification. AI liveness detection entirely prevents spoofing. 
+#### 03. DRAFT COMMAND CENTER (VERSION HISTORY)
+> *Structured drafting with a safety net.*  
+Generates legally sound petitions and judgments while tracking every edit with an **Immutable Judicial Audit Trail (IJAT)**.
+*   **Feature**: Word-level **Visual Diff Viewer** (Red/Green) for forensic tracking of changes.
 
----
-
-## ⚙️ Architecture: How Mandamus Works
-
-1. **Ingest**
-   Case files are ingested via Auto Loader securely into a **Delta Lake**. High-accuracy OCR seamlessly converts scanned PDFs into machine-readable text.
-2. **Analyse**
-   Specialized NLP models summarize documents while Vector embeddings retrieve semantically similar precedents at scale.
-3. **Generate**
-   Our RAG pipeline constructs detailed, structured drafts along with strict confidence scorings and legal citations.
-4. **Review**
-   We do not replace judges. The judge reviews, edits, and approves the findings. An immutable audit trail is logged. 
+#### 04. SMART SCHEDULER & VIRTUAL ENCLAVE
+> *Eliminate unnecessary adjournments.*  
+Predicts case readiness and hosts secure, real-time WebRTC hearings with **Integrated Socket.io Signaling**.
 
 ---
 
-## 🚀 Tech Stack
+## 🛠️ THE ARCHITECTURE
 
-**Frontend Interface**:
-- React 18 (Vite)
-- Custom CSS (Glassmorphism, CSS Variables, Hardware-Accelerated hardware animations)
-- IntersectionObserver API (zero-dependency scroll animations)
-
-**Backend / AI (Conceptualized Architecture)**:
-- **Storage**: AWS Simple Storage Service (AWS S3) (Scalable to 25,000+ judges / 55M+ records)
-- **Compute**: Apache Spark (Distributed computing)
-- **Natural Language**: Spark NLP, Sentence Transformers, BART/Pegasus Models
-- **Search**: Databricks Vector Search
-- **Governance**: Unity Catalog & MLflow
-
----
-
-## 💻 Local Development
-
-### Prerequisites
-Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
-
-### Installation
-1. Clone this repository to your local machine.
-2. Open a terminal and navigate to the root directory `Mandamus/`.
-3. Install package dependencies:
-   ```bash
-   npm install
-   ```
-
-### Running the Platform
-Simply boot up the Vite development server:
-```bash
-npm run dev
+```mermaid
+graph TD
+    A[Raw Case Files] -->|OCR Scan| B(Text Extraction Enclave)
+    B --> C{Mandamus Intelligence Layer}
+    C -->|AWS Bedrock| D[Neural Summary]
+    C -->|Vector Search| E[Precedent Retrieval]
+    D & E --> F[Draft Command Center]
+    F -->|IJAT| G[Version History Stack]
+    G --> H[Final Judicial Approval]
+    H --> I[Automated Filing]
 ```
-Navigate to the provided localhost URL (typically `http://localhost:5173/`) in your browser to experience the landing environment.
+
+---
+
+## 🏗️ TECH STACK ("THE SHIT WE USED")
+
+| Layer | Technology |
+| :--- | :--- |
+| **Generative AI** | **AWS Bedrock (Amazon Nova Pro v1:0)** |
+| **Backend API** | **FastAPI (Python 3.11)** |
+| **Frontend UI** | **React 18 + Vite (Neo-Brutalist Styling)** |
+| **Real-time** | **Socket.io (Signaling Engine)** |
+| **Persistence** | **Firebase / Firestore / S3** |
+| **Communication** | **WebRTC (Virtual Courtroom Enclave)** |
+
+---
+
+## 🚀 DEPLOYMENT & SETUP
+
+### Backend (Render/Railway)
+1. Set up `.env` with `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_REGION`.
+2. Run: `pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000`
+
+### Frontend (Vercel)
+1. Set `VITE_API_URL` to your backend URL.
+2. Run: `npm install && npm run dev`
+
+---
+
+<div align="center">
+  <p>Built with ❤️ by the Mandamus Team for the future of Justice.</p>
+  <b>"Accelerating Justice. Ensuring Integrity."</b>
+</div>
