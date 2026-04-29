@@ -113,7 +113,6 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
     transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [transcript]);
 
-<<<<<<< Updated upstream
   const [interimText, setInterimText] = useState('');
 
   // ── SPEECH RECOGNITION (LIVE TRANSCRIPT) ──
@@ -178,18 +177,6 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
     a.download = `transcript_${caseData?.id || 'hearing'}.txt`;
     a.click();
   };
-=======
-  // Simulate transcript lines when recording
-  useEffect(() => {
-    if (!isRecording) return;
-    let i = 0;
-    const iv = setInterval(() => {
-      if (i < LIVE_LINES.length) { setTranscript(p => [...p, LIVE_LINES[i]]); i++; }
-      else clearInterval(iv);
-    }, 4000);
-    return () => clearInterval(iv);
-  }, [isRecording]);
->>>>>>> Stashed changes
 
   // Wire mic/camera toggles to real tracks
   const handleMicToggle = () => {
@@ -421,7 +408,6 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
 
             <div className="lr-side-body">
               {activeTab === 'transcript' && (
-<<<<<<< Updated upstream
                 <div className="lr-transcript-container">
                   <div className="lr-transcript-header">
                     <span>LIVE_TRANSCRIPT_v2.0</span>
@@ -450,22 +436,6 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
                     <div ref={transcriptEndRef} />
                   </div>
                 </div>
-=======
-                <>
-                  {transcript.map((msg, i) => (
-                    <div key={i} className={`lr-msg ${msg.system ? 'lr-msg-system' : ''}`}>
-                      {!msg.system && <div className="lr-msg-speaker">{msg.speaker}</div>}
-                      <div className="lr-msg-text">{msg.text}</div>
-                    </div>
-                  ))}
-                  {isRecording && (
-                    <div className="lr-transcribing">
-                      <span className="lr-rec-dot" style={{ width: 6, height: 6 }} /> Transcribing live…
-                    </div>
-                  )}
-                  <div ref={transcriptEndRef} />
-                </>
->>>>>>> Stashed changes
               )}
 
               {activeTab === 'docs' && (

@@ -1,13 +1,7 @@
-<<<<<<< Updated upstream
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Clock, XCircle, CheckCircle, ChevronRight, Copy, UserPlus } from 'lucide-react';
+import { ShieldCheck, Clock, XCircle, CheckCircle, ChevronRight, Copy, UserPlus, Check, Link as LinkIcon } from 'lucide-react';
 import { addParticipant, subscribeToParticipantsByRoom, updateParticipantStatus } from '../../lib/firestoreHelpers';
 import { useAuth } from '../../context/AuthContext';
-
-=======
-import React, { useState } from 'react';
-import { ShieldCheck, Clock, XCircle, CheckCircle, ChevronRight, Copy, Check, Link as LinkIcon } from 'lucide-react';
->>>>>>> Stashed changes
 
 const INITIAL_PARTICIPANTS = [
   { id: 'p1', name: 'Hon. Justice R. Vance', role: 'Judge',   status: 'verified' },
@@ -26,12 +20,9 @@ const STATUS_MAP = {
 };
 
 const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
-<<<<<<< Updated upstream
   const { user } = useAuth();
   const [participants, setParticipants] = useState([]);
   const [myParticipantId, setMyParticipantId] = useState(null);
-=======
-  const [participants, setParticipants] = useState(INITIAL_PARTICIPANTS);
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
 
@@ -47,7 +38,6 @@ const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2000);
   };
->>>>>>> Stashed changes
 
   // 1. Register self and listen to participants
   useEffect(() => {
