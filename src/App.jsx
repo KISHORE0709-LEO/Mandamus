@@ -12,6 +12,7 @@ import PrecedentFinder from './components/PrecedentFinder';
 import DraftGenerator from './components/DraftGenerator';
 import Scheduler from './components/Scheduler';
 import ProfilePage from './components/ProfilePage';
+import MandamusGuide from './components/MandamusGuide';
 import FeaturesNavbar from './components/FeaturesNavbar';
 import HowItWorksPage from './pages/HowItWorksPage';
 import AboutPage from './pages/AboutPage';
@@ -73,6 +74,7 @@ const Dashboard = () => {
       <style>{`.dynamic-bg { display: none !important; }`}</style>
       <FeaturesNavbar onSelectFeature={setActiveFeature} activeFeature={activeFeature} />
       {renderContent()}
+      <MandamusGuide activeFeature={activeFeature} />
     </div>
   );
 };
