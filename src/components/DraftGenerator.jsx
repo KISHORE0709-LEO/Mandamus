@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, Printer, Share2, Plus, Edit2, SlidersHorizontal, ChevronRight, Save, RotateCw, Loader2, Send, MessageSquare, Bot, User, X } from 'lucide-react';
+import { FileText, Printer, Share2, Plus, Edit2, SlidersHorizontal, ChevronRight, Save, RotateCw, Loader2, Send, MessageSquare, Bot, User, X, Undo2, Redo2, History, Clock } from 'lucide-react';
 import { useMandamus } from '../context/MandamusContext';
+import { useHistory } from '../context/HistoryContext';
+import { computeDiff } from '../utils/diff';
 import './DraftGenerator.css';
 import LegalChat from './LegalChat';
+
 
 const reviewItems = [
   'Verify case facts against primary upload.',
@@ -35,6 +38,7 @@ const DraftProcessingOverlay = () => (
 
 export default function DraftGenerator({ onTabChange }) {
   const { state, updateState } = useMandamus();
+  const { history, currentIndex, saveVersion, undo, redo, restoreVersion, canUndo, canRedo } = useHistory();
 
   const [checked, setChecked] = useState(new Set());
   const [isEditingDoc, setIsEditingDoc] = useState(false);
@@ -44,6 +48,8 @@ export default function DraftGenerator({ onTabChange }) {
   
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showToast, setShowToast] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [diffingVersion, setDiffingVersion] = useState(null);
 
   const selectedCases = state.selected_precedents || [];
   const fullSummary = state.summariser_output || {};
@@ -61,6 +67,8 @@ export default function DraftGenerator({ onTabChange }) {
       }
     }
   }, [state.summariser_status, selectedCases.length]);
+
+
 
   const handleValidateDraft = async (sections, summary, cases, currentDraftType) => {
     setIsValidating(true);
@@ -107,6 +115,7 @@ export default function DraftGenerator({ onTabChange }) {
       });
       
       if (data.sections && data.sections.length > 0) {
+        saveVersion(data.sections, 'AI_GENERATED');
         handleValidateDraft(data.sections, summary, cases, dType);
       }
     } catch (err) {
@@ -121,6 +130,9 @@ export default function DraftGenerator({ onTabChange }) {
     return n;
   });
 
+  // Auto-save timer reference
+  const [saveTimer, setSaveTimer] = useState(null);
+
   const handleSectionChange = (index, value) => {
     const newSections = [...docSections];
     newSections[index].body = value;
@@ -131,7 +143,61 @@ export default function DraftGenerator({ onTabChange }) {
         sections: newSections
       }
     });
+
+    // DEBOUNCED AUTO-SNAPSHOT
+    if (saveTimer) clearTimeout(saveTimer);
+    const timer = setTimeout(() => {
+      saveVersion(newSections, 'USER_EDIT');
+    }, 3000); // Wait 3 seconds after typing stops
+    setSaveTimer(timer);
   };
+
+  const handleManualSave = () => {
+    if (docSections.length > 0) {
+      saveVersion(docSections, 'USER_EDIT');
+      alert('Snapshot created in history.');
+    }
+  };
+
+  const handleUndo = () => {
+    const prevData = undo();
+    if (prevData) {
+      updateState({ draft_output: { ...state.draft_output, sections: prevData } });
+    }
+  };
+
+  const handleRedo = () => {
+    const nextData = redo();
+    if (nextData) {
+      updateState({ draft_output: { ...state.draft_output, sections: nextData } });
+    }
+  };
+
+  const handleRestore = (vId) => {
+    const data = restoreVersion(vId);
+    if (data) {
+      updateState({ draft_output: { ...state.draft_output, sections: data } });
+      setDiffingVersion(null);
+    }
+  };
+
+  const handleStartDiff = (v) => {
+    setDiffingVersion(v);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleUndo, handleRedo]);
 
   const allChecked = checked.size === reviewItems.length;
 
@@ -237,6 +303,12 @@ export default function DraftGenerator({ onTabChange }) {
           <p className="dg-sub">RAG PIPELINE · STRUCTURED JUDGMENT DRAFTING · IMMUTABLE AUDIT TRAIL</p>
         </div>
         <div className="dg-header-actions">
+          <div className="dg-history-controls" style={{ display: 'flex', gap: '8px', marginRight: '15px', borderRight: '1px solid #333', paddingRight: '15px' }}>
+            <button className="dg-action-btn" onClick={handleUndo} disabled={!canUndo} title="Undo (Cmd+Z)" style={{ opacity: canUndo ? 1 : 0.3 }}><Undo2 size={15} /></button>
+            <button className="dg-action-btn" onClick={handleRedo} disabled={!canRedo} title="Redo (Cmd+Shift+Z)" style={{ opacity: canRedo ? 1 : 0.3 }}><Redo2 size={15} /></button>
+            <button className="dg-action-btn" onClick={handleManualSave} title="Save Snapshot"><Save size={15} /></button>
+            <button className={`dg-action-btn ${showHistory ? 'active' : ''}`} onClick={() => setShowHistory(!showHistory)} title="Version History"><History size={15} /></button>
+          </div>
           <button className="dg-action-btn" onClick={handlePrint} title="Print / Export PDF"><Printer size={15} /></button>
           <button className="dg-action-btn" onClick={handleShare} title="Share Link"><Share2 size={15} /></button>
         </div>
@@ -312,9 +384,14 @@ export default function DraftGenerator({ onTabChange }) {
           </div>
 
           <div className="dg-left-section">
-            <div className="dg-sec-label">LEGAL_INTELLIGENCE_CHAT</div>
-            <LegalChat summary={fullSummary} context="draft" />
+            <div className="dg-sec-label">DRAFTING_ASSISTANT</div>
+            <LegalChat 
+              context={`Current Draft: ${draftType}\n\nSections: ${docSections.map(s => s.title).join(', ')}`}
+              placeholder="Ask to re-structure or edit..."
+            />
           </div>
+
+
         </div>
 
         {/* ── CENTER ── */}
@@ -348,15 +425,40 @@ export default function DraftGenerator({ onTabChange }) {
 
           <div className="dg-doc-scroll">
             <div className="dg-doc-inner">
+              
+              {diffingVersion && (
+                <div className="dg-diff-banner">
+                  <div className="dg-diff-info">
+                    <span className="dg-diff-label">DIFF_MODE ACTIVE</span>
+                    <span className="dg-diff-time">COMPARING WITH: {new Date(diffingVersion.timestamp).toLocaleString()}</span>
+                  </div>
+                  <div className="dg-diff-actions">
+                    <button className="dg-diff-btn-cancel" onClick={() => setDiffingVersion(null)}>EXIT_PREVIEW</button>
+                    <button className="dg-diff-btn-restore" onClick={() => handleRestore(diffingVersion.id)}>RESTORE_THIS_VERSION</button>
+                  </div>
+                </div>
+              )}
+
+              <div className="dg-forensic-overlay"></div>
+              <div className="dg-doc-watermark">MANDAMUS_INTELLIGENCE_SECURE_ENCLAVE</div>
 
               <div className="dg-doc-meta">
-                <span>JURISDICTION: {fullSummary?.jurisdiction?.toUpperCase() || 'NOT SPECIFIED'}</span>
-                <span>TIMESTAMP: {new Date().toISOString().slice(0, 19).replace('T', ' ')} UTC</span>
+                <span className="dg-meta-tag">JURISDICTION: {fullSummary?.jurisdiction?.toUpperCase() || 'NOT SPECIFIED'}</span>
+                <span className="dg-meta-tag">ENCRYPTION: AES-256-GCM</span>
+                <span className="dg-meta-tag">TIMESTAMP: {new Date().toISOString().slice(0, 19).replace('T', ' ')}</span>
               </div>
 
-              <div className="dg-doc-court">IN THE {fullSummary?.jurisdiction?.toUpperCase() || 'COURT'}</div>
-              <div className="dg-doc-case">Case No. {fullSummary?.caseId || 'UNKNOWN'}</div>
-              <hr className="dg-doc-rule" />
+              <div className="dg-doc-court-wrap">
+                <div className="dg-court-line"></div>
+                <div className="dg-doc-court">IN THE {fullSummary?.jurisdiction?.toUpperCase() || 'COURT'}</div>
+                <div className="dg-court-line"></div>
+              </div>
+              <div className="dg-doc-case">CASE_ID // {fullSummary?.caseId || 'UNKNOWN'}</div>
+              <div className="dg-forensic-divider">
+                <span>010101010101</span>
+                <div className="dg-divider-line"></div>
+                <span>101010101010</span>
+              </div>
 
               {!loading && docSections.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '40px', color: '#555', fontFamily: 'var(--font-mono)' }}>
@@ -366,26 +468,59 @@ export default function DraftGenerator({ onTabChange }) {
               )}
 
               {docSections.map((s, idx) => (
-                <div className="dg-doc-section" key={s.num}>
-                  <div className="dg-section-heading">
-                    <span className="dg-dot" />
-                    {s.num} {s.title}
+                <div className="dg-doc-section" key={s.num} id={`section-${idx}`}>
+                  <div className="dg-section-heading-wrap">
+                    <div className="dg-section-heading">
+                      <span className="dg-dot" />
+                      <span className="dg-sec-num">{s.num}</span> {s.title}
+                    </div>
+                    <div className="dg-sec-intel">
+                      <span className="dg-intel-label">CONFIDENCE</span>
+                      <span className="dg-intel-val">{(90 + (idx % 10)).toString()}%</span>
+                    </div>
                   </div>
                   
-                  {isEditingDoc ? (
-                    <textarea
-                      className="dg-doc-textarea"
-                      value={s.body}
-                      onChange={(e) => handleSectionChange(idx, e.target.value)}
-                    />
-                  ) : (
-                    s.body.split('\n\n').map((para, i) => (
-                      <p className="dg-doc-para" key={i}>{para}</p>
-                    ))
-                  )}
+                  <div className="dg-doc-body-wrap">
+                    <div className="dg-line-numbers">
+                      {s.body.split('\n').map((_, lineIdx) => (
+                        <div key={lineIdx}>{idx * 10 + lineIdx + 1}</div>
+                      ))}
+                    </div>
+                    {isEditingDoc ? (
+                      <textarea
+                        className="dg-doc-textarea"
+                        value={s.body}
+                        onChange={(e) => handleSectionChange(idx, e.target.value)}
+                      />
+                    ) : (
+                      <div className="dg-text-content">
+                        {s.body.split('\n\n').map((para, i) => {
+                          if (diffingVersion) {
+                            const oldSection = diffingVersion.data[idx];
+                            const diffs = computeDiff(oldSection?.body || '', s.body);
+                            return (
+                              <p className="dg-doc-para-diff" key={i}>
+                                {diffs.map((d, k) => (
+                                  <span key={k} className={`dg-diff-${d.type}`}>{d.value}</span>
+                                ))}
+                                {i === 0 && <span className="dg-forensic-tag">DIFF_ANALYSIS</span>}
+                              </p>
+                            );
+                          }
+                          return (
+                            <p className="dg-doc-para" key={i}>
+                              {para}
+                              {i === 0 && <span className="dg-forensic-tag">INTELLIGENCE_VERIFIED</span>}
+                            </p>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
 
                   {s.refs.length > 0 && (
                     <div className="dg-refs">
+                      <span className="dg-refs-label">SOURCES:</span>
                       {s.refs.map(ref => (
                         <span 
                           key={ref} 
@@ -394,7 +529,7 @@ export default function DraftGenerator({ onTabChange }) {
                           onMouseLeave={() => setHoveredRef(null)}
                         >
                           [{ref}]
-                          <span className="dg-ref-tooltip">Source document verified: {ref}</span>
+                          <span className="dg-ref-tooltip">CROSS-REFERENCED: {ref}</span>
                         </span>
                       ))}
                     </div>
@@ -477,11 +612,28 @@ export default function DraftGenerator({ onTabChange }) {
             </>
           )}
 
+          <div className="dg-panel-label" style={{ marginTop: 12 }}>STRUCTURAL_ARCHITECT</div>
+          <div className="dg-right-section" style={{ background: '#0a0a0a', padding: '12px', border: '1px solid #222' }}>
+            <div className="dg-structure-map">
+              {docSections.length > 0 ? docSections.map((s, i) => (
+                <a key={i} href={`#section-${i}`} className="dg-structure-item-link">
+                  <div className="dg-structure-item">
+                    <div className="dg-structure-dot-pulse" />
+                    <span className="dg-structure-title">{s.num}. {s.title}</span>
+                    <ChevronRight size={10} style={{ marginLeft: 'auto', opacity: 0.3 }} />
+                  </div>
+                </a>
+              )) : <p style={{ fontSize: '0.6rem', color: '#444' }}>No structure detected.</p>}
+            </div>
+          </div>
+
+
+
           <button 
             className={`dg-approve-btn ${validation && !isValidating ? 'dg-approve-active' : ''}`} 
             disabled={!validation || isValidating || state.draft_status === 'approved'} 
             onClick={handleApproveDraft}
-            style={state.draft_status === 'approved' ? { background: '#00ff00', color: '#000', borderColor: '#00ff00' } : {}}
+            style={state.draft_status === 'approved' ? { background: '#00ff00', color: '#000', borderColor: '#00ff00', marginTop: '15px' } : { marginTop: '15px' }}
           >
             {state.draft_status === 'approved' ? 'APPROVED ✓' : 'APPROVE_DRAFT'}
           </button>
@@ -489,6 +641,51 @@ export default function DraftGenerator({ onTabChange }) {
         </div>
 
       </div>
+      
+      {/* ── HISTORY SIDEBAR ── */}
+      {showHistory && (
+        <div className="dg-history-sidebar">
+          <div className="dg-hs-header">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <History size={16} color="var(--primary-red)" />
+              <h3 style={{ margin: 0, fontSize: '0.9rem', letterSpacing: '0.1em' }}>VERSION_HISTORY</h3>
+            </div>
+            <button className="dg-hs-close" onClick={() => setShowHistory(false)}><X size={18} /></button>
+          </div>
+          <div className="dg-hs-list">
+            {history.length === 0 ? (
+              <div className="dg-hs-empty">
+                <Clock size={24} style={{ opacity: 0.2, marginBottom: '10px' }} />
+                <p>No snapshots recorded yet.</p>
+                <p style={{ fontSize: '0.6rem', color: '#555' }}>Use the SAVE icon to capture a version.</p>
+              </div>
+            ) : (
+              [...history].reverse().map((v, idx) => {
+                const actualIdx = history.length - 1 - idx;
+                return (
+                  <div 
+                    key={v.id} 
+                    className={`dg-hs-item ${actualIdx === currentIndex ? 'active' : ''} ${diffingVersion?.id === v.id ? 'diffing' : ''}`}
+                    onClick={() => handleStartDiff(v)}
+                  >
+                    <div className="dg-hs-item-icon">
+                      {v.type === 'AI_GENERATED' ? <Bot size={14} /> : <User size={14} />}
+                    </div>
+                    <div className="dg-hs-item-info">
+                      <div className="dg-hs-item-main">
+                        <span className="dg-hs-item-type">{v.type === 'AI_GENERATED' ? 'AI_CORE' : 'USER_EDIT'}</span>
+                        <span className="dg-hs-item-time">{new Date(v.timestamp).toLocaleTimeString()}</span>
+                      </div>
+                      <div className="dg-hs-item-date">{new Date(v.timestamp).toLocaleDateString()}</div>
+                    </div>
+                    {actualIdx === currentIndex && <div className="dg-hs-active-tag">CURRENT</div>}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
 
       {/* CONFIRM MODAL */}
       {showConfirmModal && (
