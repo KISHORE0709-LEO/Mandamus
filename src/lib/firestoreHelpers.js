@@ -94,6 +94,12 @@ export const getHearingsByJudge = async (judgeId) => {
   });
 };
 
+export const getHearingByRoomId = async (roomId) => {
+  const q = query(collection(db, 'hearings'), where('roomId', '==', roomId));
+  const snapshot = await getDocs(q);
+  return snapshot.empty ? null : { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
+};
+
 export const updateHearing = async (hearingId, updates) => {
   await updateDoc(doc(db, 'hearings', hearingId), updates);
 };

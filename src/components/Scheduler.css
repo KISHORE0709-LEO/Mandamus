@@ -312,3 +312,76 @@
   .sc-layout { grid-template-columns: 1fr; }
   .sc-row-2 { grid-template-columns: 1fr; }
 }
+
+/* ── MEETING CODE SECTION ── */
+.sc-meeting-code-section {
+  background: #0d0d0d;
+  border: 1px solid #1e1e1e;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sc-meeting-code-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: #555;
+  letter-spacing: 0.08em;
+}
+
+.sc-meeting-code-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #080808;
+  border: 1px solid #2a2a2a;
+  padding: 8px 12px;
+}
+
+.sc-meeting-code {
+  flex: 1;
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #e02020;
+  letter-spacing: 0.1em;
+}
+
+.sc-copy-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: #666;
+  padding: 4px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.sc-copy-btn:hover {
+  border-color: #e02020;
+  color: #e02020;
+}
+
+.sc-copy-link-btn {
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  color: #888;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.sc-copy-link-btn:hover {
+  background: #1a1a1a;
+  border-color: #444;
+  color: #ccc;
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, FileText, Plus, CheckCircle2, ChevronRight, Download, Trash2, Paperclip } from 'lucide-react';
+import { Calendar, Clock, FileText, Plus, CheckCircle2, ChevronRight, Download, Trash2, Paperclip, Copy, Check } from 'lucide-react';
 import { useMandamus } from '../context/MandamusContext';
 import { useAuth } from '../context/AuthContext';
 import { createHearing, getHearingsByJudge, deleteHearing } from '../lib/firestoreHelpers';
@@ -24,6 +24,12 @@ function buildAgenda(state) {
   return lines.join('\n');
 }
 
+// Generate Google Meet-style meeting code
+function generateMeetingCode() {
+  const seg = (n) => Math.random().toString(36).substring(2, 2 + n);
+  return `${seg(3)}-${seg(4)}-${seg(3)}`;
+}
+
 export default function Scheduler({ onTabChange }) {
   const { state, updateState } = useMandamus();
   const { user } = useAuth();
@@ -32,6 +38,7 @@ export default function Scheduler({ onTabChange }) {
 
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [copiedCode, setCopiedCode] = useState(null);
 
   const [form, setForm] = useState({
     title: summary.caseName ? `Hearing — ${summary.caseName}` : '',
@@ -92,6 +99,8 @@ export default function Scheduler({ onTabChange }) {
     }
 
     try {
+      const meetingCode = generateMeetingCode();
+      
       const hearingData = {
         caseId: state.case_id || summary.caseId || 'CASE-' + Date.now(),
         caseName: form.title,
@@ -104,7 +113,8 @@ export default function Scheduler({ onTabChange }) {
         agenda: form.agenda,
         draftAttached: form.attachDraft && hasDraft,
         participants: [user.uid],
-        status: 'scheduled'
+        status: 'scheduled',
+        roomId: meetingCode  // Store meeting code as roomId
       };
 
       await createHearing(hearingData);
@@ -163,6 +173,19 @@ export default function Scheduler({ onTabChange }) {
   const resetForm = () => {
     setSubmitted(false);
     setForm(f => ({ ...f, date: todayStr, time: '10:00' }));
+  };
+
+  const copyMeetingCode = (code) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  const copyMeetingLink = (code) => {
+    const link = `${window.location.origin}/hearing/${code}`;
+    navigator.clipboard.writeText(link);
+    setCopiedCode(`link-${code}`);
+    setTimeout(() => setCopiedCode(null), 2000);
   };
 
   return (
@@ -337,6 +360,30 @@ export default function Scheduler({ onTabChange }) {
                   {m.draftAttached && (
                     <div className="sc-draft-badge"><Paperclip size={11} /> Draft attached</div>
                   )}
+                  
+                  {/* Meeting Code Section */}
+                  {m.roomId && (
+                    <div className="sc-meeting-code-section">
+                      <div className="sc-meeting-code-label">Meeting Code:</div>
+                      <div className="sc-meeting-code-box">
+                        <span className="sc-meeting-code">{m.roomId}</span>
+                        <button 
+                          className="sc-copy-btn" 
+                          onClick={() => copyMeetingCode(m.roomId)}
+                          title="Copy Code"
+                        >
+                          {copiedCode === m.roomId ? <Check size={13} /> : <Copy size={13} />}
+                        </button>
+                      </div>
+                      <button 
+                        className="sc-copy-link-btn" 
+                        onClick={() => copyMeetingLink(m.roomId)}
+                      >
+                        {copiedCode === `link-${m.roomId}` ? '✓ Link Copied' : 'Copy Join Link'}
+                      </button>
+                    </div>
+                  )}
+                  
                   <button
                     className="sc-join-btn"
                     onClick={() => onTabChange && onTabChange('virtual')}

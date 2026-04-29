@@ -44,7 +44,8 @@ const Dashboard = ({ role, onCaseSelect }) => {
         .then(hearings => {
           // Transform Firestore hearings to match expected format
           const transformed = hearings.map((h, idx) => ({
-            id: h.caseId || h.id,
+            id: h.id,  // Use Firestore document ID for unique key
+            caseId: h.caseId,
             name: h.caseName || 'Untitled Case',
             time: h.scheduledTime || '10:00 AM',
             room: `COURT-${Math.floor(Math.random() * 20) + 1}${String.fromCharCode(65 + Math.floor(Math.random() * 3))}`,
@@ -52,6 +53,7 @@ const Dashboard = ({ role, onCaseSelect }) => {
             date: h.scheduledDate ? new Date(h.scheduledDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBD',
             type: h.type?.includes('Criminal') ? 'Criminal' : h.type?.includes('Civil') ? 'Civil' : 'Commercial',
             hearingId: h.id,
+            roomId: h.roomId,
             parties: h.parties,
             agenda: h.agenda,
             draftAttached: h.draftAttached
@@ -129,7 +131,7 @@ const Dashboard = ({ role, onCaseSelect }) => {
                 {/* Case */}
                 <div className="vhd-col-case">
                   <div className="vhd-case-top">
-                    <span className="vhd-case-id">{c.id}</span>
+                    <span className="vhd-case-id">{c.caseId || c.id}</span>
                     <span className="vhd-type-tag" style={{ color: TYPE_COLOR[c.type], borderColor: TYPE_COLOR[c.type] }}>
                       {c.type}
                     </span>

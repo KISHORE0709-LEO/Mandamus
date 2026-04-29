@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { getHearingsByJudge, getHearingByRoomId } from '../../lib/firestoreHelpers';
 import Dashboard from './Dashboard';
+import JoinByCode from './JoinByCode';
 import CasePreHearing from './CasePreHearing';
 import Verification from './Verification';
 import WaitingRoom from './WaitingRoom';
@@ -21,18 +23,63 @@ const VirtualHearing = () => {
   const [stage,        setStage]        = useState('dashboard');
   const [selectedCase, setSelectedCase] = useState(null);
   const [roomId,       setRoomId]       = useState(null);
+  const [hearings,     setHearings]     = useState([]);
 
-  const handleCaseSelect = (c) => { setSelectedCase(c); setStage('pre-hearing'); };
+  // Load hearings from Firestore
+  useEffect(() => {
+    if (user?.uid) {
+      getHearingsByJudge(user.uid)
+        .then(setHearings)
+        .catch(err => console.error('Error loading hearings:', err));
+    }
+  }, [user]);
+
+  const handleCaseSelect = (c) => { 
+    setSelectedCase(c); 
+    setRoomId(c.roomId || c.hearingId); // Use existing roomId from hearing
+    setStage('pre-hearing'); 
+  };
+
+  // Handle joining by code
+  const handleJoinByCode = async (code) => {
+    try {
+      // Try to find in loaded hearings first
+      let hearing = hearings.find(h => h.roomId === code);
+      
+      // If not found, try fetching from Firestore
+      if (!hearing) {
+        hearing = await getHearingByRoomId(code);
+      }
+      
+      if (hearing) {
+        setSelectedCase(hearing);
+        setRoomId(code);
+        setStage('pre-hearing');
+      } else {
+        alert('Invalid meeting code. Please check and try again.');
+      }
+    } catch (error) {
+      console.error('Error joining by code:', error);
+      alert('Failed to join meeting. Please try again.');
+    }
+  };
 
   // Judge generates roomId on Start Hearing; others join with existing roomId
   const handleStart = () => {
-    if (role === 'judge') setRoomId(generateRoomId());
+    if (role === 'judge' && !roomId) {
+      setRoomId(generateRoomId());
+    }
     setStage('live-session');
   };
 
   return (
     <div className="virtual-hearing-container">
-      {stage === 'dashboard'    && <Dashboard role={role} onCaseSelect={handleCaseSelect} />}
+      {stage === 'dashboard' && (
+        <>
+          <JoinByCode onJoin={handleJoinByCode} />
+          <Dashboard role={role} onCaseSelect={handleCaseSelect} />
+        </>
+      )}
       {stage === 'pre-hearing'  && <CasePreHearing role={role} caseData={selectedCase} onProceed={() => setStage('verification')} onBack={() => setStage('dashboard')} />}
       {stage === 'verification' && <Verification role={role} caseData={selectedCase} onVerified={() => setStage('waiting-room')} />}
       {stage === 'waiting-room' && <WaitingRoom role={role} caseData={selectedCase} roomId={roomId} onStart={handleStart} />}

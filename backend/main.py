@@ -335,11 +335,13 @@ async def summarise_document(file: UploadFile = File(...)):
         s3_key = None
         try:
             yield json.dumps({"processing_status": "uploading"}) + "\n"
+            await asyncio.sleep(0.1)  # Small delay to ensure frontend receives the message
 
             # Step 1: Try in-memory extraction first (no S3 round-trip)
             extracted_text, extraction_method = await asyncio.to_thread(extract_text_from_bytes, file_bytes)
 
             yield json.dumps({"processing_status": "extracting"}) + "\n"
+            await asyncio.sleep(0.1)
 
             if extraction_method == "needs_textract":
                 # Scanned PDF: upload to S3 then run Textract
@@ -366,12 +368,15 @@ async def summarise_document(file: UploadFile = File(...)):
                 ))
 
             yield json.dumps({"processing_status": "summarising"}) + "\n"
+            await asyncio.sleep(0.1)
+            
             bedrock_result = await asyncio.to_thread(summarise_with_bedrock, extracted_text)
 
             if "error" in bedrock_result:
                 raise Exception(f"Bedrock Error: {bedrock_result['error']}")
 
             yield json.dumps({"processing_status": "structuring"}) + "\n"
+            await asyncio.sleep(0.1)
 
             processing_time = round(time.time() - start_time, 2)
             final_response = {
