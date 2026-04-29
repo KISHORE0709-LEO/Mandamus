@@ -243,11 +243,3 @@ This project is released under the MIT License — see the `LICENSE` file for de
 
 - Primary: Project Team
 
----
-
-If you'd like, I can also:
-- Add CI workflow files to `.github/workflows/`.
-- Generate a `CONTRIBUTING.md` and issue templates.
-- Add example `.env.example` files for backend and frontend.
-
-Please tell me which extras you want next.
