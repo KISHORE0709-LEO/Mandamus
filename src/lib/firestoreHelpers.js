@@ -148,30 +148,24 @@ export const subscribeToRoom = (roomId, callback) => {
 export const addParticipant = async (participantData) => {
   const docRef = await addDoc(collection(db, 'participants'), {
     ...participantData,
-    participantId: 'PART-' + Date.now(),
-    connectionStatus: 'connected',
+    status: participantData.role === 'judge' ? 'admitted' : 'pending',
     joinedAt: serverTimestamp(),
-    createdAt: serverTimestamp()
   });
   return docRef.id;
 };
 
-export const updateParticipant = async (participantId, updates) => {
-  await updateDoc(doc(db, 'participants', participantId), updates);
+export const updateParticipantStatus = async (participantId, status) => {
+  await updateDoc(doc(db, 'participants', participantId), { status });
 };
 
-export const getParticipantsByHearing = async (hearingId) => {
-  const q = query(collection(db, 'participants'), where('hearingId', '==', hearingId));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-};
-
-export const subscribeToParticipants = (hearingId, callback) => {
-  const q = query(collection(db, 'participants'), where('hearingId', '==', hearingId));
+export const subscribeToParticipantsByRoom = (roomId, callback) => {
+  const q = query(collection(db, 'participants'), where('roomId', '==', roomId));
   return onSnapshot(q, (snapshot) => {
     callback(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
   });
 };
+
+
 
 // ═══════════════════════════════════════════════════════════════════════
 // BIOMETRIC LOG OPERATIONS

@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { ShieldCheck, Clock, XCircle, CheckCircle, ChevronRight, Copy } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ShieldCheck, Clock, XCircle, CheckCircle, ChevronRight, Copy, UserPlus } from 'lucide-react';
+import { addParticipant, subscribeToParticipantsByRoom, updateParticipantStatus } from '../../lib/firestoreHelpers';
+import { useAuth } from '../../context/AuthContext';
+
 
 const INITIAL_PARTICIPANTS = [
   { id: 'p1', name: 'Hon. Justice R. Vance', role: 'Judge',   status: 'verified' },
@@ -18,12 +21,62 @@ const STATUS_MAP = {
 };
 
 const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
-  const [participants, setParticipants] = useState(INITIAL_PARTICIPANTS);
+  const { user } = useAuth();
+  const [participants, setParticipants] = useState([]);
+  const [myParticipantId, setMyParticipantId] = useState(null);
 
-  const admit  = (id) => setParticipants(p => p.map(x => x.id === id ? { ...x, status: 'admitted' } : x));
-  const reject = (id) => setParticipants(p => p.map(x => x.id === id ? { ...x, status: 'rejected' } : x));
+  // 1. Register self and listen to participants
+  useEffect(() => {
+    if (!roomId || !user?.uid || myParticipantId) return;
 
-  const allReady = participants.every(p => ['verified', 'admitted'].includes(p.status));
+    let mounted = true;
+
+    // Register self ONLY if not already in list
+    const registerSelf = async () => {
+      try {
+        // Check if we are already in the participants list to prevent duplicates on refresh
+        const existing = participants.find(p => p.uid === user.uid);
+        if (existing) {
+          if (mounted) setMyParticipantId(existing.id);
+          return;
+        }
+
+        const id = await addParticipant({
+          roomId,
+          name: user?.displayName || (role === 'judge' ? 'Hon. Judge' : 'Guest Participant'),
+          role: role.charAt(0).toUpperCase() + role.slice(1),
+          uid: user.uid,
+        });
+        if (mounted) setMyParticipantId(id);
+      } catch (err) {
+        console.error("Registration error:", err);
+      }
+    };
+
+    registerSelf();
+
+    // Subscribe to all participants in this room
+    const unsubscribe = subscribeToParticipantsByRoom(roomId, (data) => {
+      if (!mounted) return;
+      setParticipants(data);
+      
+      // Auto-join if admitted
+      const me = data.find(p => p.uid === user?.uid);
+      if (me && me.status === 'admitted' && role !== 'judge') {
+        onStart();
+      }
+    });
+
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, [roomId, user, role, myParticipantId, participants.length]); // Re-run only if room/user changes or list size changes
+
+
+  const handleAdmit  = async (id) => await updateParticipantStatus(id, 'admitted');
+  const handleReject = async (id) => await updateParticipantStatus(id, 'rejected');
+
 
   return (
     <div className="vh-center-wrap">
@@ -61,9 +114,9 @@ const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
 
         <div className="vh-participants-list">
           {participants.map(p => {
-            const s = STATUS_MAP[p.status];
+            const s = STATUS_MAP[p.status] || STATUS_MAP.waiting;
             return (
-              <div key={p.id} className="vh-participant-row">
+              <div key={p.id} className={`vh-participant-row ${p.status === 'pending' ? 'vh-row-pending' : ''}`}>
                 <div className="vh-participant-avatar">{p.name[0]}</div>
                 <div className="vh-participant-info">
                   <div className="vh-participant-name">{p.name}</div>
@@ -72,15 +125,20 @@ const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
                 <div className="vh-participant-status" style={{ color: s.color }}>
                   {s.icon} {s.label}
                 </div>
-                {role === 'judge' && !['verified', 'admitted', 'rejected'].includes(p.status) && p.role !== 'Judge' && (
+                {role === 'judge' && p.status === 'pending' && (
                   <div className="vh-admit-controls">
-                    <button className="vh-btn-admit" onClick={() => admit(p.id)}>Admit</button>
-                    <button className="vh-btn-reject" onClick={() => reject(p.id)}>Reject</button>
+                    <button className="vh-btn-admit" onClick={() => handleAdmit(p.id)}>ADMIT</button>
+                    <button className="vh-btn-reject" onClick={() => handleReject(p.id)}>REJECT</button>
                   </div>
                 )}
               </div>
             );
           })}
+          {participants.length === 0 && (
+            <div className="vh-waiting-empty">
+              <UserPlus size={20} /> Initializing room participants...
+            </div>
+          )}
         </div>
 
         {role === 'judge' ? (
