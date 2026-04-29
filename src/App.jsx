@@ -18,6 +18,7 @@ import AboutPage from './pages/AboutPage';
 import VirtualHearing from './components/virtual_hearing/VirtualHearing';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { MandamusProvider } from './context/MandamusContext';
+import { HistoryProvider } from './context/HistoryContext';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -49,7 +50,7 @@ const Dashboard = () => {
       case 'precedent':
         return <PrecedentFinder onTabChange={setActiveFeature} />;
       case 'draft':
-        return <DraftGenerator />;
+        return <DraftGenerator onTabChange={setActiveFeature} />;
       case 'scheduler':
         return <Scheduler onTabChange={setActiveFeature} />;
       case 'profile':
@@ -79,7 +80,8 @@ const Dashboard = () => {
 function App() {
   return (
     <AuthProvider>
-      <MandamusProvider>
+      <HistoryProvider>
+        <MandamusProvider>
         <Router>
           <div className="app-container">
             {/* Global Fixed Background */}
@@ -107,6 +109,7 @@ function App() {
           </div>
         </Router>
       </MandamusProvider>
+      </HistoryProvider>
     </AuthProvider>
   );
 }

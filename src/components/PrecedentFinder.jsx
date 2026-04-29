@@ -320,8 +320,8 @@ export default function PrecedentFinder({ onTabChange }) {
       {/* CASE CARDS */}
       <div className="pf-cases" style={{ position: 'relative', minHeight: '300px' }}>
         {loading && <PrecedentLoadingOverlay />}
-        {cases.map(c => (
-          <div key={c.case_id} className={`pf-card ${selected.has(c.case_id) ? 'pf-card-selected' : ''}`}>
+        {cases.map((c, idx) => (
+          <div key={`${c.case_id}-${idx}`} className={`pf-card ${selected.has(c.case_id) ? 'pf-card-selected' : ''}`}>
             <div className="pf-card-main">
 
               <div className="pf-card-top">
