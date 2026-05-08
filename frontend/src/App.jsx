@@ -72,6 +72,8 @@ const LandingPage = () => (
 const Dashboard = ({ activeFeature, setActiveFeature }) => {
   const renderContent = () => {
     switch (activeFeature) {
+      case 'judge-dashboard':
+        return <JudgeDashboard setActiveFeature={setActiveFeature} />;
       case 'summariser':
         return <Summarizer onTabChange={setActiveFeature} />;
       case 'precedent':
@@ -103,7 +105,26 @@ const Dashboard = ({ activeFeature, setActiveFeature }) => {
 };
 
 function App() {
-  const [activeFeature, setActiveFeature] = React.useState('summariser');
+  const defaultRole = localStorage.getItem('userRole');
+  const [activeFeature, setActiveFeature] = React.useState(defaultRole === 'judge' ? 'judge-dashboard' : 'summariser');
+
+  React.useEffect(() => {
+    const handleStorageChange = () => {
+      const role = localStorage.getItem('userRole');
+      if (role === 'judge') {
+        setActiveFeature('judge-dashboard');
+      } else {
+        setActiveFeature('summariser');
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    // Also listen to a custom event for role change within the same tab
+    window.addEventListener('roleChanged', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('roleChanged', handleStorageChange);
+    };
+  }, []);
 
   return (
     <AuthProvider>
@@ -127,11 +148,6 @@ function App() {
                 <Route path="/hearing/:roomId" element={
                   <ProtectedRoute>
                     <HearingJoinPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/judge-dashboard" element={
-                  <ProtectedRoute>
-                    <JudgeDashboard />
                   </ProtectedRoute>
                 } />
                 <Route path="/public-dashboard" element={
