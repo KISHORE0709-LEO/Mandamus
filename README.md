@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/Logo.png" width="300" alt="Mandamus Logo">
+  <img src="frontend/public/Logo.png" width="300" alt="Mandamus Logo">
 </p>
 
 ```text

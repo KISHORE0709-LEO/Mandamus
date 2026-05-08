@@ -463,69 +463,162 @@
   .pf-score-num { font-size: 2rem; }
 }
 
-/* ── LOADING OVERLAY ── */
-.pf-loading-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.85);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  border: 1px solid #2a2a2a;
-  animation: pf-fade-in 0.3s ease-out;
-}
-@keyframes pf-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.pf-loading-box {
-  background: #0a0a0a;
+/* ── NEURAL SEARCH CONSOLE ── */
+.ns-console-wrapper {
+  background: #050505;
   border: 1px solid #e02020;
-  padding: 30px 40px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 20px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 0 30px rgba(224, 32, 32, 0.15);
+  animation: ns-fade-in 0.4s ease-out;
+}
+
+@keyframes ns-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.ns-console-header {
+  background: #0a0a0a;
+  border-bottom: 1px solid #2a2a2a;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  position: relative;
-  overflow: hidden;
-  width: 320px;
+  font-family: monospace;
+  font-size: 0.7rem;
+  color: #888;
 }
-.pf-loading-scanner {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%;
-  height: 2px;
+
+.ns-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #e02020;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.ns-blink-dot {
+  width: 8px;
+  height: 8px;
   background: #e02020;
-  opacity: 0.5;
-  animation: pf-scan 2s linear infinite;
+  border-radius: 50%;
+  animation: ns-blink 1s infinite;
 }
-@keyframes pf-scan {
-  0% { top: 0; }
-  100% { top: 100%; }
+
+@keyframes ns-blink {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px #e02020; }
+  50% { opacity: 0.3; box-shadow: none; }
 }
-@keyframes pf-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+
+.ns-status-tag {
+  background: rgba(224, 32, 32, 0.1);
+  color: #e02020;
+  padding: 2px 8px;
+  border: 1px solid rgba(224, 32, 32, 0.3);
+  font-size: 0.6rem;
+  font-weight: 600;
 }
-.pf-spin {
-  animation: pf-spin 2s linear infinite;
+
+.ns-console-body {
+  display: flex;
+  height: 320px;
+}
+
+/* Matrix Panel (Left) */
+.ns-matrix-panel {
+  width: 25%;
+  background: #000;
+  border-right: 1px solid #1a1a1a;
+  padding: 12px;
+  overflow: hidden;
+  position: relative;
+  font-family: monospace;
+  font-size: 0.6rem;
+  color: #e02020;
+  opacity: 0.6;
+}
+
+.ns-matrix-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 80%, rgba(0,0,0,1) 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.ns-hex-line {
+  white-space: pre;
+  margin-bottom: 4px;
+  letter-spacing: 0.1em;
+}
+
+/* Terminal Panel (Right) */
+.ns-terminal-panel {
+  flex: 1;
+  background: #0a0a0a;
+  padding: 20px;
+  overflow-y: auto;
+  font-family: monospace;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.ns-terminal-title {
+  color: #444;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  margin-bottom: 12px;
+  border-bottom: 1px dashed #222;
+  padding-bottom: 8px;
+}
+
+.ns-log-line {
+  display: flex;
+  gap: 12px;
+  font-size: 0.8rem;
+  animation: ns-type 0.1s ease-out;
+}
+
+@keyframes ns-type {
+  from { opacity: 0; transform: translateX(-5px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.ns-log-time {
+  color: #555;
+  flex-shrink: 0;
+}
+
+.ns-log-text {
+  color: #ccc;
+  text-shadow: 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.ns-log-sys {
+  color: #888;
+}
+
+.ns-log-neural {
   color: #e02020;
 }
-.pf-loading-text {
+
+.ns-cursor-line {
+  display: flex;
+  gap: 12px;
   font-size: 0.8rem;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: 0.15em;
-  font-family: monospace;
+  margin-top: 4px;
 }
-.pf-loading-sub {
-  font-size: 0.6rem;
-  color: #555;
-  text-align: center;
-  font-family: 'Inter', sans-serif;
-  line-height: 1.5;
+
+.ns-cursor {
+  color: #e02020;
+  animation: ns-blink 1s infinite;
+  font-weight: bold;
 }
 

@@ -34,16 +34,102 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-const PrecedentLoadingOverlay = () => (
-  <div className="pf-loading-overlay">
-    <div className="pf-loading-box">
-      <div className="pf-loading-scanner" />
-      <Loader2 size={32} className="pf-spin" />
-      <span className="pf-loading-text">NEURAL_SEARCH_ACTIVE</span>
-      <span className="pf-loading-sub">Scanning 10,000+ precedents for semantic alignment...</span>
+const NeuralSearchConsole = () => {
+  const [logs, setLogs] = useState([]);
+  const [hexLines, setHexLines] = useState([]);
+
+  useEffect(() => {
+    // Generate Hex stream
+    const chars = '0123456789ABCDEF';
+    const generateLine = () => {
+      let line = '0x';
+      for(let i=0; i<8; i++) line += chars[Math.floor(Math.random() * 16)];
+      line += ' ';
+      for(let i=0; i<8; i++) line += chars[Math.floor(Math.random() * 16)];
+      return line;
+    };
+    
+    // Initial fill
+    const initial = Array(20).fill(0).map(() => generateLine());
+    setHexLines(initial);
+
+    const interval = setInterval(() => {
+      setHexLines(prev => {
+        const newLines = [...prev.slice(1), generateLine()];
+        return newLines;
+      });
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const searchStages = [
+      { msg: "[SYS] Establishing secure connection to Judicial Data Vault...", delay: 0 },
+      { msg: "[DB_CORE] Mounting 1.4 million Supreme Court & High Court records...", delay: 800 },
+      { msg: "[NEURAL] Vectorizing semantic fact pattern & generating dense embeddings...", delay: 2000 },
+      { msg: "[NLP_ENG] Extracting IPC sections & core legal doctrines...", delay: 3500 },
+      { msg: "[MATCH] Running cosine similarity across multi-dimensional vector space...", delay: 5000 },
+      { msg: "[FILTER] Applying temporal boundaries & jurisdictional constraints...", delay: 7000 },
+      { msg: "[RANKING] Isolating top 98%+ semantic matches...", delay: 8500 },
+      { msg: "[FINALIZE] Decrypting case citations and judicial outcomes...", delay: 10000 },
+    ];
+
+    const timeouts = searchStages.map(({ msg, delay }) => {
+      return setTimeout(() => {
+        const timeStr = new Date().toISOString().split('T')[1].substring(0, 12);
+        setLogs(prev => [...prev, { time: timeStr, text: msg }]);
+      }, delay);
+    });
+
+    return () => timeouts.forEach(clearTimeout);
+  }, []);
+
+  return (
+    <div className="ns-console-wrapper">
+      <div className="ns-console-header">
+        <div className="ns-header-left">
+          <span className="ns-blink-dot"></span>
+          <span>NEURAL_SEARCH_ACTIVE</span>
+        </div>
+        <div className="ns-header-right">
+          <span className="ns-status-tag">SECURE_CONNECTION</span>
+        </div>
+      </div>
+      
+      <div className="ns-console-body">
+        {/* Left Panel: Hex Matrix */}
+        <div className="ns-matrix-panel">
+          <div className="ns-matrix-overlay"></div>
+          {hexLines.map((line, i) => (
+            <div key={i} className="ns-hex-line">{line}</div>
+          ))}
+        </div>
+        
+        {/* Right Panel: Terminal Logs */}
+        <div className="ns-terminal-panel">
+          <div className="ns-terminal-title">SYSTEM_LOG_OUTPUT</div>
+          {logs.map((log, i) => {
+            const isNeural = log.text.includes('[NEURAL]') || log.text.includes('[NLP_ENG]') || log.text.includes('[RANKING]');
+            const isSys = log.text.includes('[SYS]') || log.text.includes('[DB_CORE]');
+            const textClass = isNeural ? 'ns-log-neural' : (isSys ? 'ns-log-sys' : 'ns-log-text');
+            
+            return (
+              <div key={i} className="ns-log-line">
+                <span className="ns-log-time">{log.time}</span>
+                <span className={textClass}>{log.text}</span>
+              </div>
+            );
+          })}
+          <div className="ns-cursor-line">
+            <span className="ns-log-time">{new Date().toISOString().split('T')[1].substring(0, 12)}</span>
+            <span className="ns-cursor">_</span>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function PrecedentFinder({ onTabChange }) {
   const { state, updateState } = useMandamus();
@@ -320,8 +406,8 @@ export default function PrecedentFinder({ onTabChange }) {
 
       {/* CASE CARDS */}
       <div className="pf-cases" style={{ position: 'relative', minHeight: '300px' }}>
-        {loading && <PrecedentLoadingOverlay />}
-        {(showAll ? cases : cases.slice(0, 3)).map((c, idx) => (
+        {loading && <NeuralSearchConsole />}
+        {(!loading && showAll ? cases : cases.slice(0, 3)).map((c, idx) => (
           <div key={`${c.case_id}-${idx}`} className={`pf-card ${selected.has(c.case_id) ? 'pf-card-selected' : ''}`}>
             <div className="pf-card-main">
 
