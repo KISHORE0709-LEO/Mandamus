@@ -106,6 +106,8 @@ const AuthPage = () => {
       setRole(role);
       if (role === 'public') {
         navigate('/public-dashboard');
+      } else if (role === 'judge') {
+        navigate('/judge-dashboard');
       } else {
         navigate('/dashboard');
       }
@@ -181,6 +183,8 @@ const AuthPage = () => {
       setRole(formData.role);
       if (formData.role === 'public') {
         navigate('/public-dashboard');
+      } else if (formData.role === 'judge') {
+        navigate('/judge-dashboard');
       } else {
         navigate('/dashboard');
       }

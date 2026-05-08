@@ -24,6 +24,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { MandamusProvider } from './context/MandamusContext';
 import { HistoryProvider } from './context/HistoryContext';
 import SilentJustice from './components/SilentJustice';
+import JudgeDashboard from './components/JudgeDashboard';
 
 
 const GlobalBackground = () => {
@@ -126,6 +127,11 @@ function App() {
                 <Route path="/hearing/:roomId" element={
                   <ProtectedRoute>
                     <HearingJoinPage />
+                  </ProtectedRoute>
+                } />
+                <Route path="/judge-dashboard" element={
+                  <ProtectedRoute>
+                    <JudgeDashboard />
                   </ProtectedRoute>
                 } />
                 <Route path="/public-dashboard" element={

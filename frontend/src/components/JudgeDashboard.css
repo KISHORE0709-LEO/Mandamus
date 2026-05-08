@@ -1,0 +1,280 @@
+.jd-page {
+  background: #000;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  padding: 40px 50px 80px;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.jd-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 2px solid #1a1a1a;
+  padding-bottom: 24px;
+  margin-bottom: 32px;
+}
+.jd-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.jd-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  margin: 0;
+  line-height: 1;
+  color: #fff;
+}
+.jd-sub {
+  font-size: 0.7rem;
+  color: #888;
+  letter-spacing: 0.15em;
+  font-family: monospace;
+}
+.jd-user-badge {
+  background: #0a0a0a;
+  border: 1px solid #e02020;
+  color: #e02020;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  letter-spacing: 0.1em;
+  font-family: monospace;
+}
+
+/* ── METRICS ── */
+.jd-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 40px;
+}
+.jd-metric-card {
+  background: #0d0d0d;
+  border: 1px solid #2a2a2a;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color 0.2s;
+}
+.jd-metric-card:hover { border-color: #444; }
+.jd-metric-val {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+}
+.jd-metric-lbl {
+  font-size: 0.65rem;
+  color: #888;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+.jd-metric-red .jd-metric-val { color: #e02020; }
+
+/* ── MAIN GRID ── */
+.jd-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 40px;
+}
+
+.jd-section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.1em;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #2a2a2a;
+  padding-bottom: 12px;
+}
+
+/* ── PENDING APPROVALS ── */
+.jd-approval-card {
+  background: #0a0a0a;
+  border: 1px solid #e02020;
+  padding: 20px;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.jd-approval-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.jd-approval-type {
+  font-size: 0.6rem;
+  background: rgba(224, 32, 32, 0.1);
+  color: #e02020;
+  padding: 4px 8px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.jd-approval-time {
+  font-size: 0.7rem;
+  color: #ccc;
+  font-family: monospace;
+}
+.jd-approval-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.jd-approval-info {
+  font-size: 0.75rem;
+  color: #888;
+  margin-bottom: 16px;
+}
+.jd-approve-btn {
+  width: 100%;
+  background: #e02020;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: filter 0.2s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.jd-approve-btn:hover { filter: brightness(1.2); }
+
+.jd-scheduled-panel {
+  background: rgba(0, 255, 100, 0.05);
+  border: 1px solid #00aa44;
+  padding: 16px;
+  margin-top: 16px;
+}
+.jd-scheduled-title {
+  color: #00aa44;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  letter-spacing: 0.05em;
+}
+.jd-creds {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: #ccc;
+  margin-bottom: 16px;
+}
+.jd-cred-val { color: #fff; font-weight: bold; background: #111; padding: 2px 6px; }
+
+.jd-start-hearing-btn {
+  background: #00aa44;
+  color: #000;
+  border: none;
+  padding: 10px;
+  width: 100%;
+  font-size: 0.75rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.jd-start-hearing-btn:hover { background: #00cc55; }
+
+/* ── DOCKET CARDS ── */
+.jd-docket-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.jd-docket-card {
+  background: #0d0d0d;
+  border: 1px solid #2a2a2a;
+  display: flex;
+  align-items: stretch;
+  transition: border-color 0.2s;
+}
+.jd-docket-card:hover { border-color: #555; }
+
+.jd-docket-time {
+  width: 120px;
+  background: #111;
+  border-right: 1px solid #2a2a2a;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  gap: 6px;
+}
+.jd-docket-time-val { font-size: 1.2rem; font-weight: 900; font-family: monospace; color: #fff; }
+.jd-docket-time-lbl { font-size: 0.6rem; color: #666; letter-spacing: 0.1em; }
+
+.jd-docket-main {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.jd-docket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+.jd-docket-title { font-size: 1.2rem; font-weight: 700; margin: 0 0 6px 0; color: #fff; }
+.jd-docket-type { font-size: 0.7rem; color: #888; }
+.jd-docket-score {
+  font-family: monospace;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #00aa44;
+  background: rgba(0, 255, 100, 0.1);
+  padding: 4px 8px;
+  border: 1px solid #00aa44;
+}
+
+.jd-docket-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+.jd-action-btn {
+  background: transparent;
+  border: 1px solid #333;
+  color: #ccc;
+  padding: 8px 16px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+.jd-action-btn:hover { border-color: #888; color: #fff; }
+.jd-action-summarize:hover { border-color: #e02020; color: #e02020; }
+.jd-action-draft:hover { border-color: #f39c12; color: #f39c12; }
+
+@media (max-width: 1024px) {
+  .jd-grid { grid-template-columns: 1fr; }
+  .jd-metrics { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+  .jd-docket-card { flex-direction: column; }
+  .jd-docket-time { width: 100%; border-right: none; border-bottom: 1px solid #2a2a2a; padding: 12px; flex-direction: row; justify-content: space-between; }
+}
