@@ -1,0 +1,123 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // HELPER FUNCTIONS
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isJudge() {
+      return isAuthenticated() && getUserRole() == 'judge';
+    }
+    
+    function isParticipant(participantIds) {
+      return isAuthenticated() && request.auth.uid in participantIds;
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // USERS COLLECTION — User profiles and roles
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId);
+      allow create: if isAuthenticated();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // CASES COLLECTION — Case management
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    match /cases/{caseId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isJudge();
+      allow delete: if false; // Immutable records
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // HEARINGS COLLECTION — Scheduled hearings
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    match /hearings/{hearingId} {
+      allow read: if isAuthenticated() && 
+                     (isJudge() || isParticipant(resource.data.participants));
+      allow create, update: if isJudge();
+      allow delete: if isJudge();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // PARTICIPANTS COLLECTION — Real-time participant tracking
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    match /participants/{participantId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && 
+                       (isOwner(resource.data.userId) || isJudge());
+      allow delete: if isJudge();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // SIGNALING COLLECTION — WebRTC signaling (temporary, auto-delete)
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    match /signaling/{signalingId} {
+      allow read, write: if isAuthenticated();
+      allow delete: if isAuthenticated();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // BIOMETRIC_LOGS COLLECTION — Verification audit trail (immutable)
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    match /biometric_logs/{logId} {
+      allow read: if isAuthenticated() && 
+                     (isOwner(resource.data.userId) || isJudge());
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Immutable audit trail
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // HEARING_RECORDINGS COLLECTION — Recording metadata (immutable)
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    match /hearing_recordings/{recordingId} {
+      allow read: if isAuthenticated();
+      allow create: if isJudge();
+      allow update, delete: if false; // Immutable records
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // TRANSCRIPTS COLLECTION — Live hearing transcripts
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    match /transcripts/{transcriptId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated();
+      allow delete: if isJudge();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // ROOMS COLLECTION — Virtual hearing rooms
+    // ═══════════════════════════════════════════════════════════════════════
+    
+    match /rooms/{roomId} {
+      allow read: if isAuthenticated();
+      allow create: if isJudge();
+      allow update: if isAuthenticated();
+      allow delete: if isJudge();
+    }
+  }
+}

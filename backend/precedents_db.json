@@ -1,0 +1,122 @@
+[
+  {
+    "case_id": "PREC-2015-01X",
+    "case_name": "Shreya Singhal vs Union of India",
+    "court": "Supreme Court",
+    "jurisdiction": "Appellate",
+    "year": 2015,
+    "citation": "(2015) 5 SCC 1",
+    "full_text": "The Supreme Court struck down Section 66A of the Information Technology Act, 2000 in its entirety, ruling that it violated the fundamental right to freedom of speech and expression under Article 19(1)(a) of the Constitution of India. The Court found the section to be 'unconstitutionally vague' as its wording was too broad, encompassing forms of expression that shouldn't be criminalised. The judgment established that only speech that reaches the level of 'incitement' to violence or public disorder can be restricted.",
+    "ipc_sections": [],
+    "tags": ["IT_ACT_66A", "FREEDOM_OF_SPEECH", "ARTICLE_19"],
+    "outcome": "Section 66A of IT Act struck down."
+  },
+  {
+    "case_id": "PREC-2017-02X",
+    "case_name": "K.S. Puttaswamy vs Union of India",
+    "court": "Supreme Court",
+    "jurisdiction": "Constitutional",
+    "year": 2017,
+    "citation": "(2017) 10 SCC 1",
+    "full_text": "A landmark nine-judge bench of the Supreme Court unanimously held that the Right to Privacy is a fundamental right guaranteed under the Constitution of India. It forms an intrinsic part of the right to life and personal liberty under Article 21 and the freedoms guaranteed in Part III. The ruling overruled previous judgments (M.P. Sharma and Kharak Singh) that held privacy was not a fundamental right, fundamentally shaping the future of data protection and individual autonomy in India.",
+    "ipc_sections": [],
+    "tags": ["RIGHT_TO_PRIVACY", "ARTICLE_21", "FUNDAMENTAL_RIGHTS"],
+    "outcome": "Right to Privacy recognized as a Fundamental Right."
+  },
+  {
+    "case_id": "PREC-1997-03X",
+    "case_name": "Vishaka vs State of Rajasthan",
+    "court": "Supreme Court",
+    "jurisdiction": "Appellate",
+    "year": 1997,
+    "citation": "(1997) 6 SCC 241",
+    "full_text": "The Supreme Court recognized that sexual harassment at the workplace violates the fundamental rights to equality (Article 14), life and liberty (Article 21), and the right to practice any profession (Article 19). In the absence of domestic law, the Court formulated the 'Vishaka Guidelines' establishing a mandatory mechanism for addressing and preventing sexual harassment of women at workplaces. This eventually paved the way for the POSH Act of 2013.",
+    "ipc_sections": [{"section": "IPC 354", "description": "Assault or criminal force to woman with intent to outrage her modesty."}],
+    "tags": ["SEXUAL_HARASSMENT", "WOMEN_RIGHTS", "WORKPLACE_SAFETY"],
+    "outcome": "Formulation of Vishaka Guidelines against workplace sexual harassment."
+  },
+  {
+    "case_id": "PREC-1978-04X",
+    "case_name": "Maneka Gandhi vs Union of India",
+    "court": "Supreme Court",
+    "jurisdiction": "Writ Petition",
+    "year": 1978,
+    "citation": "(1978) 1 SCC 248",
+    "full_text": "The Supreme Court drastically expanded the scope of Article 21 (Right to Life and Personal Liberty). The Court ruled that the 'procedure established by law' under Article 21 must be fair, just, and reasonable, not arbitrary or oppressive. It intertwined Articles 14, 19, and 21, establishing the 'golden triangle' of fundamental rights, and held that the right to travel abroad is part of personal liberty. This case shifted Indian constitutional jurisprudence towards substantive due process.",
+    "ipc_sections": [],
+    "tags": ["ARTICLE_21", "PERSONAL_LIBERTY", "DUE_PROCESS"],
+    "outcome": "Expansion of Article 21 to include fair and reasonable procedures."
+  },
+  {
+    "case_id": "PREC-2010-05X",
+    "case_name": "State of Maharashtra vs Sangharaj",
+    "court": "Bombay High Court",
+    "jurisdiction": "Appellate",
+    "year": 2010,
+    "citation": "2010 (5) Mh.L.J 321",
+    "full_text": "A notable criminal appeal involving a conviction for murder under Section 302 of the Indian Penal Code. The court evaluated the admissibility and reliability of circumstantial evidence and witness testimonies to uphold or overturn the conviction. The judgment focused heavily on establishing the chain of circumstances to prove guilt beyond reasonable doubt, reinforcing standard protocols for criminal homicide convictions.",
+    "ipc_sections": [{"section": "IPC 302", "description": "Punishment for murder."}],
+    "tags": ["MURDER", "CIRCUMSTANTIAL_EVIDENCE", "CRIMINAL_LAW"],
+    "outcome": "Evaluated burden of proof in homicide cases."
+  },
+  {
+    "case_id": "PREC-2005-06X",
+    "case_name": "P.A. Inamdar vs State of Maharashtra",
+    "court": "Supreme Court",
+    "jurisdiction": "Constitutional",
+    "year": 2005,
+    "citation": "(2005) 6 SCC 537",
+    "full_text": "A critical judgment regarding the autonomy of unaided minority and non-minority educational institutions. The Supreme Court ruled that the state cannot impose its reservation policy or a quota on seats in unaided private educational institutions. The court clarified the extent of state regulation, affirming that institutions have the right to establish their own admission procedures provided they are fair, transparent, and non-exploitative, significantly shaping Indian education law.",
+    "ipc_sections": [],
+    "tags": ["EDUCATION_RIGHTS", "MINORITY_RIGHTS", "RESERVATIONS"],
+    "outcome": "State cannot impose reservations in unaided private institutions."
+  },
+  {
+    "case_id": "PREC-2011-07X",
+    "case_name": "Aruna Shanbaug vs Union of India",
+    "court": "Supreme Court",
+    "jurisdiction": "Writ Petition",
+    "year": 2011,
+    "citation": "(2011) 4 SCC 454",
+    "full_text": "The Supreme Court recognized the legality of 'passive euthanasia' in India for the first time. Responding to a petition filed on behalf of Aruna Shanbaug, a nurse who had been in a vegetative state for decades following a brutal assault, the Court laid down strict guidelines under which life support could be withdrawn from patients in a permanent vegetative state (PVS), subject to approval by the respective High Court. Active euthanasia remained illegal.",
+    "ipc_sections": [],
+    "tags": ["PASSIVE_EUTHANASIA", "RIGHT_TO_DIE", "MEDICAL_LAW"],
+    "outcome": "Legalization of passive euthanasia under strict judicial guidelines."
+  },
+  {
+    "case_id": "PREC-2013-08X",
+    "case_name": "Lily Thomas vs Union of India",
+    "court": "Supreme Court",
+    "jurisdiction": "Writ Petition",
+    "year": 2013,
+    "citation": "(2013) 7 SCC 653",
+    "full_text": "The Supreme Court struck down Section 8(4) of the Representation of the People Act, 1951 as unconstitutional. This specific section previously allowed convicted Members of Parliament (MPs) and Members of Legislative Assemblies (MLAs) to retain their seats if they filed an appeal within three months. The Court ruled that any MP or MLA convicted of a crime with a minimum sentence of two years would face immediate disqualification, marking a major step towards electoral decriminalisation.",
+    "ipc_sections": [],
+    "tags": ["ELECTORAL_REFORM", "DISQUALIFICATION", "CONSTITUTIONAL_LAW"],
+    "outcome": "Immediate disqualification of convicted MPs/MLAs."
+  },
+  {
+    "case_id": "PREC-2014-09X",
+    "case_name": "NALSA vs Union of India",
+    "court": "Supreme Court",
+    "jurisdiction": "Writ Petition",
+    "year": 2014,
+    "citation": "(2014) 5 SCC 438",
+    "full_text": "A landmark decision where the Supreme Court officially recognized transgender individuals as a 'Third Gender', affirming their fundamental rights under the Constitution. The Court directed the government to treat transgender individuals as socially and educationally backward classes to extend reservations in education and public employment. It also recognized their right to self-identification of gender, emphasizing equality and dignity under Articles 14, 15, 16, and 21.",
+    "ipc_sections": [],
+    "tags": ["TRANSGENDER_RIGHTS", "THIRD_GENDER", "ARTICLE_14"],
+    "outcome": "Legal recognition of transgender individuals as a third gender."
+  },
+  {
+    "case_id": "PREC-2018-10X",
+    "case_name": "Common Cause vs Union of India",
+    "court": "Supreme Court",
+    "jurisdiction": "Constitutional",
+    "year": 2018,
+    "citation": "(2018) 5 SCC 1",
+    "full_text": "Building upon the Aruna Shanbaug judgment, a five-judge Constitution Bench recognized the 'Right to Die with Dignity' as a fundamental right under Article 21. The Court legally validated the execution of 'Living Wills' (Advance Medical Directives), allowing competent individuals to specify their decisions regarding the withdrawal of life-prolonging medical treatment in the event they become terminally ill and unable to consent, thereby easing the procedural complexities of passive euthanasia.",
+    "ipc_sections": [],
+    "tags": ["LIVING_WILLS", "PASSIVE_EUTHANASIA", "RIGHT_TO_DIE"],
+    "outcome": "Legalization of Advance Medical Directives (Living Wills)."
+  }
+]

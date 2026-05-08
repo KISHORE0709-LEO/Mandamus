@@ -1,0 +1,12 @@
+python-socketio[asyncio]
+python-engineio
+uvicorn[standard]
+fastapi
+python-multipart
+boto3
+pymupdf
+python-dotenv
+pydantic
+botocore
+python-docx
+google-generativeai
