@@ -53,7 +53,7 @@ export const MandamusProvider = ({ children }) => {
   };
 
   return (
-    <MandamusContext.Provider value={{ state, updateState, reinitialize }}>
+    <MandamusContext.Provider value={{ state, updateState, reinitialize, clearState: reinitialize }}>
       {children}
     </MandamusContext.Provider>
   );

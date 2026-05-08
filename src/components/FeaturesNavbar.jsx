@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import './FeaturesNavbar.css';
 
 const FeaturesNavbar = ({ onSelectFeature, activeFeature }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { state } = useMandamus();
   const navigate = useNavigate();
 
@@ -32,8 +32,7 @@ const FeaturesNavbar = ({ onSelectFeature, activeFeature }) => {
   ];
 
   const handleLogout = async () => {
-    await signOut(auth);
-    navigate('/login');
+    await logout();
   };
 
   return (

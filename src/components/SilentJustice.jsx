@@ -25,12 +25,11 @@ import './SilentJustice.css';
 
 const SilentJustice = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const fileInputRef = useRef(null);
 
   const handleLogout = async () => {
-    await auth.signOut();
-    navigate('/login');
+    await logout();
   };
   
   const [step, setStep] = useState('report'); // 'report', 'evaluating', 'evaluation_result', 'submitting', 'success', 'track'

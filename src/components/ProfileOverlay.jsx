@@ -9,14 +9,16 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { auth } from '../lib/firebase';
+import { useAuth } from '../context/AuthContext';
 import './ProfileOverlay.css';
 
 const ProfileOverlay = ({ isOpen, onClose, user }) => {
   if (!isOpen) return null;
 
+  const { logout } = useAuth();
+  
   const handleLogout = async () => {
-    await auth.signOut();
-    window.location.href = '/';
+    await logout();
   };
 
   return (

@@ -7,11 +7,10 @@ import './PublicDashboard.css';
 
 const PublicDashboard = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const handleLogout = async () => {
-    await auth.signOut();
-    navigate('/login');
+    await logout();
   };
 
   const dashboardItems = [

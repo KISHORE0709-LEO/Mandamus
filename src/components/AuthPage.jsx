@@ -7,7 +7,7 @@ import {
   signInWithPopup,
   updateProfile
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -84,8 +84,25 @@ const AuthPage = () => {
     setErrors({});
     try {
       const result = await signInWithPopup(auth, googleProvider);
+      const email = result.user.email;
       const role = formData.role || 'public';
+
+      // Check role mapping
+      const userDoc = await getDoc(doc(db, 'users_by_email', email.toLowerCase()));
+      if (userDoc.exists()) {
+        const registeredRole = userDoc.data().role;
+        if (registeredRole !== role) {
+          await auth.signOut();
+          throw { code: 'custom/role-mismatch', message: `This email is already registered as a ${registeredRole.toUpperCase()} account.` };
+        }
+      }
+
       saveUserRole(result.user.uid, role, result.user.displayName, result.user.email);
+      await setDoc(doc(db, 'users_by_email', email.toLowerCase()), { 
+        role: role, 
+        uid: result.user.uid 
+      });
+
       setRole(role);
       if (role === 'public') {
         navigate('/public-dashboard');
@@ -94,7 +111,7 @@ const AuthPage = () => {
       }
     } catch (error) {
       console.error('Google Sign-In Error:', error);
-      setErrors({ google: 'Failed to sign in with Google.' });
+      setErrors({ google: error.code === 'custom/role-mismatch' ? error.message : 'Failed to sign in with Google.' });
     } finally {
       setIsLoading(false);
     }
@@ -113,13 +130,54 @@ const AuthPage = () => {
 
     try {
       if (authMode === 'signup') {
+        // Check if email already exists with a different role before creating
+        const userDoc = await getDoc(doc(db, 'users_by_email', formData.email.toLowerCase()));
+        if (userDoc.exists()) {
+          const existingRole = userDoc.data().role;
+          throw { code: 'custom/role-mismatch', message: `This email is already registered as a ${existingRole.toUpperCase()} account.` };
+        }
+
         const cred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
         await updateProfile(cred.user, { displayName: formData.fullName });
         saveUserRole(cred.user.uid, formData.role, formData.fullName, formData.email);
+        
+        // Save to email mapping for quick check
+        await setDoc(doc(db, 'users_by_email', formData.email.toLowerCase()), { 
+          role: formData.role, 
+          uid: cred.user.uid 
+        });
       } else {
+        // Sign in first to get the UID, but we should actually check role BEFORE or AFTER
+        // Check role mapping first for better UX
+        const userDoc = await getDoc(doc(db, 'users_by_email', formData.email.toLowerCase()));
+        if (userDoc.exists()) {
+          const registeredRole = userDoc.data().role;
+          if (registeredRole !== formData.role) {
+            throw { code: 'custom/role-mismatch', message: `This email is already registered as a ${registeredRole.toUpperCase()} account.` };
+          }
+        }
+
         const cred = await signInWithEmailAndPassword(auth, formData.email, formData.password);
-        saveUserRole(cred.user.uid, formData.role, cred.user.displayName, cred.user.email);
+        
+        // Double check Firestore for role if mapping didn't exist (legacy users)
+        const profileDoc = await getDoc(doc(db, 'users', cred.user.uid));
+        if (profileDoc.exists()) {
+          const registeredRole = profileDoc.data().role;
+          if (registeredRole !== formData.role) {
+            // Log them back out if they tried to bypass
+            await auth.signOut();
+            throw { code: 'custom/role-mismatch', message: `This email is already registered as a ${registeredRole.toUpperCase()} account.` };
+          }
+        } else {
+          // If profile doesn't exist, this is the first time they are logging in with this role
+          saveUserRole(cred.user.uid, formData.role, cred.user.displayName, cred.user.email);
+          await setDoc(doc(db, 'users_by_email', formData.email.toLowerCase()), { 
+            role: formData.role, 
+            uid: cred.user.uid 
+          });
+        }
       }
+      
       setRole(formData.role);
       if (formData.role === 'public') {
         navigate('/public-dashboard');
@@ -129,12 +187,14 @@ const AuthPage = () => {
     } catch (error) {
       console.error('Auth Error:', error);
       const errs = {};
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      if (error.code === 'custom/role-mismatch') {
+        errs.auth = error.message;
+      } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         errs.auth = 'Invalid email or password';
       } else if (error.code === 'auth/email-already-in-use') {
         errs.email = 'Email already in use';
       } else {
-        errs.auth = 'An error occurred. Please try again.';
+        errs.auth = error.message || 'An error occurred. Please try again.';
       }
       setErrors(errs);
     } finally {

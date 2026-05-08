@@ -18,7 +18,7 @@ import asyncio
 from botocore.exceptions import ClientError
 from typing import List, Optional
 from pydantic import BaseModel
-from fastapi import FastAPI, File, UploadFile, HTTPException, Request
+from fastapi import FastAPI, File, UploadFile, HTTPException, Request, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
@@ -513,7 +513,7 @@ def extract_text_via_textract(s3_key: str) -> tuple:
     return "\n".join(text_blocks), "textract"
 
 @app.post("/upload")
-async def upload_pdf(file: UploadFile = File(...)):
+async def upload_pdf(user_id: str = Form(...), file: UploadFile = File(...)):
     if not file.filename.lower().endswith('.pdf'):
         raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
     
@@ -521,7 +521,7 @@ async def upload_pdf(file: UploadFile = File(...)):
     bucket_name = "mandamus-cases"
     
     unique_filename = f"{uuid.uuid4()}_{file.filename}"
-    s3_key = f"uploads/{unique_filename}"
+    s3_key = f"users/{user_id}/uploads/{unique_filename}"
     
     try:
         s3_client.upload_fileobj(
@@ -545,8 +545,9 @@ async def upload_pdf(file: UploadFile = File(...)):
 @app.post("/summarise")
 async def summarise_document(
     request: Request,
+    user_id: str = Form(...),
     files: List[UploadFile] = File(...), 
-    deep_analysis: bool = False
+    deep_analysis: bool = Form(False)
 ):
     """Batch process multiple legal documents in parallel."""
     start_time = time.time()
@@ -577,7 +578,7 @@ async def summarise_document(
                         
                         s3_client = get_s3_client()
                         bucket_name = "mandamus-cases"
-                        s3_key = f"ocr_temp/{uuid.uuid4()}_{filename}"
+                        s3_key = f"users/{user_id}/ocr_temp/{uuid.uuid4()}_{filename}"
                         
                         await asyncio.to_thread(
                             s3_client.put_object,

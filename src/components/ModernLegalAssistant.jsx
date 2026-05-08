@@ -18,14 +18,13 @@ import {
 
 const ModernLegalAssistant = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [silentMode, setSilentMode] = useState(false);
   const [input, setInput] = useState('');
   const [currentResponse, setCurrentResponse] = useState(null);
 
   const handleLogout = async () => {
-    await auth.signOut();
-    navigate('/login');
+    await logout();
   };
 
   const handleQuery = (e) => {

@@ -25,14 +25,13 @@ import './LegalAdvisor.css';
 
 const LegalAdvisor = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [input, setInput] = useState('');
   const [activeModule, setActiveModule] = useState('advisor');
   const scrollRef = useRef(null);
 
   const handleLogout = async () => {
-    await auth.signOut();
-    navigate('/login');
+    await logout();
   };
 
   const [messages, setMessages] = useState([

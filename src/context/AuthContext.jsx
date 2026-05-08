@@ -24,8 +24,22 @@ export const AuthProvider = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
+  const logout = async () => {
+    try {
+      await auth.signOut();
+      setRole(null);
+      // Clear all possible persistence layers completely
+      sessionStorage.clear();
+      localStorage.clear();
+      // Force reload to clear in-memory state
+      window.location.href = '/login';
+    } catch (e) {
+      console.error("Logout failed", e);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, role, setRole }}>
+    <AuthContext.Provider value={{ user, loading, role, setRole, logout }}>
       {!loading && children}
     </AuthContext.Provider>
   );

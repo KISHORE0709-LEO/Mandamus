@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { FileUp, CheckCircle2, Search, ChevronRight, Download, Edit3, ThumbsUp, RotateCcw, FileText, Save, ArrowRight, X, ChevronUp, ChevronDown, ShieldCheck, AlertTriangle, Languages } from 'lucide-react';
 import { useMandamus } from '../context/MandamusContext';
+import { useAuth } from '../context/AuthContext';
 import './Summarizer.css';
 import LegalChat from './LegalChat';
 
@@ -319,6 +320,7 @@ const ProcessingOverlay = ({ currentStage, onComplete, onCancel }) => {
 /* ─── MAIN SUMMARIZER ─── */
 export default function Summarizer({ onTabChange }) {
   const { state, updateState, reinitialize } = useMandamus();
+  const { user } = useAuth();
   const phase = state.summariser_status; 
   const summaryData = state.summariser_output || {};
 
@@ -397,6 +399,9 @@ export default function Summarizer({ onTabChange }) {
     setErrorMsg(null);
     
     const formData = new FormData();
+    formData.append('user_id', user?.uid || 'anonymous');
+    formData.append('deep_analysis', deepAnalysis);
+    
     selectedFiles.forEach(file => {
       formData.append('files', file);
     });
@@ -405,7 +410,7 @@ export default function Summarizer({ onTabChange }) {
     abortControllerRef.current = new AbortController();
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/summarise?deep_analysis=${deepAnalysis}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/summarise`, {
         method: 'POST',
         body: formData,
         signal: abortControllerRef.current.signal
