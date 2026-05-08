@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import './FeaturesNavbar.css';
 
 const FeaturesNavbar = ({ onSelectFeature, activeFeature }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, role } = useAuth();
   const { state } = useMandamus();
   const navigate = useNavigate();
 
@@ -24,6 +24,7 @@ const FeaturesNavbar = ({ onSelectFeature, activeFeature }) => {
   };
 
   const features = [
+    ...(role === 'judge' ? [{ id: 'judge-dashboard', name: 'Dashboard' }] : []),
     { id: 'summariser', name: 'Summariser' },
     { id: 'precedent', name: 'Precedent Finder' },
     { id: 'draft', name: 'Draft Generator' },

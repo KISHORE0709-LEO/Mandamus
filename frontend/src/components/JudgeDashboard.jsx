@@ -14,7 +14,7 @@ const MOCK_DOCKET = [
   { id: 'doc-3', title: 'TechCorp v. Innovate', type: 'IP TRIBUNAL', time: '16:00 PM', score: 85, status: 'PENDING DOCS' }
 ];
 
-export default function JudgeDashboard() {
+export default function JudgeDashboard({ setActiveFeature }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [approvals, setApprovals] = useState(MOCK_APPROVALS);
@@ -31,7 +31,11 @@ export default function JudgeDashboard() {
   };
 
   const navigateToWorkspace = (feature, caseId) => {
-    navigate(`/dashboard?feature=${feature}&caseId=${caseId}`);
+    if (setActiveFeature) {
+      setActiveFeature(feature);
+    } else {
+      navigate(`/dashboard?feature=${feature}&caseId=${caseId}`);
+    }
   };
 
   const startHearing = (roomId) => {
