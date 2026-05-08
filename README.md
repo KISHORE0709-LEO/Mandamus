@@ -254,36 +254,38 @@ Mandamus/
 │       ├── server.js              # Socket events for virtual courtroom and chat
 │       └── package.json           # Signaling server dependencies
 │
-├── src/                           # React Frontend Application
-│   ├── components/                # Modular UI Components
-│   │   ├── virtual_hearing/       # Virtual courtroom components (Video Grid, WebRTC)
-│   │   ├── Summarizer.jsx         # Case summarisation logic and UI
-│   │   ├── PrecedentFinder.jsx    # Precedent search UI and semantic highlighting
-│   │   ├── DraftGenerator.jsx     # Auditable text editor for judgement drafting
-│   │   ├── Scheduler.jsx          # NJDG-synced smart calendar interface
-│   │   ├── LegalChat.jsx          # Context-aware chat sidebar
-│   │   └── MandamusGuide.jsx      # Spline 3D intelligent guide integration
+├── frontend/                      # React Frontend Application (Vite)
+│   ├── src/                       # React source code
+│   │   ├── components/            # Modular UI Components
+│   │   │   ├── virtual_hearing/   # Virtual courtroom components (Video Grid, WebRTC)
+│   │   │   ├── Summarizer.jsx     # Case summarisation logic and UI
+│   │   │   ├── PrecedentFinder.jsx# Precedent search UI and semantic highlighting
+│   │   │   ├── DraftGenerator.jsx # Auditable text editor for judgement drafting
+│   │   │   ├── Scheduler.jsx      # NJDG-synced smart calendar interface
+│   │   │   ├── LegalChat.jsx      # Context-aware chat sidebar
+│   │   │   └── MandamusGuide.jsx  # Spline 3D intelligent guide integration
+│   │   │
+│   │   ├── context/               # React Contexts (Global State)
+│   │   │   ├── AuthContext.jsx    # Firebase Authentication state
+│   │   │   ├── MandamusContext.jsx# Global dashboard and UI state
+│   │   │   └── HistoryContext.jsx # Interaction logging and auditing
+│   │   │
+│   │   ├── lib/                   # Utilities and External Configs
+│   │   │   ├── firebase.js        # Firebase SDK initialization
+│   │   │   └── firestoreHelpers.js# DB interaction helpers
+│   │   │
+│   │   ├── pages/                 # Full-Page Routing Views
+│   │   │   ├── AboutPage.jsx          
+│   │   │   └── HowItWorksPage.jsx
+│   │   │
+│   │   └── utils/                 # Helper functions
+│   │       └── diff.js            # Custom word-level text diffing algorithm
 │   │
-│   ├── context/                   # React Contexts (Global State)
-│   │   ├── AuthContext.jsx        # Firebase Authentication state
-│   │   ├── MandamusContext.jsx    # Global dashboard and UI state
-│   │   └── HistoryContext.jsx     # Interaction logging and auditing
-│   │
-│   ├── lib/                       # Utilities and External Configs
-│   │   ├── firebase.js            # Firebase SDK initialization
-│   │   └── firestoreHelpers.js    # DB interaction helpers
-│   │
-│   ├── pages/                     # Full-Page Routing Views
-│   │   ├── AboutPage.jsx          
-│   │   └── HowItWorksPage.jsx
-│   │
-│   └── utils/                     # Helper functions
-│       └── diff.js                # Custom word-level text diffing algorithm
-│
-├── public/                        # Static Assets (Logo, Images, models)
-├── index.html                     # Main application entry point
-├── package.json                   # NPM dependencies (React, Firebase, WebRTC)
-└── vite.config.js                 # Vite bundler configuration
+│   ├── public/                    # Static Assets (Logo, Images, models)
+│   ├── index.html                 # Main application entry point
+│   ├── package.json               # NPM dependencies (React, Firebase, WebRTC)
+│   ├── vercel.json                # Vercel deployment configuration
+│   └── vite.config.js             # Vite bundler configuration
 ```
 
 ---
@@ -353,6 +355,9 @@ sequenceDiagram
 # Clone the repository
 git clone https://github.com/chv-sneha/Mandamus.git
 cd Mandamus
+
+# Navigate to the frontend directory
+cd frontend
 
 # Install dependencies
 npm install
