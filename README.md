@@ -25,7 +25,7 @@ Before Mandamus, the legal system has been buckling under its own weight.
 **The Staggering Statistics:**
 * Currently, there are over **55 Million pending cases** in the Indian judiciary system alone.
 * Over **70% of prisoners** are undertrials, awaiting their day in court while evidence degrades.
-* On average, a standard civil or criminal case can take anywhere from **5 to 25 years** to reach a final resolution.
+* On average, a standard civil or criminal case can take anywhere from **5 to 15 years** to reach a final resolution.
 
 **A Real-World Example:**
 Consider a standard property dispute. The initial FIR and witness statements run up to 200 pages. The judge must spend weeks manually reading the raw, unstructured documents. When the first hearing is finally scheduled, it is abruptly adjourned because the defense failed to file a crucial reply—a fact no one noticed until the day of the hearing. Six months later, during trial, lawyers and clerks spend hours manually hunting through physical books and legacy portals for past precedents. Finally, drafting the 50-page judgement takes the judge another two months of manual synthesis.
