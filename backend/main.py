@@ -31,9 +31,9 @@ try:
     import google.generativeai as genai
     if os.getenv("GOOGLE_API_KEY"):
         genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-        # Using 'gemini-flash-latest' as it has much higher free tier rate limits
-        gemini_model = genai.GenerativeModel('gemini-flash-latest')
-        logger.info("Gemini Flash Latest initialized successfully.")
+        # Using 'gemini-1.5-flash' for better JSON extraction consistency
+        gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+        logger.info("Gemini 1.5 Flash initialized successfully.")
     else:
         gemini_model = None
         logger.warning("GOOGLE_API_KEY not found. Gemini features will be disabled.")
@@ -78,13 +78,16 @@ origins = [
     "https://*.netlify.app",
 ]
 
-# Use allow_origin_regex for wildcard subdomains if needed, 
-# but FastAPI's CORSMiddleware handles list matching for exact strings.
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://mandamus-judicial.vercel.app",
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Ultra-robust: Allow all for production to fix persistent CORS blocks
-    allow_credentials=False, # Required to be False if allow_origins is ["*"]
+    allow_origins=origins,
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -493,7 +496,7 @@ def extract_text_from_bytes(file_bytes: bytes) -> tuple:
 def extract_text_via_textract(s3_key: str) -> tuple:
     """Fallback: use Textract for scanned PDFs already uploaded to S3."""
     textract_client = get_textract_client()
-    bucket_name = "mandamus-cases"
+    bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME", "mandamus-cases")
 
     response = textract_client.start_document_text_detection(
         DocumentLocation={'S3Object': {'Bucket': bucket_name, 'Name': s3_key}}
@@ -531,7 +534,7 @@ async def upload_pdf(user_id: str = Form(...), file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
     
     s3_client = get_s3_client()
-    bucket_name = "mandamus-cases"
+    bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME", "mandamus-cases")
     
     unique_filename = f"{uuid.uuid4()}_{file.filename}"
     s3_key = f"users/{user_id}/uploads/{unique_filename}"
@@ -585,7 +588,7 @@ async def summarise_document(
                     extracted_text, extraction_method = await asyncio.to_thread(extract_text_from_bytes, file_bytes)
                     if extraction_method == "needs_textract":
                         s3_client = get_s3_client()
-                        bucket_name = "mandamus-cases"
+                        bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME", "mandamus-cases")
                         s3_key = f"users/{user_id}/ocr_temp/{uuid.uuid4()}_{filename}"
                         
                         await asyncio.to_thread(
@@ -693,9 +696,12 @@ async def extract_text_endpoint(
         # 1. Try Digital Extraction
         extracted_text, method = extract_text_from_bytes(file_bytes)
         
-        # 2. Fallback to AWS Textract (Scanned)
-        if method == "needs_textract":
-            logger.info(f"Digital extraction failed for {filename}. Switching to AWS Textract...")
+        # 2. AWS Extraction Pipeline (Textract -> Bedrock Nova)
+        metadata = {"title": "", "petitioner": "", "respondent": "", "type": "criminal"}
+        
+        # Ensure we have text via Textract if digital fails
+        if not extracted_text or len(extracted_text) < 100:
+            logger.info(f"Switching to AWS Textract for {filename}...")
             s3_client = get_s3_client()
             bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME", "mandamus-cases")
             s3_key = f"users/{user_id}/admin_ocr/{uuid.uuid4()}_{filename}"
@@ -710,39 +716,52 @@ async def extract_text_endpoint(
                 )
                 extracted_text, method = await asyncio.to_thread(extract_text_via_textract, s3_key)
             except Exception as e:
-                logger.error(f"Textract/S3 failed: {e}")
-                # Last resort: Try to read whatever we can or return error
+                logger.error(f"AWS Textract failed: {e}")
                 if not extracted_text:
-                    raise Exception(f"AWS Textract failed and no digital text found. Error: {str(e)}")
+                    raise Exception(f"AWS Textract failed for {filename}")
 
-        # 3. Use Gemini to extract Metadata from the text for Auto-Fill
-        metadata = {"title": "", "petitioner": "", "respondent": "", "type": "criminal"}
-        if extracted_text and len(extracted_text) > 100 and gemini_model:
+        # 3. AWS Bedrock Metadata Extraction
+        if extracted_text and len(extracted_text) > 100:
             try:
+                bedrock = get_bedrock_client()
                 prompt = f"""Extract legal metadata from this case text. 
                 Return ONLY JSON: {{"title": "Case Title", "petitioner": "Name", "respondent": "Name", "type": "criminal/civil"}}
                 
                 TEXT:
                 {extracted_text[:4000]}"""
+
+                body = json.dumps({
+                    "inferenceConfig": {"max_new_tokens": 500, "temperature": 0},
+                    "messages": [{"role": "user", "content": [{"text": prompt}]}]
+                })
                 
-                resp = await asyncio.to_thread(gemini_model.generate_content, prompt)
-                meta_json = resp.text.strip()
-                if "```json" in meta_json:
-                    meta_json = meta_json.split("```json")[1].split("```")[0].strip()
-                metadata = json.loads(meta_json)
+                response = await asyncio.to_thread(
+                    bedrock.invoke_model,
+                    body=body,
+                    modelId="amazon.nova-lite-v1:0",
+                    accept="application/json",
+                    contentType="application/json"
+                )
+                
+                resp_body = json.loads(response.get('body').read())
+                resp_text = resp_body['output']['message']['content'][0]['text'].strip()
+                if "```json" in resp_text:
+                    resp_text = resp_text.split("```json")[1].split("```")[0].strip()
+                metadata = json.loads(resp_text)
+                method = f"aws-pipeline({method})"
+                logger.info("Metadata extracted via AWS Bedrock.")
             except Exception as e:
-                logger.warning(f"Metadata extraction failed: {e}")
+                logger.error(f"AWS Bedrock metadata extraction failed: {e}")
 
         return {
             "status": "success",
-            "text": extracted_text,
+            "text": extracted_text or "",
             "method": method,
             "metadata": metadata,
             "filename": filename
         }
     except Exception as e:
         logger.error(f"OCR Endpoint failed: {str(e)}")
-        # Return partial success if we have text but metadata failed
         return {
             "status": "partial_success",
             "error": str(e),
