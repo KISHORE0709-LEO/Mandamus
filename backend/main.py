@@ -916,7 +916,10 @@ async def get_legal_history(user_id: str):
         if os.path.exists(HISTORY_FILE):
             with open(HISTORY_FILE, "r") as f:
                 history_db = json.load(f)
+                # Defensive check for structure
+                if not isinstance(history_db, dict): return {"history": []}
                 user_data = history_db.get(user_id, {})
+                if not isinstance(user_data, dict): return {"history": []}
                 return {"history": user_data.get("threads", [])}
         return {"history": []}
     except Exception as e:
@@ -938,6 +941,48 @@ async def get_thread_messages(user_id: str, thread_id: str):
         return {"messages": []}
 
 
+
+@app.post("/legal-assistant/tts")
+async def text_to_speech(data: dict):
+    from fastapi.responses import StreamingResponse
+    import httpx
+    
+    text = data.get("text", "")
+    api_key = os.getenv("ELEVEN_LABS_API_KEY")
+    
+    if not api_key or "your_eleven_labs_key" in api_key:
+        raise HTTPException(status_code=400, detail="ElevenLabs API key is not configured yet.")
+
+    # Voice ID for 'Antoni' (Calm, professional male voice)
+    voice_id = "ErXwobaYiN019PkySvjV" 
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream"
+
+    headers = {
+        "Accept": "audio/mpeg",
+        "Content-Type": "application/json",
+        "xi-api-key": api_key
+    }
+
+    payload = {
+        "text": text,
+        "model_id": "eleven_multilingual_v2", # Fixed: v1 is deprecated for free tier
+        "voice_settings": {
+            "stability": 0.5,
+            "similarity_boost": 0.5
+        }
+    }
+
+    async def stream_audio():
+        async with httpx.AsyncClient() as client:
+            async with client.stream("POST", url, json=payload, headers=headers, timeout=60.0) as response:
+                if response.status_code != 200:
+                    error_detail = await response.aread()
+                    logger.error(f"ElevenLabs Error: {error_detail}")
+                    return
+                async for chunk in response.aiter_bytes():
+                    yield chunk
+
+    return StreamingResponse(stream_audio(), media_type="audio/mpeg")
 
 class PrecedentSearchRequest(BaseModel):
     query: str

@@ -14,7 +14,10 @@ import {
   LogOut,
   User,
   AlertTriangle,
-  Plus
+  Plus,
+  Volume2,
+  Square,
+  Loader2
 } from 'lucide-react';
 
 const ModernLegalAssistant = () => {
@@ -28,6 +31,81 @@ const ModernLegalAssistant = () => {
   const [lastAnalysis, setLastAnalysis] = useState({ severity: 'Medium', domain: 'General Legal Assistance' });
   const [history, setHistory] = useState([]);
   const scrollRef = React.useRef(null);
+  
+  // TTS State
+  const [playingId, setPlayingId] = useState(null);
+  const [isTtsLoading, setIsTtsLoading] = useState(false);
+  const [audioInstance, setAudioInstance] = useState(null);
+
+  const handleTTS = async (text, msgId) => {
+    // If clicking same message while playing, STOP it
+    if (playingId === msgId) {
+      if (audioInstance) {
+        audioInstance.pause();
+        audioInstance.currentTime = 0;
+      }
+      setPlayingId(null);
+      setAudioInstance(null);
+      return;
+    }
+
+    // Stop previous audio
+    if (audioInstance) {
+      audioInstance.pause();
+    }
+
+    setIsTtsLoading(true);
+    setPlayingId(msgId);
+
+    try {
+      // 1. Fetch the audio stream
+      const response = await fetch('http://127.0.0.1:8000/legal-assistant/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text.substring(0, 1000) }), // ElevenLabs limit safety
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.detail || 'TTS failed');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      
+      // 2. Create and play audio
+      const audio = new Audio();
+      audio.src = url;
+      audio.type = 'audio/mpeg';
+      
+      setAudioInstance(audio);
+      
+      // Attempt to play
+      const playPromise = audio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.then(() => {
+          console.log("Audio started playing");
+        }).catch(error => {
+          console.error("Playback failed:", error);
+          setPlayingId(null);
+        });
+      }
+
+      audio.onended = () => {
+        setPlayingId(null);
+        setAudioInstance(null);
+        URL.revokeObjectURL(url);
+      };
+
+    } catch (err) {
+      console.error("TTS Error:", err);
+      alert(`Audio Error: ${err.message}`);
+      setPlayingId(null);
+    } finally {
+      setIsTtsLoading(false);
+    }
+  };
 
   const handleNewChat = () => {
     setMessages([]);
@@ -289,6 +367,35 @@ const ModernLegalAssistant = () => {
                                   <span style={{ fontSize: '14px', fontWeight: '700', color: '#fff', letterSpacing: '1px' }}>MANDAMUS ADVISOR</span>
                                   <span style={{ fontSize: '11px', color: '#888', fontWeight: '600', textTransform: 'uppercase' }}>{msg.data.domain || 'General'}</span>
                                 </div>
+                                <button 
+                                  onClick={() => handleTTS(msg.data.explanation, index)}
+                                  style={{ 
+                                    background: 'rgba(224, 32, 32, 0.1)', 
+                                    border: '1px solid rgba(224, 32, 32, 0.3)', 
+                                    borderRadius: '8px', 
+                                    padding: '6px 12px', 
+                                    color: '#fff', 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    gap: '8px', 
+                                    cursor: 'pointer',
+                                    transition: 'all 0.2s ease',
+                                    marginLeft: '12px'
+                                  }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(224, 32, 32, 0.2)'; e.currentTarget.style.borderColor = '#e02020'; }}
+                                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(224, 32, 32, 0.1)'; e.currentTarget.style.borderColor = 'rgba(224, 32, 32, 0.3)'; }}
+                                >
+                                  {isTtsLoading && playingId === index ? (
+                                    <Loader2 size={14} className="btn-spinner" style={{ animation: 'authSpin 1s linear infinite' }} />
+                                  ) : playingId === index ? (
+                                    <Square size={14} fill="#fff" />
+                                  ) : (
+                                    <Volume2 size={14} />
+                                  )}
+                                  <span style={{ fontSize: '11px', fontWeight: '800', letterSpacing: '1px' }}>
+                                    {playingId === index ? 'STOP' : 'LISTEN'}
+                                  </span>
+                                </button>
                               </div>
                               <div style={{ padding: '4px 12px', background: 'rgba(0,0,0,0.5)', borderRadius: '20px', border: `1px solid ${getSeverityColor(msg.data.severity || 'Medium')}`, display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: getSeverityColor(msg.data.severity || 'Medium'), boxShadow: `0 0 10px ${getSeverityColor(msg.data.severity || 'Medium')}` }} />
