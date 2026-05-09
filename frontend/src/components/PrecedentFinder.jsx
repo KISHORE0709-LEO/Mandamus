@@ -146,20 +146,24 @@ export default function PrecedentFinder({ onTabChange }) {
 
   const selected = new Set(state.selected_precedents ? state.selected_precedents.map(c => c.case_id) : []);
 
+  // ── SESSION RESTORE: On mount, load cached results from MandamusContext ──
   useEffect(() => {
-    if (state.summariser_status === 'complete' && state.summariser_output) {
+    if (state.precedent_results?.allCases?.length > 0) {
+      // Results already cached — restore instantly, no API call
+      setAllCases(state.precedent_results.allCases);
+      setQuery(state.precedent_results.query || '');
+    } else if (state.summariser_status === 'complete' && state.summariser_output) {
       const parsed = state.summariser_output;
       const q = parsed.legalQuestions?.[0] || parsed.caseName || '';
-      if (!query && cases.length === 0 && !loading) {
+      if (q) {
         setQuery(q);
         searchPrecedents(q, parsed);
       }
     }
-  }, [state.summariser_status]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (cases.length > 0) {
-      // Group by year and calculate avg similarity
       const yearMap = {};
       cases.forEach(c => {
         const y = c.year || 'Unknown';
@@ -195,7 +199,6 @@ export default function PrecedentFinder({ onTabChange }) {
   useEffect(() => {
     let filtered = [...allCases];
     
-    // Filter by Court Level
     if (activeLevel !== 'ALL') {
       filtered = filtered.filter(c => {
         const court = (c.court || '').toUpperCase();
@@ -206,15 +209,12 @@ export default function PrecedentFinder({ onTabChange }) {
       });
     }
 
-    // Filter by Time Window (last 5 years)
     if (activeTime === 'LAST_5Y') {
       const currentYear = new Date().getFullYear();
       filtered = filtered.filter(c => (currentYear - (parseInt(c.year) || 0)) <= 5);
     }
 
-    // Sort by Similarity Score (ensure it stays sorted)
     filtered.sort((a, b) => (b.similarity_score || 0) - (a.similarity_score || 0));
-
     setCases(filtered);
   }, [allCases, activeLevel, activeTime]);
 
@@ -239,15 +239,14 @@ export default function PrecedentFinder({ onTabChange }) {
     .then(res => res.json())
     .then(data => {
       const newResults = data.results || [];
-      // Combine with existing cases to avoid re-fetching if we switch back
       setAllCases(prev => {
-        const combined = [...prev];
+        const base = forceFresh ? [] : [...prev];
         newResults.forEach(nr => {
-          if (!combined.find(c => c.case_name === nr.case_name)) {
-            combined.push(nr);
-          }
+          if (!base.find(c => c.case_name === nr.case_name)) base.push(nr);
         });
-        return combined;
+        // ── SESSION SAVE: persist results so navigating back is instant ──
+        updateState({ precedent_results: { allCases: base, query: q } });
+        return base;
       });
       setLoading(false);
     })

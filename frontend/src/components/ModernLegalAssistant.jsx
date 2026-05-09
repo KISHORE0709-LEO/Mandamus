@@ -32,9 +32,10 @@ const ModernLegalAssistant = () => {
   const languages = [
     { name: 'English', code: 'English' },
     { name: 'Hindi (हिंदी)', code: 'Hindi' },
-    { name: 'Spanish (Español)', code: 'Spanish' },
-    { name: 'French (Français)', code: 'French' },
-    { name: 'German (Deutsch)', code: 'German' }
+    { name: 'Telugu (తెలుగు)', code: 'Telugu' },
+    { name: 'Kannada (ಕನ್ನಡ)', code: 'Kannada' },
+    { name: 'Tamil (தமிழ்)', code: 'Tamil' },
+    { name: 'Malayalam (മലയാളം)', code: 'Malayalam' }
   ];
   const [silentMode, setSilentMode] = useState(false);
   const [input, setInput] = useState('');
@@ -137,9 +138,10 @@ const ModernLegalAssistant = () => {
     const langMap = {
       'English': 'en-US',
       'Hindi': 'hi-IN',
-      'Spanish': 'es-ES',
-      'French': 'fr-FR',
-      'German': 'de-DE'
+      'Telugu': 'te-IN',
+      'Kannada': 'kn-IN',
+      'Tamil': 'ta-IN',
+      'Malayalam': 'ml-IN'
     };
     
     recognition.lang = langMap[selectedLanguage] || 'en-US';

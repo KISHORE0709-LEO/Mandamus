@@ -1,0 +1,651 @@
+{
+    "mlh_judge": {
+        "threads": [
+            {
+                "id": "a30bb305-0a95-4997-806e-d77ef3ac9eb9",
+                "domain": "Workplace Harassment & POSH",
+                "query": "harassment at work",
+                "date": "09 May 13:47"
+            }
+        ],
+        "thread_messages": {
+            "a30bb305-0a95-4997-806e-d77ef3ac9eb9": [
+                {
+                    "role": "user",
+                    "content": "harassment at work"
+                },
+                {
+                    "role": "assistant",
+                    "data": {
+                        "query": "harassment at work",
+                        "explanation": "You've mentioned 'harassment at work', which falls under the category of workplace harassment. This is a serious issue and can have a significant impact on your well-being and professional life. It's important to address it promptly to ensure your safety and rights are protected. Workplace harassment can include unwanted comments, advances, or any behavior that creates a hostile work environment. Understanding your rights and the steps you can take is crucial in dealing with this situation effectively.",
+                        "laws": [
+                            "IPC 354A, BNS 75 - Sexual Harassment",
+                            "POSH Act 2013 - Sexual Harassment at Workplace Act"
+                        ],
+                        "rights": [
+                            "Right to an Internal Committee (IC) in any organization with 10+ employees",
+                            "Right to 'SHe-Box' reporting for Central/State employees",
+                            "Right to leave/transfer during inquiry to avoid retaliation"
+                        ],
+                        "severity": "High",
+                        "domain": "Workplace Harassment & POSH",
+                        "steps": [
+                            {
+                                "title": "Step 1: Immediate Action (Helplines/Numbers)",
+                                "content": "If you feel unsafe or need immediate support, contact the National Commission for Women (NCW) Helpline at 7827170170."
+                            },
+                            {
+                                "title": "Step 2: Official Filing (Links/Portals)",
+                                "content": "Submit a written complaint to your company's Internal Committee (IC). If they ignore it, file an online complaint on the Ministry of WCD portal: https://shebox.nic.in/. Simultaneously, file an FIR under BNS Section 75 at the nearest police station."
+                            },
+                            {
+                                "title": "Step 3: Legal/Evidence",
+                                "content": "Keep a record of all incidents, including dates, times, and details of the harassment. Save any emails, messages, or other communications that are relevant. This documentation will be crucial for your complaint and any legal proceedings."
+                            }
+                        ],
+                        "suggested_questions": [
+                            "What is the next step after filing the complaint?",
+                            "How can I track the status of my FIR?"
+                        ],
+                        "thread_id": "a30bb305-0a95-4997-806e-d77ef3ac9eb9"
+                    }
+                }
+            ]
+        }
+    },
+    "H6JEHb5orsavb5B3vAmimvTgmiX2": {
+        "threads": [
+            {
+                "id": "a3db549c-5440-4975-bfe3-ff201ab867b6",
+                "domain": "Domestic Violence & Cruelty, Cybercrime & Digital Scams, Workplace Harassment & POSH",
+                "query": "how to file case",
+                "date": "09 May 17:01"
+            },
+            {
+                "id": "157d9b75-16f5-4a45-a0a3-0e15a07e07fd",
+                "domain": "Domestic Violence & Cruelty, Workplace Harassment & POSH, Cybercrime & Digital Scams",
+                "query": "\u092e\u0941\u091d\u0947 \u090f\u0915 \u0915\u0947\u0938 \u092b\u093e\u0907\u0932 \u0915\u0930\u0928\u093e \u0939\u0948 \u0915\u0948\u0938\u093e \u0915\u0930\u0928\u093e \u0939\u0948 \u092c\u0924\u093e\u0913",
+                "date": "09 May 15:42"
+            },
+            {
+                "id": "b0473d7d-0ebc-42fe-ae75-b33af5b73fa5",
+                "domain": "Workplace Harassment & POSH",
+                "query": "\"\u092e\u0947\u0930\u0947 \u0938\u093e\u0925 \u0911\u092b\u093f\u0938 \u092e\u0947\u0902 \u092a\u0930\u0947\u0936\u093e\u0928\u0940 \u0939\u094b \u0930\u0939\u0940 \u0939\u0948\"",
+                "date": "09 May 15:34"
+            },
+            {
+                "id": "2c3cfc75-1926-49f0-8935-744dc267f509",
+                "domain": "Multiple (Domestic Violence, Cybercrime, Workplace Harassment)",
+                "query": "how to file a case ?",
+                "date": "09 May 14:17"
+            },
+            {
+                "id": "3aa819f5-1e92-4a2d-a45a-ef74658b3226",
+                "domain": "Workplace Harassment & POSH",
+                "query": "What is the next step after filing the FIR?",
+                "date": "09 May 13:52"
+            },
+            {
+                "id": "705b5eb4-3c14-464b-92e4-05a9fabee00e",
+                "domain": "General Legal Advice",
+                "query": "How can I track the status of my FIR?",
+                "date": "09 May 13:50"
+            }
+        ],
+        "thread_messages": {
+            "705b5eb4-3c14-464b-92e4-05a9fabee00e": [
+                {
+                    "role": "user",
+                    "content": "How to file a case ?"
+                },
+                {
+                    "role": "assistant",
+                    "data": {
+                        "query": "How to file a case?",
+                        "explanation": "It looks like you're dealing with a serious issue and need to know how to file a case. This is a big step, and it's important to do it right to ensure your safety and justice. Depending on your specific situation (domestic violence, cybercrime, or workplace harassment), the process will vary slightly. Let's break it down in a way that's easy to follow, so you know exactly what to do next.",
+                        "laws": [
+                            "IPC 498A, BNS 85, 86 (Domestic Violence)",
+                            "IPC 420, BNS 318 (Cybercrime)",
+                            "IPC 354A, BNS 75 (Workplace Harassment)"
+                        ],
+                        "rights": [
+                            "Right to reside in the shared household (Sec 17 DV Act)",
+                            "Right to block/report unauthorized transactions immediately",
+                            "Right to an Internal Committee (IC) in any organization with 10+ employees"
+                        ],
+                        "severity": "High",
+                        "domain": "General (as the specific domain is not clear from the query)",
+                        "steps": [
+                            {
+                                "title": "Step 1: Immediate Action (Helplines/Numbers)",
+                                "content": "Depending on your situation, dial the appropriate helpline: Women Helpline (1091) for domestic violence, National Cybercrime Helpline (1930) for cybercrime, or NCW Helpline (7827170170) for workplace harassment."
+                            },
+                            {
+                                "title": "Step 2: Official Filing (Links/Portals)",
+                                "content": "Visit the relevant portal to file your complaint: https://www.cybercrime.gov.in for cybercrime, or https://shebox.nic.in/ for workplace harassment. For domestic violence, visit the nearest Protection Officer or 'Mahila Thana' (Women Police Station)."
+                            },
+                            {
+                                "title": "Step 3: Legal/Evidence",
+                                "content": "Gather all necessary evidence. For domestic violence, save photos of injuries and abusive messages. For cybercrime, export WhatsApp chats as.txt, save URL links, and take screenshots of transaction IDs. For workplace harassment, keep a written record of incidents."
+                            }
+                        ],
+                        "suggested_questions": [
+                            "What is the next step after filing the case?",
+                            "How can I track the status of my FIR?"
+                        ],
+                        "thread_id": "705b5eb4-3c14-464b-92e4-05a9fabee00e"
+                    }
+                },
+                {
+                    "role": "user",
+                    "content": "How can I track the status of my FIR?"
+                },
+                {
+                    "role": "assistant",
+                    "data": {
+                        "query": "How can I track the status of my FIR?",
+                        "explanation": "You've filed an FIR (First Information Report) and now you want to know its status. This is important because it helps you understand if the police are taking action on your complaint. Knowing the status can also help you decide if you need to follow up or take additional steps. It's like checking the progress of a task you've assigned to someone\u2014you want to make sure it's being handled properly.",
+                        "laws": [
+                            "IPC: Varies based on the nature of the crime",
+                            "BNS: Varies based on the nature of the crime"
+                        ],
+                        "rights": [
+                            "Right to follow up on your FIR",
+                            "Right to seek updates from the police station"
+                        ],
+                        "severity": "Medium",
+                        "domain": "General Legal Advice",
+                        "steps": [
+                            {
+                                "title": "Step 1: Immediate Action (Helplines/Numbers)",
+                                "content": "Dial 100 or 112 to contact your local police station directly. Ask to speak with the officer-in-charge (OIC) to inquire about the status of your FIR."
+                            },
+                            {
+                                "title": "Step 2: Official Filing (Links/Portals)",
+                                "content": "Visit your state's Citizen Portal or the official police department website to check the status of your FIR. Some states offer online tracking services."
+                            },
+                            {
+                                "title": "Step 3: Legal/Evidence",
+                                "content": "Keep a copy of your FIR acknowledgment receipt. Note down the FIR number and the date it was filed. This information will be useful when you follow up with the police."
+                            }
+                        ],
+                        "suggested_questions": [
+                            "What is the next step?",
+                            "How to track my FIR?"
+                        ],
+                        "thread_id": "705b5eb4-3c14-464b-92e4-05a9fabee00e"
+                    }
+                }
+            ],
+            "3aa819f5-1e92-4a2d-a45a-ef74658b3226": [
+                {
+                    "role": "user",
+                    "content": "How can i file a dowry case ??"
+                },
+                {
+                    "role": "assistant",
+                    "data": {
+                        "query": "How can i file a dowry case??",
+                        "explanation": "Filing a dowry case is a serious matter and it's important to take immediate action to protect yourself and seek justice. Dowry cases often involve cruelty by the husband or his relatives, demanding money or property. This can be emotionally and physically draining. By filing a case, you're not only standing up for your rights but also sending a strong message that such practices are unacceptable. It's crucial to gather all evidence and follow the correct procedures to ensure your case is strong and you receive the protection you deserve.",
+                        "laws": [
+                            "IPC 498A: Cruelty by husband or relatives",
+                            "BNS 85, 86: Related provisions under the new BNS code"
+                        ],
+                        "rights": [
+                            "Right to reside in the shared household (Sec 17 DV Act)",
+                            "Right to protection orders (Sec 18)",
+                            "Right to free legal aid via NALSA (15100)",
+                            "Right to emergency shelter/medical aid"
+                        ],
+                        "severity": "High",
+                        "domain": "Domestic Violence & Cruelty",
+                        "steps": [
+                            {
+                                "title": "Step 1: Immediate Action (Helplines/Numbers)",
+                                "content": "Dial 1091 (Women Helpline) or 112 for immediate police assistance."
+                            },
+                            {
+                                "title": "Step 2: Official Filing (Links/Portals)",
+                                "content": "Visit the nearest Protection Officer or 'Mahila Thana' (Women Police Station). You can also file an Online FIR on your state's Citizen Portal."
+                            },
+                            {
+                                "title": "Step 3: Legal/Evidence",
+                                "content": "Save photos of injuries, medical bills, and record any abusive calls/messages. Request an 'Interim Protection Order' under Section 23 of the DV Act to ensure your immediate safety."
+                            }
+                        ],
+                        "suggested_questions": [
+                            "What is the next step after filing the FIR?",
+                            "How can I track the status of my FIR?"
+                        ],
+                        "thread_id": "3aa819f5-1e92-4a2d-a45a-ef74658b3226"
+                    }
+                },
+                {
+                    "role": "user",
+                    "content": "What is the next step after filing the FIR?"
+                },
+                {
+                    "role": "assistant",
+                    "data": {
+                        "query": "What is the next step after filing the FIR?",
+                        "explanation": "After you've filed an FIR (First Information Report), it's important to know what comes next to ensure your case is handled properly. Filing an FIR is the first official step in reporting a crime, but it's just the beginning. The police will start an investigation based on the information you provided. It's crucial to follow up and stay informed about the progress of your case. Depending on the type of crime, you may also need to take additional steps to protect your rights and gather evidence. This ensures that your case is strong and that you receive the support you need.",
+                        "laws": [
+                            "IPC 354A (Sexual Harassment)",
+                            "BNS 75 (Sexual Harassment)"
+                        ],
+                        "rights": [
+                            "Right to an Internal Committee (IC) in any organization with 10+ employees",
+                            "Right to 'SHe-Box' reporting for Central/State employees",
+                            "Right to leave/transfer during inquiry to avoid retaliation"
+                        ],
+                        "severity": "Medium",
+                        "domain": "Workplace Harassment & POSH",
+                        "steps": [
+                            {
+                                "title": "Step 1: Immediate Action (Helplines/Numbers)",
+                                "content": "If you need immediate assistance or advice, contact the National Commission for Women (NCW) Helpline at 7827170170 for legal assistance."
+                            },
+                            {
+                                "title": "Step 2: Official Filing (Links/Portals)",
+                                "content": "File an online complaint on the Ministry of WCD portal at https://shebox.nic.in/ for further action."
+                            },
+                            {
+                                "title": "Step 3: Legal/Evidence",
+                                "content": "Keep a copy of the FIR acknowledgment and gather any additional evidence such as emails, messages, or witness statements to support your case."
+                            }
+                        ],
+                        "suggested_questions": [
+                            "What is the next step?",
+                            "How to track my FIR?"
+                        ],
+                        "thread_id": "3aa819f5-1e92-4a2d-a45a-ef74658b3226"
+                    }
+                }
+            ],
+            "2c3cfc75-1926-49f0-8935-744dc267f509": [
+                {
+                    "role": "user",
+                    "content": "how to file a case ?"
+                },
+                {
+                    "role": "assistant",
+                    "data": {
+                        "query": "how to file a case?",
+                        "explanation": "It sounds like you're dealing with a tough situation and need to know how to file a legal case. This is a critical step to protect your rights and seek justice. Depending on your specific issue, the process can vary. It's important to act quickly and follow the right steps to ensure your case is handled properly. Let's break it down in a simple way so you know exactly what to do.",
+                        "laws": [
+                            "IPC 498A, BNS 85, 86 (Domestic Violence)",
+                            "IT Act 66D (Cybercrime)",
+                            "BNS 75, POSH Act 2013 (Workplace Harassment)"
+                        ],
+                        "rights": [
+                            "Right to reside in the shared household (Sec 17 DV Act)",
+                            "Right to block/report unauthorized transactions immediately",
+                            "Right to an Internal Committee (IC) in any organization with 10+ employees"
+                        ],
+                        "severity": "Critical",
+                        "domain": "Multiple (Domestic Violence, Cybercrime, Workplace Harassment)",
+                        "steps": [
+                            {
+                                "title": "Step 1: Immediate Action (Helplines/Numbers)",
+                                "content": "Depending on your issue, dial the appropriate helpline: Women Helpline (1091) for domestic violence, National Cybercrime Helpline (1930) for cybercrime, or NCW Helpline (7827170170) for workplace harassment."
+                            },
+                            {
+                                "title": "Step 2: Official Filing (Links/Portals)",
+                                "content": "Visit the relevant portal to file your complaint: https://www.cybercrime.gov.in for cybercrime, https://shebox.nic.in/ for workplace harassment, or visit the nearest Protection Officer or 'Mahila Thana' (Women Police Station) for domestic violence."
+                            },
+                            {
+                                "title": "Step 3: Legal/Evidence",
+                                "content": "Gather all necessary evidence. For domestic violence, save photos of injuries and abusive messages. For cybercrime, export WhatsApp chats, save URL links, and take screenshots of transaction IDs. For workplace harassment, keep a written record of incidents and any correspondence."
+                            }
+                        ],
+                        "suggested_questions": [
+                            "What is the next step after filing my case?",
+                            "How can I track the status of my FIR?"
+                        ],
+                        "thread_id": "2c3cfc75-1926-49f0-8935-744dc267f509"
+                    }
+                }
+            ],
+            "b0473d7d-0ebc-42fe-ae75-b33af5b73fa5": [
+                {
+                    "role": "user",
+                    "content": "How to book a lawyer? i want the contact details like.. im in banglore so"
+                },
+                {
+                    "role": "assistant",
+                    "data": {
+                        "query": "How to book a lawyer? i want the contact details like.. im in banglore so",
+                        "explanation": "It sounds like you're looking for a lawyer in Bangalore and need their contact details. This is an important step, especially if you're dealing with a legal issue. Having a lawyer can help you understand your rights, navigate the legal system, and represent you in court if needed. In Bangalore, there are several ways to find a lawyer, including online directories, legal aid services, and referrals from friends or family.",
+                        "laws": [],
+                        "rights": [
+                            "Right to free legal aid via NALSA (15100)"
+                        ],
+                        "severity": "Medium",
+                        "domain": "General Legal Assistance",
+                        "steps": [
+                            {
+                                "title": "Step 1: Immediate Action (Helplines/Numbers)",
+                                "content": "Call the NALSA helpline at 15100 for free legal aid services. They can provide you with a list of lawyers in your area."
+                            },
+                            {
+                                "title": "Step 2: Official Filing (Links/Portals)",
+                                "content": "Visit the Bar Council of India's website at https://www.barcouncilofindia.org/ to find a list of advocates in Bangalore. You can also check the Legal Services Authorities Act website at https://nalsa.gov.in/ for more information on free legal aid."
+                            },
+                            {
+                                "title": "Step 3: Legal/Evidence",
+                                "content": "Prepare a list of your legal issues and any documents you have related to your case. This will help the lawyer understand your situation better and provide you with the best possible advice."
+                            }
+                        ],
+                        "suggested_questions": [
+                            "What is the next step?",
+                            "How to track my FIR?"
+                        ],
+                        "thread_id": "b0473d7d-0ebc-42fe-ae75-b33af5b73fa5"
+                    }
+                },
+                {
+                    "role": "user",
+                    "content": "What are the steps to file a complaint on police officer , who refused to take my complaint , and he was unbiased ?/"
+                },
+                {
+                    "role": "assistant",
+                    "data": {
+                        "query": "What are the steps to file a complaint on police officer, who refused to take my complaint, and he was unbiased?/",
+                        "explanation": "It sounds like you're facing a tough situation where a police officer didn't take your complaint seriously, and you feel they were biased. This can be very frustrating and concerning. It's important to know that you have the right to seek help and take action when you feel that you're not being treated fairly by those who are supposed to protect you. Here's what this means for you: you can officially report this misconduct, and there are specific steps you can take to ensure your complaint is heard and acted upon.",
+                        "laws": [
+                            "IPC: 166 (Public servant disobeying direction of law with intent to cause injury to any person)"
+                        ],
+                        "rights": [
+                            "Right to file a complaint against police misconduct",
+                            "Right to seek redressal through higher authorities"
+                        ],
+                        "severity": "Medium",
+                        "domain": "Domestic Violence & Cruelty",
+                        "steps": [
+                            {
+                                "title": "Step 1: Immediate Action (Helplines/Numbers)",
+                                "content": "Dial 100 to contact the police control room and explain your situation. If you feel unsafe or need immediate assistance, you can also call 112 for emergency services."
+                            },
+                            {
+                                "title": "Step 2: Official Filing (Links/Portals)",
+                                "content": "Visit the official website of your state police department and look for the 'Complaint Against Police' section. You can also file a complaint on the National Human Rights Commission (NHRC) website at https://nhrc.nic.in/."
+                            },
+                            {
+                                "title": "Step 3: Legal/Evidence",
+                                "content": "Document everything. Write down the details of your interaction with the police officer, including dates, times, and what was said. If you have any witnesses, get their contact information. Save any communication you had with the officer, such as text messages or emails."
+                            }
+                        ],
+                        "suggested_questions": [
+                            "What if the police officer retaliates against me?",
+                            "How can I ensure my complaint is taken seriously?"
+                        ],
+                        "thread_id": "b0473d7d-0ebc-42fe-ae75-b33af5b73fa5"
+                    }
+                },
+                {
+                    "role": "user",
+                    "content": "\"\u092e\u0947\u0930\u0947 \u0938\u093e\u0925 \u0911\u092b\u093f\u0938 \u092e\u0947\u0902 \u092a\u0930\u0947\u0936\u093e\u0928\u0940 \u0939\u094b \u0930\u0939\u0940 \u0939\u0948\""
+                },
+                {
+                    "role": "assistant",
+                    "data": {
+                        "query": "\u092e\u0947\u0930\u0947 \u0938\u093e\u0925 \u0911\u092b\u093f\u0938 \u092e\u0947\u0902 \u092a\u0930\u0947\u0936\u093e\u0928\u0940 \u0939\u094b \u0930\u0939\u0940 \u0939\u0948",
+                        "explanation": "\u0906\u092a\u0915\u0947 \u0911\u092b\u093f\u0938 \u092e\u0947\u0902 \u0939\u094b \u0930\u0939\u0940 \u092a\u0930\u0947\u0936\u093e\u0928\u0940 \u0917\u0902\u092d\u0940\u0930 \u0939\u094b \u0938\u0915\u0924\u0940 \u0939\u0948, \u0916\u093e\u0938\u0915\u0930 \u0905\u0917\u0930 \u092f\u0939 \u092a\u0930\u0947\u0936\u093e\u0928\u0940 \u092f\u094c\u0928 \u0909\u0924\u094d\u092a\u0940\u0921\u093c\u0928 \u092f\u093e \u0905\u0928\u094d\u092f \u092a\u094d\u0930\u0915\u093e\u0930 \u0915\u0940 \u0927\u092e\u0915\u093f\u092f\u094b\u0902 \u0938\u0947 \u0938\u0902\u092c\u0902\u0927\u093f\u0924 \u0939\u0948\u0964 \u0910\u0938\u0947 \u092e\u093e\u092e\u0932\u094b\u0902 \u092e\u0947\u0902, \u0906\u092a\u0915\u094b \u0905\u092a\u0928\u0947 \u0905\u0927\u093f\u0915\u093e\u0930\u094b\u0902 \u0915\u0947 \u092c\u093e\u0930\u0947 \u092e\u0947\u0902 \u092a\u0924\u093e \u0939\u094b\u0928\u093e \u091a\u093e\u0939\u093f\u090f \u0914\u0930 \u0909\u091a\u093f\u0924 \u0915\u0926\u092e \u0909\u0920\u093e\u0928\u0947 \u091a\u093e\u0939\u093f\u090f\u0964 \u0911\u092b\u093f\u0938 \u092e\u0947\u0902 \u0909\u0924\u094d\u092a\u0940\u0921\u093c\u0928 \u0928 \u0915\u0947\u0935\u0932 \u0906\u092a\u0915\u093e \u0915\u093e\u092e \u092a\u094d\u0930\u092d\u093e\u0935\u093f\u0924 \u0915\u0930 \u0938\u0915\u0924\u093e \u0939\u0948 \u092c\u0932\u094d\u0915\u093f \u0906\u092a\u0915\u093e \u092e\u093e\u0928\u0938\u093f\u0915 \u0938\u094d\u0935\u093e\u0938\u094d\u0925\u094d\u092f \u092d\u0940 \u0916\u0930\u093e\u092c \u0915\u0930 \u0938\u0915\u0924\u093e \u0939\u0948\u0964 \u0907\u0938\u0932\u093f\u090f, \u092f\u0939 \u092e\u0939\u0924\u094d\u0935\u092a\u0942\u0930\u094d\u0923 \u0939\u0948 \u0915\u093f \u0906\u092a \u0905\u092a\u0928\u0940 \u0938\u0941\u0930\u0915\u094d\u0937\u093e \u0914\u0930 \u0905\u0927\u093f\u0915\u093e\u0930\u094b\u0902 \u0915\u094b \u0938\u092e\u091d\u0947\u0902 \u0914\u0930 \u0906\u0935\u0936\u094d\u092f\u0915 \u0915\u093e\u0930\u094d\u0930\u0935\u093e\u0908 \u0915\u0930\u0947\u0902\u0964",
+                        "laws": [
+                            "IPC 354A, BNS 75 - \u092f\u094c\u0928 \u0909\u0924\u094d\u092a\u0940\u0921\u093c\u0928",
+                            "POSH Act 2013 - \u0915\u093e\u0930\u094d\u092f\u0938\u094d\u0925\u0932 \u092a\u0930 \u092f\u094c\u0928 \u0909\u0924\u094d\u092a\u0940\u0921\u093c\u0928"
+                        ],
+                        "rights": [
+                            "\u0915\u093f\u0938\u0940 \u092d\u0940 \u0938\u0902\u0917\u0920\u0928 \u092e\u0947\u0902 10+ \u0915\u0930\u094d\u092e\u091a\u093e\u0930\u093f\u092f\u094b\u0902 \u0915\u0947 \u0938\u093e\u0925 \u0906\u0902\u0924\u0930\u093f\u0915 \u0938\u092e\u093f\u0924\u093f (IC) \u0915\u093e \u0905\u0927\u093f\u0915\u093e\u0930",
+                            "\u0915\u0947\u0902\u0926\u094d\u0930\u0940\u092f/\u0930\u093e\u091c\u094d\u092f \u0915\u0930\u094d\u092e\u091a\u093e\u0930\u093f\u092f\u094b\u0902 \u0915\u0947 \u0932\u093f\u090f 'SHe-Box' \u0930\u093f\u092a\u094b\u0930\u094d\u091f\u093f\u0902\u0917 \u0915\u093e \u0905\u0927\u093f\u0915\u093e\u0930",
+                            "\u091c\u093e\u0902\u091a \u0915\u0947 \u0926\u094c\u0930\u093e\u0928 \u092a\u094d\u0930\u0924\u093f\u0936\u094b\u0927 \u0938\u0947 \u092c\u091a\u0928\u0947 \u0915\u0947 \u0932\u093f\u090f \u091b\u0941\u091f\u094d\u091f\u0940/\u0938\u094d\u0925\u093e\u0928\u093e\u0902\u0924\u0930\u0923 \u0915\u093e \u0905\u0927\u093f\u0915\u093e\u0930"
+                        ],
+                        "severity": "High",
+                        "domain": "Workplace Harassment & POSH",
+                        "steps": [
+                            {
+                                "title": "Step 1: Immediate Action (Helplines/Numbers)",
+                                "content": "\u0924\u0941\u0930\u0902\u0924 \u0915\u093e\u0930\u094d\u0930\u0935\u093e\u0908 \u0915\u0947 \u0932\u093f\u090f, \u0906\u092a \u0930\u093e\u0937\u094d\u091f\u094d\u0930\u0940\u092f \u092e\u0939\u093f\u0932\u093e \u0906\u092f\u094b\u0917 (NCW) \u0939\u0947\u0932\u094d\u092a\u0932\u093e\u0907\u0928 7827170170 \u092a\u0930 \u0938\u0902\u092a\u0930\u094d\u0915 \u0915\u0930 \u0938\u0915\u0924\u0947 \u0939\u0948\u0902\u0964"
+                            },
+                            {
+                                "title": "Step 2: Official Filing (Links/Portals)",
+                                "content": "\u090f\u0915 \u0932\u093f\u0916\u093f\u0924 \u0936\u093f\u0915\u093e\u092f\u0924 \u0905\u092a\u0928\u0947 \u0915\u0902\u092a\u0928\u0940 \u0915\u0947 \u0906\u0902\u0924\u0930\u093f\u0915 \u0938\u092e\u093f\u0924\u093f (IC) \u0915\u094b \u091c\u092e\u093e \u0915\u0930\u0947\u0902\u0964 \u0905\u0917\u0930 \u0935\u0947 \u0907\u0938\u0947 \u0905\u0928\u0926\u0947\u0916\u093e \u0915\u0930\u0924\u0947 \u0939\u0948\u0902, \u0924\u094b \u0906\u092a \u091c\u093f\u0932\u093e \u0915\u0932\u0947\u0915\u094d\u091f\u0930 \u0915\u0947 \u0915\u093e\u0930\u094d\u092f\u093e\u0932\u092f \u092e\u0947\u0902 \u0938\u094d\u0925\u093e\u0928\u0940\u092f \u0938\u092e\u093f\u0924\u093f (LC) \u0938\u0947 \u0938\u0902\u092a\u0930\u094d\u0915 \u0915\u0930 \u0938\u0915\u0924\u0947 \u0939\u0948\u0902\u0964 \u0938\u093e\u0925 \u0939\u0940, \u092e\u0939\u093f\u0932\u093e \u090f\u0935\u0902 \u092c\u093e\u0932 \u0935\u093f\u0915\u093e\u0938 \u092e\u0902\u0924\u094d\u0930\u093e\u0932\u092f \u0915\u0947 \u092a\u094b\u0930\u094d\u091f\u0932 https://shebox.nic.in/ \u092a\u0930 \u0911\u0928\u0932\u093e\u0907\u0928 \u0936\u093f\u0915\u093e\u092f\u0924 \u0926\u0930\u094d\u091c \u0915\u0930\u0947\u0902\u0964"
+                            },
+                            {
+                                "title": "Step 3: Legal/Evidence",
+                                "content": "\u0938\u093e\u0925 \u0939\u0940, BNS \u0927\u093e\u0930\u093e 75 \u0915\u0947 \u0924\u0939\u0924 \u0928\u093f\u0915\u091f\u0924\u092e \u092a\u0941\u0932\u093f\u0938 \u0938\u094d\u091f\u0947\u0936\u0928 \u092e\u0947\u0902 \u090f\u0915 FIR \u0926\u0930\u094d\u091c \u0915\u0930\u0947\u0902\u0964 \u0905\u092a\u0928\u0947 \u0938\u093e\u0925 \u0939\u0941\u0908 \u0918\u091f\u0928\u093e\u0913\u0902 \u0915\u0947 \u0938\u092c\u0942\u0924 \u091c\u0948\u0938\u0947 \u0908\u092e\u0947\u0932, \u092e\u0948\u0938\u0947\u091c, \u0914\u0930 \u0917\u0935\u093e\u0939\u094b\u0902 \u0915\u0947 \u092c\u092f\u093e\u0928 \u0907\u0915\u091f\u094d\u0920\u093e \u0915\u0930\u0947\u0902\u0964"
+                            }
+                        ],
+                        "suggested_questions": [
+                            "\u0905\u0917\u0932\u093e \u0915\u0926\u092e \u0915\u094d\u092f\u093e \u0939\u0948?",
+                            "\u0905\u092a\u0928\u0940 FIR \u0915\u094b \u0915\u0948\u0938\u0947 \u091f\u094d\u0930\u0948\u0915 \u0915\u0930\u0947\u0902?"
+                        ],
+                        "thread_id": "b0473d7d-0ebc-42fe-ae75-b33af5b73fa5"
+                    }
+                }
+            ],
+            "157d9b75-16f5-4a45-a0a3-0e15a07e07fd": [
+                {
+                    "role": "user",
+                    "content": "mera naam Sneha Mujhe Meri Aadmi pareshan kar raha hai kya karun"
+                },
+                {
+                    "role": "assistant",
+                    "data": {
+                        "query": "mera naam Sneha Mujhe Meri Aadmi pareshan kar raha hai kya karun",
+                        "explanation": "Sneha, it sounds like you're experiencing domestic violence or cruelty from your husband. This is a serious issue and you have rights to protect yourself. Under the Protection of Women from Domestic Violence Act (DV Act), you have the right to reside in the shared household, get protection orders, and receive free legal aid. It's important to take immediate action to ensure your safety and seek the help you need.",
+                        "laws": [
+                            "IPC 498A",
+                            "BNS 85, 86",
+                            "DV Act 2005"
+                        ],
+                        "rights": [
+                            "Right to reside in the shared household (Sec 17 DV Act)",
+                            "Right to protection orders (Sec 18)",
+                            "Right to free legal aid via NALSA (15100)",
+                            "Right to emergency shelter/medical aid"
+                        ],
+                        "severity": "High",
+                        "domain": "Domestic Violence & Cruelty",
+                        "steps": [
+                            {
+                                "title": "Step 1: Immediate Action (Helplines/Numbers)",
+                                "content": "Dial 1091 (Women Helpline) or 112 for immediate police dispatch. You can also call the Domestic Violence Helpline at 181."
+                            },
+                            {
+                                "title": "Step 2: Official Filing (Links/Portals)",
+                                "content": "Visit the nearest Protection Officer or 'Mahila Thana' (Women Police Station). You can also file an Online FIR on your state's Citizen Portal."
+                            },
+                            {
+                                "title": "Step 3: Legal/Evidence",
+                                "content": "Request an 'Interim Protection Order' under Section 23 of the DV Act to ensure your immediate safety. Save photos of injuries, medical bills, and record abusive calls/messages as evidence."
+                            }
+                        ],
+                        "suggested_questions": [
+                            "What is the next step?",
+                            "How to track my FIR?"
+                        ],
+                        "thread_id": "157d9b75-16f5-4a45-a0a3-0e15a07e07fd"
+                    }
+                },
+                {
+                    "role": "user",
+                    "content": "\u092e\u0947\u0930\u093e \u0928\u093e\u092e \u0938\u094d\u0928\u0947\u0939\u093e"
+                },
+                {
+                    "role": "assistant",
+                    "data": {
+                        "query": "\u092e\u0947\u0930\u093e \u0928\u093e\u092e \u0938\u094d\u0928\u0947\u0939\u093e",
+                        "explanation": "\u0938\u094d\u0928\u0947\u0939\u093e, \u0906\u092a\u0915\u093e \u0928\u093e\u092e \u092c\u0924\u093e\u0928\u0947 \u0938\u0947 \u0939\u092e\u0947\u0902 \u0906\u092a\u0915\u0940 \u092e\u0926\u0926 \u0915\u0930\u0928\u0947 \u092e\u0947\u0902 \u092e\u0926\u0926 \u0928\u0939\u0940\u0902 \u092e\u093f\u0932\u0924\u0940 \u0939\u0948\u0964 \u0905\u0917\u0930 \u0906\u092a\u0915\u094b \u0915\u093f\u0938\u0940 \u0915\u093e\u0928\u0942\u0928\u0940 \u0938\u092e\u0938\u094d\u092f\u093e \u0915\u093e \u0938\u093e\u092e\u0928\u093e \u0915\u0930\u0928\u093e \u092a\u0921\u093c \u0930\u0939\u093e \u0939\u0948, \u0924\u094b \u0915\u0943\u092a\u092f\u093e \u0939\u092e\u0947\u0902 \u0935\u093f\u0938\u094d\u0924\u093e\u0930 \u0938\u0947 \u092c\u0924\u093e\u090f\u0902\u0964 \u0939\u092e \u0906\u092a\u0915\u094b \u0938\u0939\u0940 \u0926\u093f\u0936\u093e-\u0928\u093f\u0930\u094d\u0926\u0947\u0936 \u0914\u0930 \u0915\u0926\u092e \u0909\u0920\u093e\u0928\u0947 \u092e\u0947\u0902 \u092e\u0926\u0926 \u0915\u0930\u0947\u0902\u0917\u0947\u0964 \u0905\u0917\u0930 \u0906\u092a\u0915\u094b \u0915\u093f\u0938\u0940 \u0924\u0930\u0939 \u0915\u0940 \u092e\u0926\u0926 \u091a\u093e\u0939\u093f\u090f, \u0924\u094b \u0915\u0943\u092a\u092f\u093e \u0939\u092e\u0947\u0902 \u092c\u0924\u093e\u090f\u0902 \u0924\u093e\u0915\u093f \u0939\u092e \u0906\u092a\u0915\u094b \u0938\u0939\u0940 \u091c\u093e\u0928\u0915\u093e\u0930\u0940 \u0914\u0930 \u0915\u0926\u092e \u092a\u094d\u0930\u0926\u093e\u0928 \u0915\u0930 \u0938\u0915\u0947\u0902\u0964",
+                        "laws": [],
+                        "rights": [],
+                        "severity": "Low",
+                        "domain": "General",
+                        "steps": [
+                            {
+                                "title": "Step 1: Immediate Action (Helplines/Numbers)",
+                                "content": "\u0905\u0917\u0930 \u0906\u092a\u0915\u094b \u0915\u093f\u0938\u0940 \u0924\u0930\u0939 \u0915\u0940 \u092e\u0926\u0926 \u091a\u093e\u0939\u093f\u090f, \u0924\u094b \u0915\u0943\u092a\u092f\u093e \u0939\u092e\u0947\u0902 \u092c\u0924\u093e\u090f\u0902 \u0924\u093e\u0915\u093f \u0939\u092e \u0906\u092a\u0915\u094b \u0938\u0939\u0940 \u091c\u093e\u0928\u0915\u093e\u0930\u0940 \u0914\u0930 \u0915\u0926\u092e \u092a\u094d\u0930\u0926\u093e\u0928 \u0915\u0930 \u0938\u0915\u0947\u0902\u0964"
+                            },
+                            {
+                                "title": "Step 2: Official Filing (Links/Portals)",
+                                "content": "\u0905\u0917\u0930 \u0906\u092a\u0915\u094b \u0915\u093f\u0938\u0940 \u0915\u093e\u0928\u0942\u0928\u0940 \u0938\u092e\u0938\u094d\u092f\u093e \u0915\u093e \u0938\u093e\u092e\u0928\u093e \u0915\u0930\u0928\u093e \u092a\u0921\u093c \u0930\u0939\u093e \u0939\u0948, \u0924\u094b \u0915\u0943\u092a\u092f\u093e \u0939\u092e\u0947\u0902 \u0935\u093f\u0938\u094d\u0924\u093e\u0930 \u0938\u0947 \u092c\u0924\u093e\u090f\u0902\u0964 \u0939\u092e \u0906\u092a\u0915\u094b \u0938\u0939\u0940 \u0926\u093f\u0936\u093e-\u0928\u093f\u0930\u094d\u0926\u0947\u0936 \u0914\u0930 \u0915\u0926\u092e \u0909\u0920\u093e\u0928\u0947 \u092e\u0947\u0902 \u092e\u0926\u0926 \u0915\u0930\u0947\u0902\u0917\u0947\u0964"
+                            },
+                            {
+                                "title": "Step 3: Legal/Evidence",
+                                "content": "\u0905\u0917\u0930 \u0906\u092a\u0915\u094b \u0915\u093f\u0938\u0940 \u0915\u093e\u0928\u0942\u0928\u0940 \u0938\u092e\u0938\u094d\u092f\u093e \u0915\u093e \u0938\u093e\u092e\u0928\u093e \u0915\u0930\u0928\u093e \u092a\u0921\u093c \u0930\u0939\u093e \u0939\u0948, \u0924\u094b \u0915\u0943\u092a\u092f\u093e \u0939\u092e\u0947\u0902 \u0935\u093f\u0938\u094d\u0924\u093e\u0930 \u0938\u0947 \u092c\u0924\u093e\u090f\u0902\u0964 \u0939\u092e \u0906\u092a\u0915\u094b \u0938\u0939\u0940 \u0926\u093f\u0936\u093e-\u0928\u093f\u0930\u094d\u0926\u0947\u0936 \u0914\u0930 \u0915\u0926\u092e \u0909\u0920\u093e\u0928\u0947 \u092e\u0947\u0902 \u092e\u0926\u0926 \u0915\u0930\u0947\u0902\u0917\u0947\u0964"
+                            }
+                        ],
+                        "suggested_questions": [
+                            "\u092e\u0941\u091d\u0947 \u0915\u093f\u0938 \u0924\u0930\u0939 \u0915\u0940 \u092e\u0926\u0926 \u091a\u093e\u0939\u093f\u090f?",
+                            "\u092e\u0948\u0902 \u0905\u092a\u0928\u0940 \u0938\u092e\u0938\u094d\u092f\u093e \u0915\u0947 \u092c\u093e\u0930\u0947 \u092e\u0947\u0902 \u0935\u093f\u0938\u094d\u0924\u093e\u0930 \u0938\u0947 \u0915\u0948\u0938\u0947 \u092c\u0924\u093e\u090a\u0902?"
+                        ],
+                        "thread_id": "157d9b75-16f5-4a45-a0a3-0e15a07e07fd"
+                    }
+                },
+                {
+                    "role": "user",
+                    "content": "\u092e\u0941\u091d\u0947 \u090f\u0915 \u0915\u0947\u0938 \u092b\u093e\u0907\u0932 \u0915\u0930\u0928\u093e \u0939\u0948 \u0915\u0948\u0938\u093e \u0915\u0930\u0928\u093e \u0939\u0948 \u092c\u0924\u093e\u0913"
+                },
+                {
+                    "role": "assistant",
+                    "data": {
+                        "query": "\u092e\u0941\u091d\u0947 \u090f\u0915 \u0915\u0947\u0938 \u092b\u093e\u0907\u0932 \u0915\u0930\u0928\u093e \u0939\u0948 \u0915\u0948\u0938\u093e \u0915\u0930\u0928\u093e \u0939\u0948 \u092c\u0924\u093e\u0913",
+                        "explanation": "\u0906\u092a\u0928\u0947 \u092c\u0924\u093e\u092f\u093e \u0939\u0948 \u0915\u093f \u0906\u092a\u0915\u094b \u090f\u0915 \u0915\u0947\u0938 \u092b\u093e\u0907\u0932 \u0915\u0930\u0928\u093e \u0939\u0948\u0964 \u092f\u0939 \u090f\u0915 \u0917\u0902\u092d\u0940\u0930 \u092e\u093e\u092e\u0932\u093e \u0939\u0948 \u0914\u0930 \u0906\u092a\u0915\u094b \u0938\u0939\u0940 \u092a\u094d\u0930\u0915\u094d\u0930\u093f\u092f\u093e \u0915\u093e \u092a\u093e\u0932\u0928 \u0915\u0930\u0928\u093e \u0939\u094b\u0917\u093e\u0964 \u0938\u092c\u0938\u0947 \u092a\u0939\u0932\u0947, \u0906\u092a\u0915\u094b \u092f\u0939 \u0928\u093f\u0930\u094d\u0927\u093e\u0930\u093f\u0924 \u0915\u0930\u0928\u093e \u0939\u094b\u0917\u093e \u0915\u093f \u0915\u093f\u0938 \u092a\u094d\u0930\u0915\u093e\u0930 \u0915\u093e \u0915\u0947\u0938 \u092b\u093e\u0907\u0932 \u0915\u0930\u0928\u093e \u0939\u0948, \u091c\u0948\u0938\u0947 \u0918\u0930\u0947\u0932\u0942 \u0939\u093f\u0902\u0938\u093e, \u0938\u093e\u0907\u092c\u0930 \u0915\u094d\u0930\u093e\u0907\u092e, \u092f\u093e \u0915\u093e\u0930\u094d\u092f\u0938\u094d\u0925\u0932 \u092a\u0930 \u0909\u0924\u094d\u092a\u0940\u0921\u093c\u0928\u0964 \u090f\u0915 \u092c\u093e\u0930 \u091c\u092c \u0906\u092a \u0936\u094d\u0930\u0947\u0923\u0940 \u0928\u093f\u0930\u094d\u0927\u093e\u0930\u093f\u0924 \u0915\u0930 \u0932\u0947\u0902\u0917\u0947, \u0924\u094b \u0906\u092a \u0938\u0939\u0940 \u092a\u094d\u0930\u0915\u094d\u0930\u093f\u092f\u093e \u0915\u093e \u092a\u093e\u0932\u0928 \u0915\u0930 \u0938\u0915\u0924\u0947 \u0939\u0948\u0902\u0964 \u0906\u092a\u0915\u094b \u0938\u0902\u092c\u0902\u0927\u093f\u0924 \u0905\u0927\u093f\u0915\u093e\u0930\u093f\u092f\u094b\u0902 \u0938\u0947 \u0938\u0902\u092a\u0930\u094d\u0915 \u0915\u0930\u0928\u093e \u0939\u094b\u0917\u093e \u0914\u0930 \u0909\u091a\u093f\u0924 \u0926\u0938\u094d\u0924\u093e\u0935\u0947\u091c \u0914\u0930 \u0938\u092c\u0942\u0924 \u0907\u0915\u091f\u094d\u0920\u093e \u0915\u0930\u0928\u0947 \u0939\u094b\u0902\u0917\u0947\u0964",
+                        "laws": [
+                            "IPC 498A, BNS 85, 86",
+                            "IPC 354A, BNS 75",
+                            "IPC 420, BNS 318"
+                        ],
+                        "rights": [
+                            "\u0918\u0930\u0947\u0932\u0942 \u0939\u093f\u0902\u0938\u093e \u0915\u0947 \u092e\u093e\u092e\u0932\u094b\u0902 \u092e\u0947\u0902 \u0938\u0941\u0930\u0915\u094d\u0937\u093e \u0906\u0926\u0947\u0936 \u0915\u093e \u0905\u0927\u093f\u0915\u093e\u0930",
+                            "\u0938\u093e\u0907\u092c\u0930 \u0905\u092a\u0930\u093e\u0927 \u0915\u0947 \u092e\u093e\u092e\u0932\u094b\u0902 \u092e\u0947\u0902 \u0905\u0928\u0927\u093f\u0915\u0943\u0924 \u0932\u0947\u0928\u0926\u0947\u0928 \u0915\u094b \u092c\u094d\u0932\u0949\u0915/\u0930\u093f\u092a\u094b\u0930\u094d\u091f \u0915\u0930\u0928\u0947 \u0915\u093e \u0905\u0927\u093f\u0915\u093e\u0930",
+                            "\u0915\u093e\u0930\u094d\u092f\u0938\u094d\u0925\u0932 \u092a\u0930 \u0909\u0924\u094d\u092a\u0940\u0921\u093c\u0928 \u0915\u0947 \u092e\u093e\u092e\u0932\u094b\u0902 \u092e\u0947\u0902 \u0906\u0902\u0924\u0930\u093f\u0915 \u0938\u092e\u093f\u0924\u093f \u0915\u0947 \u0938\u092e\u0915\u094d\u0937 \u0936\u093f\u0915\u093e\u092f\u0924 \u0926\u0930\u094d\u091c \u0915\u0930\u0928\u0947 \u0915\u093e \u0905\u0927\u093f\u0915\u093e\u0930"
+                        ],
+                        "severity": "High",
+                        "domain": "Domestic Violence & Cruelty, Workplace Harassment & POSH, Cybercrime & Digital Scams",
+                        "steps": [
+                            {
+                                "title": "Step 1: Immediate Action (Helplines/Numbers)",
+                                "content": "\u092f\u0926\u093f \u0906\u092a\u0915\u094b \u0924\u0924\u094d\u0915\u093e\u0932 \u092e\u0926\u0926 \u0915\u0940 \u0906\u0935\u0936\u094d\u092f\u0915\u0924\u093e \u0939\u0948, \u0924\u094b \u0906\u092a \u0928\u093f\u092e\u094d\u0928\u0932\u093f\u0916\u093f\u0924 \u0939\u0947\u0932\u094d\u092a\u0932\u093e\u0907\u0928 \u0928\u0902\u092c\u0930\u094b\u0902 \u092a\u0930 \u0938\u0902\u092a\u0930\u094d\u0915 \u0915\u0930 \u0938\u0915\u0924\u0947 \u0939\u0948\u0902: \u0918\u0930\u0947\u0932\u0942 \u0939\u093f\u0902\u0938\u093e \u0915\u0947 \u0932\u093f\u090f 1091, \u0938\u093e\u0907\u092c\u0930 \u0915\u094d\u0930\u093e\u0907\u092e \u0915\u0947 \u0932\u093f\u090f 1930, \u0914\u0930 \u0915\u093e\u0930\u094d\u092f\u0938\u094d\u0925\u0932 \u092a\u0930 \u0909\u0924\u094d\u092a\u0940\u0921\u093c\u0928 \u0915\u0947 \u0932\u093f\u090f 7827170170\u0964"
+                            },
+                            {
+                                "title": "Step 2: Official Filing (Links/Portals)",
+                                "content": "\u0906\u092a \u0906\u0927\u093f\u0915\u093e\u0930\u093f\u0915 \u092a\u094b\u0930\u094d\u091f\u0932\u094b\u0902 \u092a\u0930 \u0915\u0947\u0938 \u092b\u093e\u0907\u0932 \u0915\u0930 \u0938\u0915\u0924\u0947 \u0939\u0948\u0902: \u0938\u093e\u0907\u092c\u0930 \u0915\u094d\u0930\u093e\u0907\u092e \u0915\u0947 \u0932\u093f\u090f www.cybercrime.gov.in, \u0915\u093e\u0930\u094d\u092f\u0938\u094d\u0925\u0932 \u092a\u0930 \u0909\u0924\u094d\u092a\u0940\u0921\u093c\u0928 \u0915\u0947 \u0932\u093f\u090f shebox.nic.in\u0964"
+                            },
+                            {
+                                "title": "Step 3: Legal/Evidence",
+                                "content": "\u0938\u092c\u0942\u0924 \u0907\u0915\u091f\u094d\u0920\u093e \u0915\u0930\u0928\u093e \u092e\u0939\u0924\u094d\u0935\u092a\u0942\u0930\u094d\u0923 \u0939\u0948\u0964 \u0918\u0930\u0947\u0932\u0942 \u0939\u093f\u0902\u0938\u093e \u0915\u0947 \u092e\u093e\u092e\u0932\u094b\u0902 \u092e\u0947\u0902, \u091a\u094b\u091f\u094b\u0902 \u0915\u0940 \u0924\u0938\u094d\u0935\u0940\u0930\u0947\u0902, \u092e\u0947\u0921\u093f\u0915\u0932 \u092c\u093f\u0932, \u0914\u0930 \u0905\u092a\u092e\u093e\u0928\u091c\u0928\u0915 \u0915\u0949\u0932/\u0938\u0902\u0926\u0947\u0936\u094b\u0902 \u0915\u094b \u0930\u093f\u0915\u0949\u0930\u094d\u0921 \u0915\u0930\u0947\u0902\u0964 \u0938\u093e\u0907\u092c\u0930 \u0915\u094d\u0930\u093e\u0907\u092e \u0915\u0947 \u092e\u093e\u092e\u0932\u094b\u0902 \u092e\u0947\u0902, \u091a\u0948\u091f \u0915\u094b \u0921\u093f\u0932\u0940\u091f \u0928 \u0915\u0930\u0947\u0902, \u0935\u094d\u0939\u093e\u091f\u094d\u0938\u090f\u092a \u091a\u0948\u091f \u0915\u094b .txt \u0915\u0947 \u0930\u0942\u092a \u092e\u0947\u0902 \u090f\u0915\u094d\u0938\u092a\u094b\u0930\u094d\u091f \u0915\u0930\u0947\u0902, \u092a\u094d\u0930\u094b\u092b\u093e\u0907\u0932 \u0915\u0947 URL \u0932\u093f\u0902\u0915 \u0938\u0947\u0935 \u0915\u0930\u0947\u0902, \u0914\u0930 \u091f\u094d\u0930\u093e\u0902\u091c\u0947\u0915\u094d\u0936\u0928 \u0906\u0908\u0921\u0940 \u0915\u0940 \u0938\u094d\u0915\u094d\u0930\u0940\u0928\u0936\u0949\u091f \u0932\u0947\u0902\u0964"
+                            }
+                        ],
+                        "suggested_questions": [
+                            "\u0905\u0917\u0932\u093e \u0915\u0926\u092e \u0915\u094d\u092f\u093e \u0939\u0948?",
+                            "\u0905\u092a\u0928\u0947 FIR \u0915\u094b \u0915\u0948\u0938\u0947 \u091f\u094d\u0930\u0948\u0915 \u0915\u0930\u0947\u0902?"
+                        ],
+                        "thread_id": "157d9b75-16f5-4a45-a0a3-0e15a07e07fd"
+                    }
+                }
+            ],
+            "a3db549c-5440-4975-bfe3-ff201ab867b6": [
+                {
+                    "role": "user",
+                    "content": "how to file case"
+                },
+                {
+                    "role": "assistant",
+                    "data": {
+                        "query": "how to file case",
+                        "explanation": "It sounds like you're dealing with a tough situation and need to know how to file a case. This is a big step, but it's important to protect your rights and seek justice. Depending on your specific issue, the process can vary. For example, if it's related to domestic violence, cybercrime, or workplace harassment, there are specific steps and laws that apply. Let's break it down in a simple way so you know exactly what to do.",
+                        "laws": [
+                            "IPC 498A, BNS 85, 86 (Domestic Violence)",
+                            "IPC 420, BNS 318 (Cybercrime)",
+                            "IPC 354A, BNS 75 (Workplace Harassment)"
+                        ],
+                        "rights": [
+                            "Right to reside in the shared household (Sec 17 DV Act)",
+                            "Right to block/report unauthorized transactions immediately",
+                            "Right to an Internal Committee (IC) in any organization with 10+ employees"
+                        ],
+                        "severity": "High",
+                        "domain": "Domestic Violence & Cruelty, Cybercrime & Digital Scams, Workplace Harassment & POSH",
+                        "steps": [
+                            {
+                                "title": "Step 1: Immediate Action (Helplines/Numbers)",
+                                "content": "Depending on your issue, dial the appropriate helpline: Women Helpline for domestic violence (1091), National Cybercrime Helpline for cybercrime (1930), or NCW Helpline for workplace harassment (7827170170)."
+                            },
+                            {
+                                "title": "Step 2: Official Filing (Links/Portals)",
+                                "content": "Visit the relevant portal to file your complaint: https://www.cybercrime.gov.in for cybercrime, https://shebox.nic.in/ for workplace harassment, or visit the nearest Protection Officer or 'Mahila Thana' (Women Police Station) for domestic violence."
+                            },
+                            {
+                                "title": "Step 3: Legal/Evidence",
+                                "content": "Gather all necessary evidence. For domestic violence, save photos of injuries and medical bills. For cybercrime, export WhatsApp chats as.txt, save URL links of profiles, and take screenshots of transaction IDs. For workplace harassment, submit a written complaint to your company's Internal Committee (IC)."
+                            }
+                        ],
+                        "suggested_questions": [
+                            "What is the next step?",
+                            "How to track my FIR?"
+                        ],
+                        "thread_id": "a3db549c-5440-4975-bfe3-ff201ab867b6"
+                    }
+                }
+            ]
+        }
+    },
+    "5RdWxI4TkrMS3f4f0J7blZ8OMqr2": {
+        "threads": [
+            {
+                "id": "61e1c027-8f14-419b-81af-29b45e98f450",
+                "domain": "General Legal Advice",
+                "query": "court",
+                "date": "09 May 14:57"
+            }
+        ],
+        "thread_messages": {
+            "61e1c027-8f14-419b-81af-29b45e98f450": [
+                {
+                    "role": "user",
+                    "content": "how to file a case?"
+                },
+                {
+                    "role": "assistant",
+                    "data": {
+                        "query": "how to file a case?",
+                        "explanation": "It sounds like you're dealing with a tough situation and need to take legal action. Filing a case can seem overwhelming, but it's an important step to protect your rights and seek justice. Depending on your specific situation, the process can vary. It's crucial to gather all relevant evidence and follow the correct procedures to ensure your case is handled properly. Let's break down the steps you need to take based on common scenarios like domestic violence, cybercrime, or workplace harassment.",
+                        "laws": [
+                            "IPC 498A, BNS 85, 86 (Domestic Violence)",
+                            "IPC 420, BNS 318 (Cybercrime)",
+                            "IPC 354A, BNS 75 (Workplace Harassment)"
+                        ],
+                        "rights": [
+                            "Right to reside in the shared household (Sec 17 DV Act)",
+                            "Right to block/report unauthorized transactions immediately",
+                            "Right to an Internal Committee (IC) in any organization with 10+ employees"
+                        ],
+                        "severity": "High",
+                        "domain": "General Legal Advice",
+                        "steps": [
+                            {
+                                "title": "Step 1: Immediate Action (Helplines/Numbers)",
+                                "content": "Depending on your situation, dial the appropriate helpline: Women Helpline: 1091, National Cybercrime Helpline: 1930, NCW Helpline: 7827170170."
+                            },
+                            {
+                                "title": "Step 2: Official Filing (Links/Portals)",
+                                "content": "Visit the relevant portal to file your complaint: Domestic Violence - Visit the nearest Protection Officer or 'Mahila Thana' (Women Police Station). Cybercrime - File a formal complaint at https://www.cybercrime.gov.in. Workplace Harassment - File an online complaint on the Ministry of WCD portal: https://shebox.nic.in/"
+                            },
+                            {
+                                "title": "Step 3: Legal/Evidence",
+                                "content": "Gather all necessary evidence: Save photos of injuries, medical bills, record abusive calls/messages for domestic violence. For cybercrime, export WhatsApp chats as.txt, save URL links of profiles, and take screenshots of transaction IDs. For workplace harassment, submit a written complaint to your company's Internal Committee (IC)."
+                            }
+                        ],
+                        "suggested_questions": [
+                            "What is the next step?",
+                            "How to track my FIR?"
+                        ],
+                        "thread_id": "61e1c027-8f14-419b-81af-29b45e98f450"
+                    }
+                }
+            ]
+        }
+    }
+}
