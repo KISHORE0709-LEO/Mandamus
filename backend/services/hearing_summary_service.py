@@ -76,4 +76,21 @@ async def generate_hearing_intelligence(hearing_id: str):
         
     except Exception as e:
         print(f"ERROR in hearing summary: {str(e)}")
-        return {"error": str(e)}
+        # FALLBACK: Ensure MongoDB collections are populated even if AWS fails
+        fallback_data = {
+            "hearing_id": hearing_id,
+            "case_id": case_id,
+            "summary": f"System fallback summary. AWS AI generation failed.",
+            "key_points": ["Review transcript manually."],
+            "judge_observations": ["System error occurred during inference."],
+            "important_arguments": [],
+            "participants_present": [],
+            "legal_implications": "Requires manual review."
+        }
+        try:
+            await summary_repository.save_hearing_summary(fallback_data)
+            await context_repository.update_case_context(case_id, fallback_data)
+        except Exception as nested_e:
+            print(f"Failed to write fallback to MongoDB: {nested_e}")
+            
+        return {"error": str(e), "fallback": fallback_data}

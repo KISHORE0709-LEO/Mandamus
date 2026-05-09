@@ -14,3 +14,4 @@ backboard-sdk
 httpx
 motor
 pymongo
+resend

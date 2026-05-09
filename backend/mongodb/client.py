@@ -13,7 +13,14 @@ db = None
 async def connect_to_mongo():
     global client, db
     if MONGO_URI:
-        client = AsyncIOMotorClient(MONGO_URI)
+        # tlsAllowInvalidCertificates=True handles the common Mac SSL certificate issue
+        client = AsyncIOMotorClient(
+            MONGO_URI, 
+            tls=True,
+            tlsAllowInvalidCertificates=True,
+            tlsAllowInvalidHostnames=True,
+            serverSelectionTimeoutMS=5000
+        )
         db = client[MONGO_DB_NAME]
         print(f"Connected to MongoDB: {MONGO_DB_NAME}")
     else:

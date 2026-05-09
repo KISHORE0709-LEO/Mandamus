@@ -283,9 +283,10 @@ const LiveRoom = ({ role, caseData, roomId, user, userId, userName, setStage }) 
                 // Signal completion to MongoDB Intelligence Layer
                 try {
                   const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-                  await fetch(`${baseUrl}/virtual-hearing/sessions/${roomId}/complete`, { method: 'POST' });
+                  fetch(`${baseUrl}/virtual-hearing/sessions/${roomId}/complete`, { method: 'POST' })
+                    .catch(e => console.error(e));
                 } catch (err) {
-                  console.error("Failed to complete hearing in MongoDB:", err);
+                  console.error("Failed to initiate MongoDB completion:", err);
                 }
                 setStage('post-hearing'); 
               }}>
