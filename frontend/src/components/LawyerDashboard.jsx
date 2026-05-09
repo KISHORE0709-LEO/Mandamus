@@ -16,7 +16,8 @@ import {
   RefreshCw,
   Scale,
   Clock,
-  ExternalLink
+  ExternalLink,
+  Video
 } from 'lucide-react';
 import './LawyerDashboard.css';
 
@@ -196,6 +197,20 @@ export default function LawyerDashboard({ setActiveFeature }) {
                       onClick={() => navigateToCaseDetail(c)}
                     >
                       OPEN CASE <ExternalLink size={16} />
+                    </button>
+                    <button 
+                      className="ld-btn ld-btn-secondary"
+                      onClick={() => {
+                        updateState({ active_case: c });
+                        if (setActiveFeature) {
+                          setActiveFeature('scheduler');
+                        } else {
+                          navigate(`/dashboard?feature=scheduler&caseId=${c.id}`);
+                        }
+                      }}
+                      style={{ marginLeft: '10px', backgroundColor: 'rgba(224, 32, 32, 0.2)', border: '1px solid #e02020', color: '#ffb3b3' }}
+                    >
+                      JOIN <Video size={16} />
                     </button>
                   </div>
                 </div>
