@@ -183,6 +183,20 @@ export default function JudgeDashboard({ setActiveFeature }) {
                   >
                     OPEN FILE <Search size={16} />
                   </button>
+                  <button 
+                    className="jd-btn jd-btn-secondary"
+                    onClick={() => {
+                      updateState({ active_case: c });
+                      if (setActiveFeature) {
+                        setActiveFeature('scheduler');
+                      } else {
+                        navigate(`/dashboard?feature=scheduler&caseId=${c.id}`);
+                      }
+                    }}
+                    style={{ marginLeft: '10px', backgroundColor: 'rgba(224, 32, 32, 0.2)', border: '1px solid #e02020', color: '#ffb3b3' }}
+                  >
+                    SCHEDULE <Calendar size={16} />
+                  </button>
                 </div>
               </div>
             ))}

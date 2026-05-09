@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, FileText, Plus, CheckCircle2, ChevronRight, Download, Trash2, Paperclip, Copy, Check } from 'lucide-react';
 import { useMandamus } from '../context/MandamusContext';
 import { useAuth } from '../context/AuthContext';
-import { createHearing, getHearingsByJudge, deleteHearing } from '../lib/firestoreHelpers';
+import { createHearing, getHearingsByJudge, getHearingsByCase, deleteHearing } from '../lib/firestoreHelpers';
 import './Scheduler.css';
 
 const today = new Date();
@@ -58,7 +58,11 @@ export default function Scheduler({ onTabChange }) {
   useEffect(() => {
     if (user?.uid) {
       setLoading(true);
-      getHearingsByJudge(user.uid)
+      const fetchHearings = state.active_case?.id 
+        ? getHearingsByCase(state.active_case.id)
+        : getHearingsByJudge(user.uid);
+        
+      fetchHearings
         .then(hearings => {
           setMeetings(hearings);
           setLoading(false);
@@ -68,19 +72,22 @@ export default function Scheduler({ onTabChange }) {
           setLoading(false);
         });
     }
-  }, [user]);
+  }, [user, state.active_case?.id]);
 
   // Re-fill form when case data arrives
   useEffect(() => {
+    const caseName = summary.caseName || state.active_case?.title || '';
+    const petitioner = summary.petitioner || state.active_case?.petitioner || '';
+    const respondent = summary.respondent || state.active_case?.respondent || '';
+    
     setForm(f => ({
       ...f,
-      title: f.title || (summary.caseName ? `Hearing — ${summary.caseName}` : ''),
+      title: f.title || (caseName ? `Hearing — ${caseName}` : ''),
       agenda: f.agenda || buildAgenda(state),
-      parties: f.parties || (summary.petitioner && summary.respondent
-        ? `${summary.petitioner} · ${summary.respondent}` : ''),
+      parties: f.parties || (petitioner && respondent ? `${petitioner} · ${respondent}` : ''),
       attachDraft: hasDraft,
     }));
-  }, [state.summariser_output, state.draft_output]);
+  }, [state.summariser_output, state.draft_output, state.active_case]);
 
   const validate = () => {
     const e = {};
@@ -102,8 +109,8 @@ export default function Scheduler({ onTabChange }) {
       const meetingCode = generateMeetingCode();
       
       const hearingData = {
-        caseId: state.case_id || summary.caseId || 'CASE-' + Date.now(),
-        caseName: form.title,
+        caseId: state.active_case?.id || state.case_id || summary.caseId || 'CASE-' + Date.now(),
+        caseName: form.title || state.active_case?.title,
         judgeId: user.uid,
         judgeName: user.displayName || 'Judge',
         scheduledDate: form.date,
@@ -120,7 +127,9 @@ export default function Scheduler({ onTabChange }) {
       await createHearing(hearingData);
       
       // Reload hearings from Firestore
-      const updated = await getHearingsByJudge(user.uid);
+      const updated = state.active_case?.id 
+        ? await getHearingsByCase(state.active_case.id)
+        : await getHearingsByJudge(user.uid);
       setMeetings(updated);
       
       updateState({ 
@@ -139,7 +148,9 @@ export default function Scheduler({ onTabChange }) {
   const handleDelete = async (id) => {
     try {
       await deleteHearing(id);
-      const updated = await getHearingsByJudge(user.uid);
+      const updated = state.active_case?.id 
+        ? await getHearingsByCase(state.active_case.id)
+        : await getHearingsByJudge(user.uid);
       setMeetings(updated);
     } catch (error) {
       console.error('Error deleting hearing:', error);
@@ -226,94 +237,117 @@ export default function Scheduler({ onTabChange }) {
           ) : (
             <div className="sc-form">
 
-              <div className="sc-field">
-                <label className="sc-label">MEETING TITLE</label>
-                <input
-                  className={`sc-input ${errors.title ? 'sc-input-err' : ''}`}
-                  value={form.title}
-                  onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-                  placeholder="e.g. Hearing — State vs Malhotra"
-                />
-                {errors.title && <span className="sc-err">{errors.title}</span>}
-              </div>
-
-              <div className="sc-row-2">
-                <div className="sc-field">
-                  <label className="sc-label"><Calendar size={11} /> DATE</label>
-                  <input
-                    type="date"
-                    className={`sc-input sc-input-date ${errors.date ? 'sc-input-err' : ''}`}
-                    value={form.date}
-                    min={todayStr}
-                    onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                  />
-                  {errors.date && <span className="sc-err">{errors.date}</span>}
+              <div className="sc-auto-proposal-card" style={{ padding: '20px', backgroundColor: 'rgba(224, 32, 32, 0.05)', border: '1px solid rgba(224, 32, 32, 0.3)', borderRadius: '8px', marginBottom: '20px' }}>
+                <h3 style={{ color: '#ffb3b3', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  ⚡ Auto-Generated Proposal
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.95rem' }}>
+                  <div><strong style={{ color: '#fff' }}>Case Title:</strong> {form.title || 'Pending Selection'}</div>
+                  <div><strong style={{ color: '#fff' }}>Parties:</strong> {form.parties || 'Pending'}</div>
+                  <div><strong style={{ color: '#fff' }}>Proposed Date:</strong> {form.date}</div>
+                  <div><strong style={{ color: '#fff' }}>Proposed Time:</strong> {form.time}</div>
+                  <div><strong style={{ color: '#fff' }}>Type:</strong> {form.type}</div>
                 </div>
-                <div className="sc-field">
-                  <label className="sc-label"><Clock size={11} /> TIME</label>
-                  <input
-                    type="time"
-                    className={`sc-input sc-input-date ${errors.time ? 'sc-input-err' : ''}`}
-                    value={form.time}
-                    onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
-                  />
-                  {errors.time && <span className="sc-err">{errors.time}</span>}
+                
+                <div style={{ marginTop: '15px', fontSize: '0.85rem', color: '#aaa', fontStyle: 'italic' }}>
+                  * The system has analyzed the judicial docket and reserved the most optimal time slot.
                 </div>
+
+                <button className="sc-btn-primary sc-submit" onClick={handleSchedule} style={{ marginTop: '20px', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', backgroundColor: '#e02020', border: 'none' }}>
+                  <CheckCircle2 size={16} /> APPROVE & DISPATCH NOTICES
+                </button>
               </div>
 
-              <div className="sc-field">
-                <label className="sc-label">MEETING TYPE</label>
-                <select
-                  className="sc-input sc-select"
-                  value={form.type}
-                  onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
-                >
-                  <option>Virtual Hearing</option>
-                  <option>In-Person Hearing</option>
-                  <option>Chambers Meeting</option>
-                  <option>Pre-Trial Conference</option>
-                  <option>Mediation Session</option>
-                </select>
-              </div>
+              <details style={{ marginTop: '20px', color: '#888' }}>
+                <summary style={{ cursor: 'pointer', padding: '10px', backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: '6px' }}>
+                  Manual Override (Edit Parameters)
+                </summary>
+                <div style={{ marginTop: '15px', padding: '15px', border: '1px dashed #333', borderRadius: '6px' }}>
+                  <div className="sc-field">
+                    <label className="sc-label">MEETING TITLE</label>
+                    <input
+                      className={`sc-input ${errors.title ? 'sc-input-err' : ''}`}
+                      value={form.title}
+                      onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                      placeholder="e.g. Hearing — State vs Malhotra"
+                    />
+                    {errors.title && <span className="sc-err">{errors.title}</span>}
+                  </div>
 
-              <div className="sc-field">
-                <label className="sc-label">PARTIES</label>
-                <input
-                  className="sc-input"
-                  value={form.parties}
-                  onChange={e => setForm(f => ({ ...f, parties: e.target.value }))}
-                  placeholder="Petitioner · Respondent"
-                />
-              </div>
+                  <div className="sc-row-2">
+                    <div className="sc-field">
+                      <label className="sc-label"><Calendar size={11} /> DATE</label>
+                      <input
+                        type="date"
+                        className={`sc-input sc-input-date ${errors.date ? 'sc-input-err' : ''}`}
+                        value={form.date}
+                        min={todayStr}
+                        onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
+                      />
+                      {errors.date && <span className="sc-err">{errors.date}</span>}
+                    </div>
+                    <div className="sc-field">
+                      <label className="sc-label"><Clock size={11} /> TIME</label>
+                      <input
+                        type="time"
+                        className={`sc-input sc-input-date ${errors.time ? 'sc-input-err' : ''}`}
+                        value={form.time}
+                        onChange={e => setForm(f => ({ ...f, time: e.target.value }))}
+                      />
+                      {errors.time && <span className="sc-err">{errors.time}</span>}
+                    </div>
+                  </div>
 
-              <div className="sc-field">
-                <label className="sc-label">AGENDA</label>
-                <textarea
-                  className="sc-input sc-textarea"
-                  value={form.agenda}
-                  onChange={e => setForm(f => ({ ...f, agenda: e.target.value }))}
-                  placeholder="Auto-generated from case context…"
-                  rows={5}
-                />
-              </div>
+                  <div className="sc-field">
+                    <label className="sc-label">MEETING TYPE</label>
+                    <select
+                      className="sc-input sc-select"
+                      value={form.type}
+                      onChange={e => setForm(f => ({ ...f, type: e.target.value }))}
+                    >
+                      <option>Virtual Hearing</option>
+                      <option>In-Person Hearing</option>
+                      <option>Chambers Meeting</option>
+                      <option>Pre-Trial Conference</option>
+                      <option>Mediation Session</option>
+                    </select>
+                  </div>
 
-              {hasDraft && (
-                <label className="sc-attach-row">
-                  <input
-                    type="checkbox"
-                    checked={form.attachDraft}
-                    onChange={e => setForm(f => ({ ...f, attachDraft: e.target.checked }))}
-                    className="sc-checkbox"
-                  />
-                  <Paperclip size={12} />
-                  <span>Attach generated draft to this meeting</span>
-                </label>
-              )}
+                  <div className="sc-field">
+                    <label className="sc-label">PARTIES</label>
+                    <input
+                      className="sc-input"
+                      value={form.parties}
+                      onChange={e => setForm(f => ({ ...f, parties: e.target.value }))}
+                      placeholder="Petitioner · Respondent"
+                    />
+                  </div>
 
-              <button className="sc-btn-primary sc-submit" onClick={handleSchedule}>
-                <Calendar size={15} /> SCHEDULE MEETING
-              </button>
+                  <div className="sc-field">
+                    <label className="sc-label">AGENDA</label>
+                    <textarea
+                      className="sc-input sc-textarea"
+                      value={form.agenda}
+                      onChange={e => setForm(f => ({ ...f, agenda: e.target.value }))}
+                      placeholder="Auto-generated from case context…"
+                      rows={5}
+                    />
+                  </div>
 
+                  {hasDraft && (
+                    <label className="sc-attach-row">
+                      <input
+                        type="checkbox"
+                        checked={form.attachDraft}
+                        onChange={e => setForm(f => ({ ...f, attachDraft: e.target.checked }))}
+                        className="sc-checkbox"
+                      />
+                      <Paperclip size={12} />
+                      <span>Attach generated draft to this meeting</span>
+                    </label>
+                  )}
+                </div>
+              </details>
             </div>
           )}
         </div>

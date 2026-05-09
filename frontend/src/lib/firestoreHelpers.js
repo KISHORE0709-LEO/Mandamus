@@ -78,7 +78,6 @@ export const getHearing = async (hearingId) => {
 };
 
 export const getHearingsByJudge = async (judgeId) => {
-  // Remove orderBy to avoid index requirement
   const q = query(
     collection(db, 'hearings'),
     where('judgeId', '==', judgeId)
@@ -86,7 +85,21 @@ export const getHearingsByJudge = async (judgeId) => {
   const snapshot = await getDocs(q);
   const hearings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   
-  // Sort in JavaScript instead
+  return hearings.sort((a, b) => {
+    const dateA = a.scheduledDate || '';
+    const dateB = b.scheduledDate || '';
+    return dateB.localeCompare(dateA);
+  });
+};
+
+export const getHearingsByCase = async (caseId) => {
+  const q = query(
+    collection(db, 'hearings'),
+    where('caseId', '==', caseId)
+  );
+  const snapshot = await getDocs(q);
+  const hearings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  
   return hearings.sort((a, b) => {
     const dateA = a.scheduledDate || '';
     const dateB = b.scheduledDate || '';
