@@ -13,7 +13,8 @@ import {
   EyeOff,
   LogOut,
   User,
-  AlertTriangle
+  AlertTriangle,
+  Plus
 } from 'lucide-react';
 
 const ModernLegalAssistant = () => {
@@ -27,6 +28,12 @@ const ModernLegalAssistant = () => {
   const [lastAnalysis, setLastAnalysis] = useState({ severity: 'Medium', domain: 'General Legal Assistance' });
   const [history, setHistory] = useState([]);
   const scrollRef = React.useRef(null);
+
+  const handleNewChat = () => {
+    setMessages([]);
+    setThreadId(null);
+    setLastAnalysis({ severity: 'Medium', domain: 'General Legal Assistance' });
+  };
 
   // Fetch history on mount
   React.useEffect(() => {
@@ -57,40 +64,64 @@ const ModernLegalAssistant = () => {
     await logout();
   };
 
+  const handleHistoryClick = async (thread) => {
+    setThreadId(thread.id);
+    setIsLoading(true);
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/legal-assistant/messages/${user.uid}/${thread.id}`);
+      const data = await response.json();
+      if (data.messages) {
+        setMessages(data.messages);
+      }
+    } catch (err) {
+      console.error("Failed to fetch messages:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleQuery = async (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
-    const userQuery = input;
+    const userQuery = input.trim();
     setInput('');
+    
+    // Add user message to UI
+    const userMessage = { role: 'user', content: userQuery };
+    setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
-
-    // Add user message to chat history
-    setMessages(prev => [...prev, { role: 'user', content: userQuery }]);
 
     try {
       const response = await fetch('http://127.0.0.1:8000/legal-assistant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: userQuery, user_id: user.uid, thread_id: threadId })
+        body: JSON.stringify({ 
+          query: userQuery, 
+          user_id: user?.uid || 'guest',
+          thread_id: threadId,
+          messages: messages
+        }),
       });
-      
-      if (!response.ok) throw new Error('Failed to fetch legal advice');
+
       const data = await response.json();
       
-      // Add assistant response to chat history
-      setMessages(prev => [...prev, { role: 'assistant', data: data }]);
-      setLastAnalysis({ 
-        severity: data.severity || 'Medium', 
-        domain: data.domain || 'General Legal Assistance' 
-      });
-      
-      if (data.thread_id) {
-        setThreadId(data.thread_id);
-        // Refresh history after a successful query
-        const histRes = await fetch(`http://127.0.0.1:8000/legal-assistant/history/${user.uid}`);
-        const histData = await histRes.json();
-        if (histData.history) setHistory(histData.history);
+      // Update threadId if it's a new conversation
+      if (data.thread_id) setThreadId(data.thread_id);
+
+      const botMessage = { 
+        role: 'assistant', 
+        data: data
+      };
+
+      setMessages(prev => [...prev, botMessage]);
+      setLastAnalysis({ severity: data.severity, domain: data.domain });
+
+      // Refresh history sidebar
+      if (user?.uid) {
+        const hRes = await fetch(`http://127.0.0.1:8000/legal-assistant/history/${user.uid}`);
+        const hData = await hRes.json();
+        if (hData.history) setHistory(hData.history);
       }
     } catch (error) {
       console.error(error);
@@ -373,34 +404,54 @@ const ModernLegalAssistant = () => {
         {/* RIGHT SECTION - Sidebar */}
         <div style={{ height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '20px', scrollbarWidth: 'thin', scrollbarColor: '#e02020 #1a1a1a' }} className="custom-scrollbar">
           
-          {/* Consultation History - MOVED TO TOP */}
-          <div style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: '16px', padding: '24px', border: '1px solid rgba(255, 255, 255, 0.1)', flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <h3 style={{ fontSize: '13px', fontWeight: '800', color: '#e02020', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Save size={16} /> RECENT CONSULTATIONS
+          {/* New Chat Button */}
+          <button 
+            onClick={handleNewChat}
+            style={{ width: '100%', padding: '16px', background: '#e02020', color: '#fff', border: 'none', borderRadius: '16px', fontSize: '15px', fontWeight: '800', letterSpacing: '1px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', transition: 'all 0.3s ease', boxShadow: '0 4px 20px rgba(224, 32, 32, 0.3)' }}
+            onMouseEnter={(e) => { e.target.style.transform = 'translateY(-2px)'; e.target.style.boxShadow = '0 6px 25px rgba(224, 32, 32, 0.4)'; }}
+            onMouseLeave={(e) => { e.target.style.transform = 'translateY(0)'; e.target.style.boxShadow = '0 4px 20px rgba(224, 32, 32, 0.3)'; }}
+          >
+            <Plus size={20} /> NEW CONSULTATION
+          </button>
+
+          {/* Consultation History */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <h3 style={{ fontSize: '12px', fontWeight: '700', color: '#888', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '12px', paddingLeft: '8px' }}>
+              Recents
             </h3>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
               {history.length > 0 ? history.map((item, idx) => (
                 <div key={idx} 
-                  onClick={handleLoadChat}
-                  style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'all 0.2s ease' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(224, 32, 32, 0.05)'; e.currentTarget.style.borderColor = 'rgba(224, 32, 32, 0.3)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; }}
+                  onClick={() => handleHistoryClick(item)}
+                  style={{ 
+                    padding: '12px 16px', 
+                    background: threadId === item.id ? 'rgba(255, 255, 255, 0.1)' : 'transparent', 
+                    borderRadius: '12px', 
+                    cursor: 'pointer', 
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                  onMouseEnter={(e) => { if (threadId !== item.id) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; }}
+                  onMouseLeave={(e) => { if (threadId !== item.id) e.currentTarget.style.background = 'transparent'; }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '800', color: '#e02020', background: 'rgba(224, 32, 32, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
-                      {item.domain.toUpperCase()}
-                    </span>
-                    <span style={{ fontSize: '10px', color: '#555', fontWeight: '700' }}>{item.date}</span>
-                  </div>
-                  <p style={{ fontSize: '13px', color: '#fff', fontWeight: '600', lineHeight: '1.4', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical' }}>
+                  <p style={{ 
+                    fontSize: '14px', 
+                    color: threadId === item.id ? '#fff' : '#ccc', 
+                    fontWeight: threadId === item.id ? '600' : '500', 
+                    lineHeight: '1.4', 
+                    overflow: 'hidden', 
+                    textOverflow: 'ellipsis', 
+                    whiteSpace: 'nowrap',
+                    margin: 0
+                  }}>
                     {item.query}
                   </p>
                 </div>
               )) : (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.3, textAlign: 'center', padding: '20px' }}>
-                  <MessageSquare size={32} style={{ marginBottom: '12px' }} />
-                  <p style={{ fontSize: '12px', fontWeight: '600' }}>No previous consultations found.</p>
+                <div style={{ padding: '20px', textAlign: 'center', opacity: 0.3 }}>
+                  <p style={{ fontSize: '12px', fontWeight: '600' }}>No previous consultations</p>
                 </div>
               )}
             </div>
@@ -416,72 +467,8 @@ const ModernLegalAssistant = () => {
             </div>
           </div>
 
-          {/* Mode Toggle and Panic Exit */}
-          <div style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: '16px', padding: '20px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <button onClick={() => setSilentMode(!silentMode)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', background: 'rgba(255, 255, 255, 0.05)', color: '#fff', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', width: '100%' }}>
-                {silentMode ? <EyeOff size={18} /> : <Eye size={18} />}
-                {silentMode ? 'Silent Mode' : 'Normal Mode'}
-              </button>
 
-              <button onClick={handlePanicExit} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '12px', background: 'rgba(224, 32, 32, 0.1)', color: '#e02020', border: '1px solid rgba(224, 32, 32, 0.3)', borderRadius: '12px', fontSize: '15px', fontWeight: '600', cursor: 'pointer', width: '100%' }}>
-                <AlertTriangle size={18} />
-                Panic Exit
-              </button>
-            </div>
-          </div>
 
-          {/* Suggested Actions */}
-          <div style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: '16px', padding: '24px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-            <h3 style={{ fontSize: '12px', fontWeight: '700', color: '#888', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>
-              Suggested Actions
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <button style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', background: 'rgba(255, 255, 255, 0.05)', border: 'none', borderRadius: '12px', cursor: 'pointer', textAlign: 'left' }}>
-                <FileText size={18} style={{ color: '#e02020' }} />
-                <span style={{ fontSize: '15px', fontWeight: '600', color: '#fff' }}>File Complaint</span>
-              </button>
-              <button style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', background: 'rgba(255, 255, 255, 0.05)', border: 'none', borderRadius: '12px', cursor: 'pointer', textAlign: 'left' }}>
-                <MessageSquare size={18} style={{ color: '#e02020' }} />
-                <span style={{ fontSize: '15px', fontWeight: '600', color: '#fff' }}>Talk to Advisor</span>
-              </button>
-              <button style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', background: 'rgba(255, 255, 255, 0.05)', border: 'none', borderRadius: '12px', cursor: 'pointer', textAlign: 'left' }}>
-                <Save size={18} style={{ color: '#e02020' }} />
-                <span style={{ fontSize: '15px', fontWeight: '600', color: '#fff' }}>Save Evidence</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Consultation History */}
-          <div style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: '16px', padding: '24px', border: '1px solid rgba(255, 255, 255, 0.1)', flex: 1, display: 'flex', flexDirection: 'column' }}>
-            <h3 style={{ fontSize: '13px', fontWeight: '800', color: '#e02020', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Save size={16} /> RECENT CONSULTATIONS
-            </h3>
-            
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
-              {history.length > 0 ? history.map((item, idx) => (
-                <div key={idx} style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', cursor: 'pointer', transition: 'all 0.2s ease' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(224, 32, 32, 0.05)'; e.currentTarget.style.borderColor = 'rgba(224, 32, 32, 0.3)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.02)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)'; }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: '800', color: '#e02020', background: 'rgba(224, 32, 32, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
-                      {item.domain.toUpperCase()}
-                    </span>
-                    <span style={{ fontSize: '10px', color: '#555', fontWeight: '700' }}>{item.date}</span>
-                  </div>
-                  <p style={{ fontSize: '13px', color: '#fff', fontWeight: '600', lineHeight: '1.4', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: '2', WebkitBoxOrient: 'vertical' }}>
-                    {item.query}
-                  </p>
-                </div>
-              )) : (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.3, textAlign: 'center', padding: '20px' }}>
-                  <MessageSquare size={32} style={{ marginBottom: '12px' }} />
-                  <p style={{ fontSize: '12px', fontWeight: '600' }}>No previous consultations found.</p>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       </div>
 

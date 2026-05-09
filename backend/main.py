@@ -734,6 +734,7 @@ class LegalAssistantRequest(BaseModel):
     query: str
     user_id: str
     thread_id: Optional[str] = None
+    messages: Optional[List[dict]] = []
 
 
 
@@ -752,12 +753,13 @@ async def legal_assistant(request: LegalAssistantRequest, background_tasks: Back
             genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
             gemini_model = genai.GenerativeModel('gemini-flash-latest')
 
-        # 1. Determine Stable Assistant ID based on User ID (MUST BE UUID)
-        # We use uuid5 for deterministic UUID based on user_id
-        stable_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, request.user_id))
-        assistant_id = request.thread_id or stable_uuid
+        # 1. Determine Assistant ID
+        # If thread_id is provided, use it. Otherwise, this is a new thread.
+        # We will also use a 'Master Assistant' for the user to track their threads.
+        user_master_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, request.user_id))
+        assistant_id = request.thread_id or str(uuid.uuid4())
         
-        # Start memory search concurrently
+        # Start memory search concurrently for the specific thread
         past_context_task = asyncio.create_task(client.search_memories(assistant_id=assistant_id, query=request.query))
         
         # 2. Get Domain Knowledge (from startup-loaded legal_kb)
@@ -783,9 +785,9 @@ async def legal_assistant(request: LegalAssistantRequest, background_tasks: Back
             assistant_id = f"LegalAdvisor-{uuid.uuid4().hex[:8]}"
 
         # 4. Single-Call Intelligent Prompt
-        # We ask Gemini to do Classification + RAG selection + Reasoning in one go
+        # We ask AI to do Classification + RAG selection + Reasoning in one go
         system_instruction = f"""You are the 'Mandamus Intelligent Legal Agent'.
-        You are a high-speed, ACTION-ORIENTED legal expert for Indian citizens.
+        You are a high-speed, ACTION-ORIENTED legal expert for Indian citizens powered by AWS Bedrock.
         
         TONE & STYLE:
         - Use simple, 'layperson-friendly' English. Avoid heavy legal jargon.
@@ -825,27 +827,49 @@ async def legal_assistant(request: LegalAssistantRequest, background_tasks: Back
         }}
         """
 
-        # Generate using Flash (Fastest model)
-        response = gemini_model.generate_content(system_instruction)
-        result_text = response.text.strip()
+        # Generate using AWS Bedrock (Nova Pro) - FASTER & BETTER FOR HISTORY
+        bedrock = get_bedrock_client()
+        bedrock_response = bedrock.converse(
+            modelId="us.amazon.nova-pro-v1:0",
+            messages=[{"role": "user", "content": [{"text": system_instruction}]}],
+            inferenceConfig={"maxTokens": 2000, "temperature": 0.0}
+        )
+        result_text = bedrock_response['output']['message']['content'][0]['text'].strip()
         
         import re
-        match = re.search(r'```(?:json)?(.*?)```', result_text, re.DOTALL)
+        match = re.search(r'\{.*\}', result_text, re.DOTALL)
         if match:
-            result_text = match.group(1).strip()
+            result_text = match.group(0).strip()
             
         parsed = json.loads(result_text)
         
         # 5. Background Tasks (No user wait)
-        async def create_and_store_memory(aid, query, explanation, domain):
+        async def create_and_store_memory(aid, master_id, query, explanation, domain, uid, full_msgs):
             try:
-                # If it's a new ID, we might need to create the real assistant first
-                memory_content = f"Domain: {domain} | Query: {query} | Advice: {explanation[:150]}"
-                await client.add_memory(assistant_id=aid, content=memory_content)
-            except:
+                # 1. Store locally for INSTANT UI RECALL (Highest Priority)
+                thread_data = {
+                    "id": aid,
+                    "domain": domain,
+                    "query": query,
+                    "date": datetime.now().strftime("%d %b %H:%M")
+                }
+                
+                # Append the latest turn to the full messages list
+                current_messages = full_msgs + [{"role": "assistant", "data": parsed}]
+                save_to_history_file(uid, aid, thread_data, current_messages)
+
+                # 2. Sync to Backboard
+                try:
+                    await client.get_assistant(assistant_id=aid)
+                except:
+                    await client.create_assistant(id=aid, name=f"Legal Thread {aid[:4]}")
+                
+                await client.add_memory(assistant_id=aid, content=f"User: {query} | AI: {explanation[:300]}")
+            except Exception as e:
+                logger.error(f"History storage error: {e}")
                 pass
 
-        background_tasks.add_task(create_and_store_memory, assistant_id, request.query, parsed.get('explanation', ''), parsed.get('domain', ''))
+        background_tasks.add_task(create_and_store_memory, assistant_id, user_master_id, request.query, parsed.get('explanation', ''), parsed.get('domain', ''), request.user_id, request.messages + [{"role": "user", "content": request.query}])
         
         parsed["thread_id"] = assistant_id
         return parsed
@@ -853,71 +877,69 @@ async def legal_assistant(request: LegalAssistantRequest, background_tasks: Back
         logger.error(f"Error in Optimized Intelligent Legal Agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to process legal reasoning.")
 
+HISTORY_FILE = "legal_history_db.json"
+
+def save_to_history_file(user_id, thread_id, thread_data, messages=None):
+    try:
+        history_db = {}
+        if os.path.exists(HISTORY_FILE):
+            with open(HISTORY_FILE, "r") as f:
+                history_db = json.load(f)
+        
+        user_data = history_db.get(user_id, {"threads": [], "thread_messages": {}})
+        
+        # 1. Update Thread Metadata (for sidebar list)
+        threads = user_data.get("threads", [])
+        exists = False
+        for i, t in enumerate(threads):
+            if t['id'] == thread_id:
+                threads[i] = thread_data
+                exists = True
+                break
+        if not exists:
+            threads.insert(0, thread_data)
+        user_data["threads"] = threads[:25]
+
+        # 2. Update Thread Messages (for full conversation recall)
+        if messages:
+            msg_store = user_data.get("thread_messages", {})
+            msg_store[thread_id] = messages
+            user_data["thread_messages"] = msg_store
+
+        history_db[user_id] = user_data
+        with open(HISTORY_FILE, "w") as f:
+            json.dump(history_db, f)
+    except Exception as e:
+        logger.error(f"Error saving history file: {e}")
+
 @app.get("/legal-assistant/history/{user_id}")
 async def get_legal_history(user_id: str):
-    from backboard import BackboardClient
-    backboard_key = os.getenv("BACKBOARD_API_KEY")
-    if not backboard_key:
-        return {"history": []}
-        
-    client = BackboardClient(api_key=backboard_key)
     try:
-        assistant_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, user_id))
-        # Search for summaries
-        past_memories = await client.search_memories(assistant_id=assistant_id, query="legal advice summary history interaction")
-        memory_list = past_memories.get('memories', [])
-        
-        history = []
-        for m in memory_list:
-            content = m.get('content', '')
-            if "Advice Summary:" not in content: continue # Only show summaries
-            
-            parts = content.split(" | ")
-            domain = parts[0].replace("Domain: ", "") if len(parts) > 0 else "Consultation"
-            query = parts[2].replace("Issue: ", "") if len(parts) > 2 else "Previous Chat"
-            
-            history.append({
-                "id": m.get('id'),
-                "domain": domain,
-                "query": query,
-                "date": datetime.now().strftime("%d %b")
-            })
-            
-        return {"history": history[:8]}
+        if os.path.exists(HISTORY_FILE):
+            with open(HISTORY_FILE, "r") as f:
+                history_db = json.load(f)
+                user_data = history_db.get(user_id, {})
+                return {"history": user_data.get("threads", [])}
+        return {"history": []}
     except Exception as e:
         logger.error(f"Error fetching legal history: {str(e)}")
         return {"history": []}
 
-@app.get("/legal-assistant/messages/{user_id}")
-async def get_legal_messages(user_id: str):
-    from backboard import BackboardClient
-    backboard_key = os.getenv("BACKBOARD_API_KEY")
-    if not backboard_key:
-        return {"messages": []}
-        
-    client = BackboardClient(api_key=backboard_key)
+@app.get("/legal-assistant/messages/{user_id}/{thread_id}")
+async def get_thread_messages(user_id: str, thread_id: str):
     try:
-        assistant_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, user_id))
-        # Fetch all memories to reconstruct chat
-        past_memories = await client.search_memories(assistant_id=assistant_id, query="*")
-        memory_list = past_memories.get('memories', [])
-        
-        messages = []
-        for m in memory_list:
-            content = m.get('content', '')
-            if "Advice Summary:" in content:
-                # This is a stored interaction. Format it for the UI.
-                parts = content.split(" | ")
-                query = parts[2].replace("Issue: ", "") if len(parts) > 2 else ""
-                advice = parts[3].replace("Advice Summary: ", "") if len(parts) > 3 else ""
-                
-                if query: messages.append({"role": "user", "content": query})
-                if advice: messages.append({"role": "assistant", "data": {"explanation": advice, "laws": [], "rights": [], "steps": []}})
-        
-        return {"messages": messages}
-    except Exception as e:
-        logger.error(f"Error fetching legal messages: {str(e)}")
+        if os.path.exists(HISTORY_FILE):
+            with open(HISTORY_FILE, "r") as f:
+                history_db = json.load(f)
+                user_data = history_db.get(user_id, {})
+                messages = user_data.get("thread_messages", {}).get(thread_id, [])
+                return {"messages": messages}
         return {"messages": []}
+    except Exception as e:
+        logger.error(f"Error fetching thread messages: {str(e)}")
+        return {"messages": []}
+
+
 
 class PrecedentSearchRequest(BaseModel):
     query: str
