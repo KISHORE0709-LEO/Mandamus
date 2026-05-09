@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Clock, XCircle, CheckCircle, ChevronRight, Copy, UserPlus, Check, Link as LinkIcon } from 'lucide-react';
-import { addParticipant, subscribeToParticipantsByRoom, updateParticipantStatus } from '../../lib/firestoreHelpers';
+import { addParticipant, subscribeToParticipantsByRoom, updateParticipantStatus, getHearingByRoomId } from '../../lib/firestoreHelpers';
 import { useAuth } from '../../context/AuthContext';
 
 const INITIAL_PARTICIPANTS = [
@@ -39,27 +39,30 @@ const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
+  const registrationAttempted = React.useRef(false);
+  const [hearing, setHearing] = useState(null);
+
+  useEffect(() => {
+    if (roomId) {
+      getHearingByRoomId(roomId).then(setHearing);
+    }
+  }, [roomId]);
+  
   // 1. Register self and listen to participants
   useEffect(() => {
-    if (!roomId || !user?.uid || myParticipantId) return;
-
+    if (!roomId || !user?.uid || registrationAttempted.current) return;
+    
+    registrationAttempted.current = true;
     let mounted = true;
 
-    // Register self ONLY if not already in list
     const registerSelf = async () => {
       try {
-        // Check if we are already in the participants list to prevent duplicates on refresh
-        const existing = participants.find(p => p.uid === user.uid);
-        if (existing) {
-          if (mounted) setMyParticipantId(existing.id);
-          return;
-        }
-
         const id = await addParticipant({
           roomId,
           name: user?.displayName || (role === 'judge' ? 'Hon. Judge' : 'Guest Participant'),
           role: role.charAt(0).toUpperCase() + role.slice(1),
           uid: user.uid,
+          status: role === 'judge' ? 'admitted' : 'pending' 
         });
         if (mounted) setMyParticipantId(id);
       } catch (err) {
@@ -85,12 +88,40 @@ const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
       mounted = false;
       unsubscribe();
     };
-  }, [roomId, user, role, myParticipantId, participants.length]); // Re-run only if room/user changes or list size changes
+  }, [roomId, user, role, onStart]); 
 
 
   const handleAdmit  = async (id) => await updateParticipantStatus(id, 'admitted');
   const handleReject = async (id) => await updateParticipantStatus(id, 'rejected');
 
+  // Derive display list: Active participants + Expected parties (if not joined)
+  const getDisplayParticipants = () => {
+    const list = [...participants];
+    
+    // Filter out the current judge from the list (they don't need to admit themselves)
+    const filtered = list.filter(p => p.uid !== user?.uid || role !== 'judge');
+
+    // Add expected parties if they haven't joined yet
+    if (hearing?.parties) {
+      const partyNames = hearing.parties.split('·').map(s => s.trim());
+      partyNames.forEach(name => {
+        const joined = participants.some(p => p.name.toLowerCase().includes(name.toLowerCase()));
+        if (!joined) {
+          filtered.push({
+            id: `expected-${name}`,
+            name: name,
+            role: 'Party to Case',
+            status: 'joining', // Shows as "Joining (Secure Facility)"
+            isExpected: true
+          });
+        }
+      });
+    }
+
+    return filtered;
+  };
+
+  const displayList = getDisplayParticipants();
 
   return (
     <div className="vh-center-wrap">
@@ -99,8 +130,9 @@ const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
           <ShieldCheck size={14} /> IDENTITY VERIFIED — WAITING ROOM
         </div>
 
-        <h2 className="vh-panel-title">{caseData?.name}</h2>
-        <p className="vh-panel-sub">Room: {caseData?.room} &nbsp;|&nbsp; {caseData?.time}</p>
+        <h2 className="vh-panel-title">{hearing?.caseName || caseData?.name || "Virtual Hearing"}</h2>
+        <p className="vh-panel-sub">Room: {hearing?.roomId || roomId} &nbsp;|&nbsp; {hearing?.scheduledTime || "10:00"}</p>
+        
         {roomId && (
           <div style={{ marginBottom: '1.5rem' }}>
             <div style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#888', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>
@@ -124,18 +156,17 @@ const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
             >
               {copiedLink ? <><Check size={13} /> LINK COPIED</> : <><LinkIcon size={13} /> COPY JOIN LINK</>}
             </button>
-            <div style={{ marginTop: '0.6rem', fontSize: '0.7rem', color: '#666', textAlign: 'center' }}>
-              Share this code or link with participants to join
-            </div>
           </div>
         )}
 
         <div className="vh-participants-list">
-          {participants.map(p => {
+          {displayList.map(p => {
             const s = STATUS_MAP[p.status] || STATUS_MAP.waiting;
             return (
               <div key={p.id} className={`vh-participant-row ${p.status === 'pending' ? 'vh-row-pending' : ''}`}>
-                <div className="vh-participant-avatar">{p.name[0]}</div>
+                <div className="vh-participant-avatar" style={{ background: p.isExpected ? '#333' : '#e02020' }}>
+                  {p.name[0]}
+                </div>
                 <div className="vh-participant-info">
                   <div className="vh-participant-name">{p.name}</div>
                   <div className="vh-participant-role">{p.role}</div>
@@ -143,7 +174,7 @@ const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
                 <div className="vh-participant-status" style={{ color: s.color }}>
                   {s.icon} {s.label}
                 </div>
-                {role === 'judge' && p.status === 'pending' && (
+                {role === 'judge' && p.status === 'pending' && !p.isExpected && (
                   <div className="vh-admit-controls">
                     <button className="vh-btn-admit" onClick={() => handleAdmit(p.id)}>ADMIT</button>
                     <button className="vh-btn-reject" onClick={() => handleReject(p.id)}>REJECT</button>
@@ -152,7 +183,7 @@ const WaitingRoom = ({ role, caseData, roomId, onStart }) => {
               </div>
             );
           })}
-          {participants.length === 0 && (
+          {displayList.length === 0 && (
             <div className="vh-waiting-empty">
               <UserPlus size={20} /> Initializing room participants...
             </div>

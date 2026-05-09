@@ -7,13 +7,15 @@ const STEPS = [
   { id: 'otp',   icon: <Key size={20} />,        label: 'OTP Verification',    desc: 'Enter the OTP sent to your device' },
 ];
 
-const Verification = ({ role, caseData, onVerified }) => {
+const Verification = ({ role, caseData, user, onVerified }) => {
   const [started, setStarted] = useState(false);
   const [currentStep, setCurrentStep] = useState(0); // 0=face,1=voice,2=otp
   const [stepsDone, setStepsDone] = useState([]);
   const [running, setRunning] = useState(false);
   const [otp, setOtp] = useState('');
   const [otpError, setOtpError] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [allDone, setAllDone] = useState(false);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -41,11 +43,60 @@ const Verification = ({ role, caseData, onVerified }) => {
     }, 3000);
   };
 
-  const handleOtp = () => {
+  const sendOtp = async () => {
+    try {
+      setRunning(true);
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const email = user?.email || 'test@mandamus.gov';
+      
+      const res = await fetch(`${baseUrl}/virtual-hearing/otp/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      
+      if (res.ok) {
+        setOtpSent(true);
+      } else {
+        const data = await res.json().catch(() => ({ detail: 'Unknown error' }));
+        alert("Backend Error: " + data.detail);
+      }
+    } catch (err) {
+      console.error("Failed to send OTP:", err);
+      alert("Error sending OTP: " + err.message);
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const handleOtp = async () => {
     if (otp.length < 4) { setOtpError('Enter a valid OTP.'); return; }
+    
+    setVerifyingOtp(true);
     setOtpError('');
-    setStepsDone(prev => [...prev, 'otp']);
-    setAllDone(true);
+    
+    try {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const email = user?.email || 'test@mandamus.gov';
+      
+      const res = await fetch(`${baseUrl}/virtual-hearing/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code: otp })
+      });
+      
+      if (res.ok) {
+        setStepsDone(prev => [...prev, 'otp']);
+        setAllDone(true);
+      } else {
+        const errorData = await res.json();
+        setOtpError(errorData.detail || 'Invalid OTP code.');
+      }
+    } catch (err) {
+      setOtpError('Connection error. Try again.');
+    } finally {
+      setVerifyingOtp(false);
+    }
   };
 
   const progress = Math.round((stepsDone.length / 3) * 100);
@@ -116,15 +167,26 @@ const Verification = ({ role, caseData, onVerified }) => {
                 {/* OTP input */}
                 {step.id === 'otp' && active && !running && (
                   <div className="vh-otp-wrap">
-                    <input
-                      className="vh-otp-input"
-                      placeholder="Enter OTP"
-                      value={otp}
-                      onChange={e => setOtp(e.target.value)}
-                      maxLength={6}
-                    />
-                    <button className="vh-btn-sm" onClick={handleOtp}>Verify</button>
-                    {otpError && <div className="vh-otp-error">{otpError}</div>}
+                    {!otpSent ? (
+                      <button className="vh-btn-sm" onClick={sendOtp}>Send OTP to Email</button>
+                    ) : (
+                      <>
+                        <input
+                          className="vh-otp-input"
+                          placeholder="Enter 6-digit code"
+                          value={otp}
+                          onChange={e => setOtp(e.target.value)}
+                          maxLength={6}
+                        />
+                        <button className="vh-btn-sm" onClick={handleOtp} disabled={verifyingOtp}>
+                          {verifyingOtp ? 'Verifying...' : 'Verify'}
+                        </button>
+                        <button className="vh-btn-link" onClick={sendOtp} style={{ fontSize: '0.7rem', marginTop: '0.4rem', background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>
+                          Resend Code
+                        </button>
+                      </>
+                    )}
+                    {otpError && <div className="vh-otp-error" style={{ color: '#ff4444', fontSize: '0.75rem', marginTop: '0.4rem' }}>{otpError}</div>}
                   </div>
                 )}
                 {/* Trigger next step button */}

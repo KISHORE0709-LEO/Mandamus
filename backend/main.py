@@ -25,7 +25,8 @@ from dotenv import load_dotenv
 
 # MongoDB Integration
 from mongodb.client import connect_to_mongo, close_mongo_connection
-from routes import virtual_hearing
+from routes import virtual_hearing, otp
+from mongodb import otp_repository
 
 # Load environment variables from .env
 load_dotenv(override=True)
@@ -82,11 +83,7 @@ origins = [
     "https://*.netlify.app",
 ]
 
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://mandamus-judicial.vercel.app",
-]
+origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -103,7 +100,9 @@ app.mount("/socket.io", socket_app)
 
 @app.on_event("startup")
 async def startup_db_client():
-    await connect_to_mongo()
+    # Run in background to avoid blocking server start
+    asyncio.create_task(connect_to_mongo())
+    asyncio.create_task(otp_repository.ensure_ttl_index())
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
@@ -111,6 +110,7 @@ async def shutdown_db_client():
 
 # Include Virtual Hearing Routes
 app.include_router(virtual_hearing.router)
+app.include_router(otp.router)
 
 # Room storage: { roomId: { socketId: { userId, role, name } } }
 rooms = {}

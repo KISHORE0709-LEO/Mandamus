@@ -97,7 +97,7 @@ const VirtualHearing = ({ initialRoomId }) => {
         </>
       )}
       {stage === 'pre-hearing'  && <CasePreHearing role={role} caseData={selectedCase} onProceed={() => setStage('verification')} onBack={() => setStage('dashboard')} />}
-      {stage === 'verification' && <Verification role={role} caseData={selectedCase} onVerified={() => setStage('waiting-room')} />}
+      {stage === 'verification' && <Verification role={role} caseData={selectedCase} user={user} onVerified={() => setStage('waiting-room')} />}
       {stage === 'waiting-room' && <WaitingRoom role={role} caseData={selectedCase} roomId={roomId} onStart={handleStart} />}
       {stage === 'live-session' && (
         <LiveRoom
