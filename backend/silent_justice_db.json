@@ -57,5 +57,65 @@
         "upload_timestamp": "2026-05-05T09:41:27.558995+00:00"
       }
     ]
+  },
+  {
+    "name": "",
+    "contact": "9606442727",
+    "location": "Bengaluru ",
+    "description": "The user is experiencing ongoing domestic abuse, intimidation, and emotional control inside her home. She is living in fear and is unable to openly seek help because her husband monitors her phone activity, deletes her messages, and threatens her regularly. The situation has escalated from verbal abuse to physical violence, leaving her emotionally distressed and unsafe. Despite secretly collecting evidence like audio recordings and injury photos, she is terrified that the evidence may be discovered or destroyed before she can report it. She also fears retaliation if she files a complaint or FIR. The user is looking for a safe, confidential way to preserve evidence, understand her legal rights, and seek protection without immediately exposing herself to danger.\n",
+    "contactMethod": "call",
+    "contactTime": "morning",
+    "onlySafeContact": true,
+    "isAnonymous": true,
+    "case_id": "SJ-BAC2B026",
+    "status": "Submitted",
+    "date": "2026-05-09T14:56:22.894775",
+    "files": [
+      {
+        "filename": "SCO.LR_-Judgement_Ghyanshaym-Soni-v-NCT-Delhi.pdf",
+        "s3_key": "silent_justice/SJ-BAC2B026/sj_84101adc-e070-4e28-8f79-b5f1dc969209_SCO.LR_-Judgement_Ghyanshaym-Soni-v-NCT-Delhi.pdf",
+        "upload_timestamp": "2026-05-09T09:26:25.366245+00:00"
+      },
+      {
+        "filename": "SCO.LR_Mind-map_Ghanshyam-Soni-v-NCTD.pdf",
+        "s3_key": "silent_justice/SJ-BAC2B026/sj_68234de1-fdf0-46d1-8a38-8b7311fe930d_SCO.LR_Mind-map_Ghanshyam-Soni-v-NCTD.pdf",
+        "upload_timestamp": "2026-05-09T09:26:27.047035+00:00"
+      }
+    ]
+  },
+  {
+    "name": "CH V Sneha",
+    "contact": "9606442727",
+    "location": "Bengaluru ",
+    "description": "The user is experiencing ongoing domestic abuse, intimidation, and emotional control inside her home. She is living in fear and is unable to openly seek help because her husband monitors her phone activity, deletes her messages, and threatens her regularly. The situation has escalated from verbal abuse to physical violence, leaving her emotionally distressed and unsafe. Despite secretly collecting evidence like audio recordings and injury photos, she is terrified that the evidence may be discovered or destroyed before she can report it. She also fears retaliation if she files a complaint or FIR. The user is looking for a safe, confidential way to preserve evidence, understand her legal rights, and seek protection without immediately exposing herself to danger.\n",
+    "contactMethod": "call",
+    "contactTime": "morning",
+    "onlySafeContact": true,
+    "isAnonymous": false,
+    "case_id": "SJ-1DA362DB",
+    "status": "Submitted",
+    "date": "2026-05-09T14:58:52.325289",
+    "files": [
+      {
+        "filename": "28122_2024_3_1503_62151_Judgement_04-Jun-2025.pdf",
+        "s3_key": "silent_justice/SJ-1DA362DB/sj_71000f74-91c7-436c-a127-0be985ce8253_28122_2024_3_1503_62151_Judgement_04-Jun-2025.pdf",
+        "upload_timestamp": "2026-05-09T09:28:54.878454+00:00"
+      },
+      {
+        "filename": "Ghanshyam_Soni_vs_State_Govt_Of_Nct_Of_Delhi_on_4_June_2025.pdf",
+        "s3_key": "silent_justice/SJ-1DA362DB/sj_d01aa234-917b-48e0-8c80-ee905a73d66d_Ghanshyam_Soni_vs_State_Govt_Of_Nct_Of_Delhi_on_4_June_2025.pdf",
+        "upload_timestamp": "2026-05-09T09:28:57.352595+00:00"
+      },
+      {
+        "filename": "SCO.LR_-Judgement_Ghyanshaym-Soni-v-NCT-Delhi.pdf",
+        "s3_key": "silent_justice/SJ-1DA362DB/sj_ff0bc7cf-ee1b-4185-b0bd-e837564a207b_SCO.LR_-Judgement_Ghyanshaym-Soni-v-NCT-Delhi.pdf",
+        "upload_timestamp": "2026-05-09T09:28:59.497161+00:00"
+      },
+      {
+        "filename": "SCO.LR_Mind-map_Ghanshyam-Soni-v-NCTD.pdf",
+        "s3_key": "silent_justice/SJ-1DA362DB/sj_4c3c93b5-0d3f-4348-9f42-75e9d8a24279_SCO.LR_Mind-map_Ghanshyam-Soni-v-NCTD.pdf",
+        "upload_timestamp": "2026-05-09T09:29:01.543859+00:00"
+      }
+    ]
   }
 ]
