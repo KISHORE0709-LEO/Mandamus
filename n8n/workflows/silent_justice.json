@@ -1,0 +1,126 @@
+{
+  "name": "Silent Justice Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "silent-justice",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [ 250, 300 ],
+      "webhookId": "silent-justice-webhook-id"
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "evidence_id",
+              "value": "={{$json.body.evidence_id || $execution.id}}"
+            },
+            {
+              "name": "description",
+              "value": "={{$json.body.description}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2",
+      "name": "Set Metadata",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [ 450, 300 ]
+    },
+    {
+      "parameters": {
+        "model": "gemini-1.5-flash",
+        "prompt": "Analyze this abuse report description and output severity risk as SAFE, HIGH, or CRITICAL: {{$json.description}}"
+      },
+      "id": "3",
+      "name": "Gemini Classification",
+      "type": "n8n-nodes-base.googleGemini",
+      "typeVersion": 1,
+      "position": [ 650, 300 ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.risk}}",
+              "operation": "contains",
+              "value2": "CRITICAL"
+            }
+          ]
+        }
+      },
+      "id": "4",
+      "name": "IF CRITICAL RISK",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [ 850, 300 ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "response",
+              "value": "Emergency protocol activated. Seek immediate safety."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5",
+      "name": "Emergency Escalation",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [ 1050, 200 ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "response",
+              "value": "Standard analysis completed. Secure logging applied."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6",
+      "name": "Standard Logging",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [ 1050, 400 ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [ [ { "node": "Set Metadata", "type": "main", "index": 0 } ] ]
+    },
+    "Set Metadata": {
+      "main": [ [ { "node": "Gemini Classification", "type": "main", "index": 0 } ] ]
+    },
+    "Gemini Classification": {
+      "main": [ [ { "node": "IF CRITICAL RISK", "type": "main", "index": 0 } ] ]
+    },
+    "IF CRITICAL RISK": {
+      "main": [
+        [ { "node": "Emergency Escalation", "type": "main", "index": 0 } ],
+        [ { "node": "Standard Logging", "type": "main", "index": 0 } ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}

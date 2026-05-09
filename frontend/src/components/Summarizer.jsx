@@ -330,11 +330,18 @@ export default function Summarizer({ onTabChange }) {
   const [editMode, setEditMode] = useState(false);
   const [approved, setApproved] = useState(false);
   const [errorMsg, setErrorMsg] = useState(null);
-  const [viewMode, setViewMode] = useState('lawyer'); // 'lawyer' | 'student'
-  const [activeTab, setActiveTab] = useState('summary'); // 'summary' | 'evidence' | 'adr' | 'inventory'
+  const [viewMode, setViewMode] = useState(() => sessionStorage.getItem('sr_viewMode') || 'lawyer'); // 'lawyer' | 'student'
+  const [activeTab, setActiveTab] = useState(() => sessionStorage.getItem('sr_activeTab') || 'summary'); // 'summary' | 'evidence' | 'adr' | 'inventory'
   const [isTranslating, setIsTranslating] = useState(false);
-  const [targetLang, setTargetLang] = useState('English');
-  const [deepAnalysis, setDeepAnalysis] = useState(false);
+  const [targetLang, setTargetLang] = useState(() => sessionStorage.getItem('sr_targetLang') || 'English');
+  const [deepAnalysis, setDeepAnalysis] = useState(() => sessionStorage.getItem('sr_deepAnalysis') === 'true');
+
+  useEffect(() => {
+    sessionStorage.setItem('sr_viewMode', viewMode);
+    sessionStorage.setItem('sr_activeTab', activeTab);
+    sessionStorage.setItem('sr_targetLang', targetLang);
+    sessionStorage.setItem('sr_deepAnalysis', deepAnalysis);
+  }, [viewMode, activeTab, targetLang, deepAnalysis]);
   
   // Use targetLang for UI labels so it flips IMMEDIATELY when user selects from dropdown
   const L = LOCALIZATION[targetLang] || LOCALIZATION.English;
@@ -345,13 +352,16 @@ export default function Summarizer({ onTabChange }) {
   const [autoStartPending, setAutoStartPending] = useState(false);
 
   useEffect(() => {
+    if (state.summariser_status === 'complete' || state.summariser_status === 'processing') {
+      return;
+    }
     if (state.active_case && state.active_case.case_text && selectedFiles.length === 0) {
       const blob = new Blob([state.active_case.case_text], { type: 'text/plain' });
       const file = new File([blob], `${state.active_case.id || 'Case'}_Document.txt`, { type: 'text/plain' });
       setSelectedFiles([file]);
       setAutoStartPending(true);
     }
-  }, [state.active_case]);
+  }, [state.active_case, state.summariser_status, selectedFiles.length]);
 
   useEffect(() => {
     if (autoStartPending && selectedFiles.length > 0) {

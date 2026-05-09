@@ -1,0 +1,72 @@
+{
+  "name": "Legal Assistant Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "legal-assistant",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [ 250, 300 ],
+      "webhookId": "legal-assistant-webhook-id"
+    },
+    {
+      "parameters": {
+        "model": "gemini-1.5-pro",
+        "prompt": "Classify the intent of this query (legal_advice, summary, precedent_search, casual): {{$json.body.message}}"
+      },
+      "id": "2",
+      "name": "Intent Classification",
+      "type": "n8n-nodes-base.googleGemini",
+      "typeVersion": 1,
+      "position": [ 450, 300 ]
+    },
+    {
+      "parameters": {
+        "model": "gemini-1.5-pro",
+        "prompt": "Given the user query '{{$json.body.message}}' and intent '{{$node['Intent Classification'].json.text}}', generate a comprehensive legal assistant response."
+      },
+      "id": "3",
+      "name": "Gemini Reasoning",
+      "type": "n8n-nodes-base.googleGemini",
+      "typeVersion": 1,
+      "position": [ 650, 300 ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "bot_response",
+              "value": "={{$json.text}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "4",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [ 850, 300 ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [ [ { "node": "Intent Classification", "type": "main", "index": 0 } ] ]
+    },
+    "Intent Classification": {
+      "main": [ [ { "node": "Gemini Reasoning", "type": "main", "index": 0 } ] ]
+    },
+    "Gemini Reasoning": {
+      "main": [ [ { "node": "Format Response", "type": "main", "index": 0 } ] ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}

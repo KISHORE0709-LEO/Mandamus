@@ -814,6 +814,17 @@ class LegalAssistantRequest(BaseModel):
 
 @app.post("/legal-assistant")
 async def legal_assistant(request: LegalAssistantRequest, background_tasks: BackgroundTasks):
+    import httpx
+    try:
+        async with httpx.AsyncClient() as client:
+            # Route to n8n Webhook for Legal Assistant Agent
+            n8n_response = await client.post("http://localhost:5678/webhook/legal-assistant", json=request.dict(), timeout=3.0)
+            if n8n_response.status_code == 200:
+                logger.info("Routed legal_assistant through n8n successfully.")
+                return n8n_response.json()
+    except Exception as e:
+        logger.warning(f"n8n webhook /webhook/legal-assistant failed or not running: {e}. Falling back to static backend logic.")
+
     from backboard import BackboardClient
     backboard_key = os.getenv("BACKBOARD_API_KEY")
     if not backboard_key:
@@ -1747,6 +1758,17 @@ class SilentJusticeEvalRequest(BaseModel):
 
 @app.post("/silent-justice/evaluate")
 async def evaluate_silent_justice(request: SilentJusticeEvalRequest):
+    import httpx
+    try:
+        async with httpx.AsyncClient() as client:
+            # Route to n8n Webhook for Silent Justice
+            n8n_response = await client.post("http://localhost:5678/webhook/silent-justice", json=request.dict(), timeout=3.0)
+            if n8n_response.status_code == 200:
+                logger.info("Routed evaluate_silent_justice through n8n successfully.")
+                return n8n_response.json()
+    except Exception as e:
+        logger.warning(f"n8n webhook /webhook/silent-justice failed or not running: {e}. Falling back to static backend logic.")
+
     try:
         bedrock = get_bedrock_client()
         prompt = f"""You are a sensitive legal AI evaluating a victim's report.
