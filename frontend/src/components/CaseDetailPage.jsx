@@ -1,10 +1,12 @@
 import React from 'react';
 import { useMandamus } from '../context/MandamusContext';
+import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, BrainCircuit, Search, FileText, Calendar, Video, CheckCircle2, ShieldCheck, Briefcase, Download } from 'lucide-react';
 import './CaseDetailPage.css';
 
 export default function CaseDetailPage({ onTabChange }) {
   const { state } = useMandamus();
+  const { user } = useAuth();
   const activeCase = state.active_case;
   const currentStage = state.pipeline_stage || 'summarise';
 
@@ -12,7 +14,7 @@ export default function CaseDetailPage({ onTabChange }) {
     return (
       <div className="cdp-page">
         <div className="cdp-header">
-          <button className="cdp-back-btn" onClick={() => onTabChange('judge-dashboard')}>
+          <button className="cdp-back-btn" onClick={() => onTabChange(user?.role === 'lawyer' ? 'lawyer-dashboard' : 'judge-dashboard')}>
             <ArrowLeft size={14} /> BACK TO DOCKET
           </button>
         </div>
@@ -42,7 +44,7 @@ export default function CaseDetailPage({ onTabChange }) {
           <h1>{activeCase.title || 'Case Overview'}</h1>
           <span className="cdp-sub">CASE ID: {activeCase.id || 'N/A'}</span>
         </div>
-        <button className="cdp-back-btn" onClick={() => onTabChange('judge-dashboard')}>
+        <button className="cdp-back-btn" onClick={() => onTabChange(user?.role === 'lawyer' ? 'lawyer-dashboard' : 'judge-dashboard')}>
           <ArrowLeft size={14} /> BACK TO DOCKET
         </button>
       </div>
@@ -74,6 +76,14 @@ export default function CaseDetailPage({ onTabChange }) {
               <span className="cdp-info-label">Filed Date</span>
               <span className="cdp-info-value">{activeCase.filedDate || 'N/A'}</span>
             </div>
+            {user?.role === 'lawyer' && (
+              <div className="cdp-info-item" style={{ marginTop: '15px', padding: '10px', background: 'rgba(224, 32, 32, 0.1)', border: '1px solid rgba(224, 32, 32, 0.3)' }}>
+                <span className="cdp-info-label" style={{ color: '#e02020' }}>YOUR ROLE</span>
+                <span className="cdp-info-value" style={{ fontWeight: '800' }}>
+                  {activeCase.petitioner_lawyer_email === user.email.toLowerCase() ? 'PETITIONER COUNSEL' : 'RESPONDENT COUNSEL'}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="cdp-action-panel">

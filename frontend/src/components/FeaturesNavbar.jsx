@@ -25,6 +25,7 @@ const FeaturesNavbar = ({ onSelectFeature, activeFeature }) => {
 
   const features = [
     ...(role === 'judge' ? [{ id: 'judge-dashboard', name: 'Dashboard' }] : []),
+    ...(role === 'lawyer' ? [{ id: 'lawyer-dashboard', name: 'Dashboard' }] : []),
     { id: 'summariser', name: 'Summariser' },
     { id: 'precedent', name: 'Precedent Finder' },
     { id: 'draft', name: 'Draft Generator' },

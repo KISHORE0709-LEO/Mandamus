@@ -27,12 +27,13 @@ import SilentJustice from './components/SilentJustice';
 import JudgeDashboard from './components/JudgeDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import CaseDetailPage from './components/CaseDetailPage';
+import LawyerDashboard from './components/LawyerDashboard';
 import { initializeSuperAdmin } from './utils/initAdmin';
 
 
 const GlobalBackground = () => {
   const location = useLocation();
-  const isFeatureRoute = ['/dashboard', '/public-dashboard', '/advisor', '/modern-advisor', '/vault', '/admin-dashboard'].some(path => location.pathname.startsWith(path));
+  const isFeatureRoute = ['/dashboard', '/public-dashboard', '/advisor', '/modern-advisor', '/vault', '/admin-dashboard', '/lawyer-dashboard'].some(path => location.pathname.startsWith(path));
   
   if (isFeatureRoute) return null;
   
@@ -99,6 +100,8 @@ const Dashboard = ({ activeFeature, setActiveFeature }) => {
     switch (activeFeature) {
       case 'judge-dashboard':
         return <JudgeDashboard setActiveFeature={setActiveFeature} />;
+      case 'lawyer-dashboard':
+        return <LawyerDashboard setActiveFeature={setActiveFeature} />;
       case 'summariser':
         return <Summarizer onTabChange={setActiveFeature} />;
       case 'precedent':
@@ -133,7 +136,12 @@ const Dashboard = ({ activeFeature, setActiveFeature }) => {
 
 function App() {
   const defaultRole = localStorage.getItem('userRole');
-  const [activeFeature, setActiveFeature] = React.useState(defaultRole === 'judge' ? 'judge-dashboard' : 'summariser');
+  const getInitialFeature = (role) => {
+    if (role === 'judge') return 'judge-dashboard';
+    if (role === 'lawyer') return 'lawyer-dashboard';
+    return 'summariser';
+  };
+  const [activeFeature, setActiveFeature] = React.useState(getInitialFeature(defaultRole));
 
   React.useEffect(() => {
     // Initialize Super Admin if needed
@@ -143,6 +151,8 @@ function App() {
       const role = localStorage.getItem('userRole');
       if (role === 'judge') {
         setActiveFeature('judge-dashboard');
+      } else if (role === 'lawyer') {
+        setActiveFeature('lawyer-dashboard');
       } else {
         setActiveFeature('summariser');
       }
