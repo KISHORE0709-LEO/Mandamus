@@ -11,3 +11,4 @@ botocore
 python-docx
 google-generativeai
 backboard-sdk
+httpx

@@ -17,7 +17,9 @@ import {
   Plus,
   Volume2,
   Square,
-  Loader2
+  Loader2,
+  Trash2,
+  Edit2
 } from 'lucide-react';
 
 const ModernLegalAssistant = () => {
@@ -30,6 +32,8 @@ const ModernLegalAssistant = () => {
   const [threadId, setThreadId] = useState(null);
   const [lastAnalysis, setLastAnalysis] = useState({ severity: 'Medium', domain: 'General Legal Assistance' });
   const [history, setHistory] = useState([]);
+  const [editingThreadId, setEditingThreadId] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
   const scrollRef = React.useRef(null);
   
   // TTS State
@@ -137,6 +141,44 @@ const ModernLegalAssistant = () => {
       });
     }
   }, [messages, isLoading]);
+
+  const handleDeleteChat = async (e, threadIdToDel) => {
+    e.stopPropagation();
+    try {
+      await fetch(`http://127.0.0.1:8000/legal-assistant/history/${user.uid}/${threadIdToDel}`, {
+        method: 'DELETE'
+      });
+      setHistory(prev => prev.filter(t => t.id !== threadIdToDel));
+      if (threadId === threadIdToDel) {
+         handleNewChat();
+      }
+    } catch (err) {
+      console.error("Failed to delete chat:", err);
+    }
+  };
+
+  const handleRenameSubmit = async (e, threadIdToRename) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!editTitle.trim()) return;
+    try {
+      await fetch(`http://127.0.0.1:8000/legal-assistant/history/${user.uid}/${threadIdToRename}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: editTitle })
+      });
+      setHistory(prev => prev.map(t => t.id === threadIdToRename ? { ...t, query: editTitle } : t));
+      setEditingThreadId(null);
+    } catch (err) {
+      console.error("Failed to rename chat:", err);
+    }
+  };
+
+  const startEditing = (e, thread) => {
+    e.stopPropagation();
+    setEditingThreadId(thread.id);
+    setEditTitle(thread.query);
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -308,7 +350,7 @@ const ModernLegalAssistant = () => {
       </nav>
 
       {/* Main Content - Two Column Layout */}
-      <div style={{ position: 'relative', zIndex: 1, height: 'calc(100vh - 100px)', marginTop: '100px', display: 'grid', gridTemplateColumns: '65% 35%', gap: '24px', maxWidth: '1800px', margin: '100px auto 0', padding: '0 40px', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', zIndex: 1, height: 'calc(100vh - 130px)', display: 'grid', gridTemplateColumns: '75% 25%', gap: '32px', maxWidth: '1500px', margin: '110px auto 20px', padding: '0 40px', overflow: 'hidden' }}>
         
         {/* LEFT SECTION - AI Response Card */}
         <div style={{ height: '100%', overflow: 'hidden' }}>
@@ -524,15 +566,16 @@ const ModernLegalAssistant = () => {
           </button>
 
           {/* Consultation History */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', background: '#111', borderRadius: '24px', border: '1px solid rgba(255, 255, 255, 0.05)', padding: '20px', overflow: 'hidden' }}>
             <h3 style={{ fontSize: '12px', fontWeight: '700', color: '#888', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '12px', paddingLeft: '8px' }}>
               Recents
             </h3>
             
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, overflowY: 'auto', paddingRight: '8px' }} className="custom-scrollbar">
               {history.length > 0 ? history.map((item, idx) => (
                 <div key={idx} 
                   onClick={() => handleHistoryClick(item)}
+                  className="history-item-container"
                   style={{ 
                     padding: '12px 16px', 
                     background: threadId === item.id ? 'rgba(255, 255, 255, 0.1)' : 'transparent', 
@@ -540,23 +583,64 @@ const ModernLegalAssistant = () => {
                     cursor: 'pointer', 
                     transition: 'all 0.2s ease',
                     display: 'flex',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px'
                   }}
                   onMouseEnter={(e) => { if (threadId !== item.id) e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'; }}
                   onMouseLeave={(e) => { if (threadId !== item.id) e.currentTarget.style.background = 'transparent'; }}
                 >
-                  <p style={{ 
-                    fontSize: '14px', 
-                    color: threadId === item.id ? '#fff' : '#ccc', 
-                    fontWeight: threadId === item.id ? '600' : '500', 
-                    lineHeight: '1.4', 
-                    overflow: 'hidden', 
-                    textOverflow: 'ellipsis', 
-                    whiteSpace: 'nowrap',
-                    margin: 0
-                  }}>
-                    {item.query}
-                  </p>
+                  {editingThreadId === item.id ? (
+                    <form onSubmit={(e) => handleRenameSubmit(e, item.id)} style={{ flex: 1, display: 'flex' }}>
+                      <input 
+                        type="text" 
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        autoFocus
+                        onBlur={() => setEditingThreadId(null)}
+                        style={{ width: '100%', background: '#000', color: '#fff', border: '1px solid #e02020', borderRadius: '4px', padding: '4px 8px', fontSize: '13px', outline: 'none' }}
+                      />
+                    </form>
+                  ) : (
+                    <p style={{ 
+                      fontSize: '14px', 
+                      color: threadId === item.id ? '#fff' : '#ccc', 
+                      fontWeight: threadId === item.id ? '600' : '500', 
+                      lineHeight: '1.4', 
+                      overflow: 'hidden', 
+                      textOverflow: 'ellipsis', 
+                      whiteSpace: 'nowrap',
+                      margin: 0,
+                      flex: 1
+                    }}>
+                      {item.query}
+                    </p>
+                  )}
+                  
+                  {/* Action Buttons (visible on hover via CSS) */}
+                  {editingThreadId !== item.id && (
+                    <div className="history-actions" style={{ display: 'flex', gap: '6px' }}>
+                      <button 
+                        onClick={(e) => startEditing(e, item)}
+                        style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', padding: '4px', borderRadius: '4px' }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#fff'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#888'}
+                        title="Rename"
+                      >
+                        <Edit2 size={14} />
+                      </button>
+                      <button 
+                        onClick={(e) => handleDeleteChat(e, item.id)}
+                        style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', padding: '4px', borderRadius: '4px' }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#e02020'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#888'}
+                        title="Delete"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )) : (
                 <div style={{ padding: '20px', textAlign: 'center', opacity: 0.3 }}>
@@ -583,6 +667,13 @@ const ModernLegalAssistant = () => {
 
       {/* Custom Scrollbar Styles */}
       <style>{`
+        .history-item-container .history-actions {
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+        .history-item-container:hover .history-actions {
+          opacity: 1;
+        }
         .custom-scrollbar::-webkit-scrollbar {
           width: 8px;
         }

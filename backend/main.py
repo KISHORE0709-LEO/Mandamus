@@ -940,6 +940,55 @@ async def get_thread_messages(user_id: str, thread_id: str):
         logger.error(f"Error fetching thread messages: {str(e)}")
         return {"messages": []}
 
+@app.delete("/legal-assistant/history/{user_id}/{thread_id}")
+async def delete_thread(user_id: str, thread_id: str):
+    try:
+        if os.path.exists(HISTORY_FILE):
+            with open(HISTORY_FILE, "r") as f:
+                history_db = json.load(f)
+                
+            user_data = history_db.get(user_id, {})
+            threads = user_data.get("threads", [])
+            user_data["threads"] = [t for t in threads if t.get("id") != thread_id]
+            
+            if "thread_messages" in user_data and thread_id in user_data["thread_messages"]:
+                del user_data["thread_messages"][thread_id]
+                
+            history_db[user_id] = user_data
+            with open(HISTORY_FILE, "w") as f:
+                json.dump(history_db, f)
+            return {"status": "success"}
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Error deleting thread: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+class RenameThreadRequest(BaseModel):
+    title: str
+
+@app.put("/legal-assistant/history/{user_id}/{thread_id}")
+async def rename_thread(user_id: str, thread_id: str, request: RenameThreadRequest):
+    try:
+        if os.path.exists(HISTORY_FILE):
+            with open(HISTORY_FILE, "r") as f:
+                history_db = json.load(f)
+                
+            user_data = history_db.get(user_id, {})
+            threads = user_data.get("threads", [])
+            for t in threads:
+                if t.get("id") == thread_id:
+                    t["query"] = request.title
+                    break
+            
+            user_data["threads"] = threads
+            history_db[user_id] = user_data
+            with open(HISTORY_FILE, "w") as f:
+                json.dump(history_db, f)
+            return {"status": "success"}
+        raise HTTPException(status_code=404, detail="Thread not found")
+    except Exception as e:
+        logger.error(f"Error renaming thread: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/legal-assistant/tts")
