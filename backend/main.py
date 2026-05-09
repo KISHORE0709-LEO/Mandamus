@@ -18,7 +18,7 @@ import asyncio
 from botocore.exceptions import ClientError
 from typing import List, Optional
 from pydantic import BaseModel
-from fastapi import FastAPI, File, UploadFile, HTTPException, Request, Form
+from fastapi import FastAPI, File, UploadFile, HTTPException, Request, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
@@ -31,9 +31,9 @@ try:
     import google.generativeai as genai
     if os.getenv("GOOGLE_API_KEY"):
         genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-        # Using 'gemini-pro-latest' as it's the most stable cross-version identifier
-        gemini_model = genai.GenerativeModel('gemini-pro-latest')
-        logger.info("Gemini Pro Latest initialized successfully.")
+        # Using 'gemini-flash-latest' as it has much higher free tier rate limits
+        gemini_model = genai.GenerativeModel('gemini-flash-latest')
+        logger.info("Gemini Flash Latest initialized successfully.")
     else:
         gemini_model = None
         logger.warning("GOOGLE_API_KEY not found. Gemini features will be disabled.")
@@ -45,12 +45,21 @@ app = FastAPI()
 
 # Load precedents_db on startup
 precedents_db = []
+legal_kb = {}
+
 try:
     with open("precedents_db.json", "r") as f:
         precedents_db = json.load(f)
     logger.info(f"Successfully loaded {len(precedents_db)} precedents from database.")
 except Exception as e:
     logger.error(f"Could not load precedents_db.json: {e}")
+
+try:
+    with open("legal_knowledge_base.json", "r") as f:
+        legal_kb = json.load(f)
+    logger.info(f"Successfully loaded legal knowledge base with {len(legal_kb.get('domains', {}))} domains.")
+except Exception as e:
+    logger.error(f"Could not load legal_knowledge_base.json: {e}")
 
 # Enable CORS - allow all origins for production deployment
 origins = [
@@ -720,6 +729,195 @@ def cosine_sim(v1, v2):
     norm_a = math.sqrt(sum(a * a for a in v1))
     norm_b = math.sqrt(sum(b * b for b in v2))
     return dot_product / (norm_a * norm_b)
+
+class LegalAssistantRequest(BaseModel):
+    query: str
+    user_id: str
+    thread_id: Optional[str] = None
+
+
+
+@app.post("/legal-assistant")
+async def legal_assistant(request: LegalAssistantRequest, background_tasks: BackgroundTasks):
+    from backboard import BackboardClient
+    backboard_key = os.getenv("BACKBOARD_API_KEY")
+    if not backboard_key:
+        raise HTTPException(status_code=500, detail="BACKBOARD_API_KEY is not configured.")
+        
+    client = BackboardClient(api_key=backboard_key)
+    try:
+        global gemini_model
+        if 'gemini_model' not in globals() or not gemini_model:
+            import google.generativeai as genai
+            genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+            gemini_model = genai.GenerativeModel('gemini-flash-latest')
+
+        # 1. Determine Stable Assistant ID based on User ID (MUST BE UUID)
+        # We use uuid5 for deterministic UUID based on user_id
+        stable_uuid = str(uuid.uuid5(uuid.NAMESPACE_DNS, request.user_id))
+        assistant_id = request.thread_id or stable_uuid
+        
+        # Start memory search concurrently
+        past_context_task = asyncio.create_task(client.search_memories(assistant_id=assistant_id, query=request.query))
+        
+        # 2. Get Domain Knowledge (from startup-loaded legal_kb)
+        # We'll pass the full KB to Gemini and let it pick the domain dynamically in ONE call
+        kb_context = json.dumps(legal_kb.get("domains", {}))
+
+        # 3. Wait for memory context if applicable
+        past_context = ""
+        if past_context_task:
+            try:
+                past_memories = await past_context_task
+                memory_list = past_memories.get('memories', [])
+                if memory_list:
+                    past_context = "User's Prior Case Context:\n"
+                    for m in memory_list:
+                        past_context += f"- {m.get('content', '')}\n"
+            except:
+                pass # Fallback to no context if memory fails
+
+        if not assistant_id:
+            # We'll create the assistant ID on the fly for the response, 
+            # but we'll save it to a real assistant in the background task.
+            assistant_id = f"LegalAdvisor-{uuid.uuid4().hex[:8]}"
+
+        # 4. Single-Call Intelligent Prompt
+        # We ask Gemini to do Classification + RAG selection + Reasoning in one go
+        system_instruction = f"""You are the 'Mandamus Intelligent Legal Agent'.
+        You are a high-speed, ACTION-ORIENTED legal expert for Indian citizens.
+        
+        TONE & STYLE:
+        - Use simple, 'layperson-friendly' English. Avoid heavy legal jargon.
+        - If you must use a legal term (e.g., 'Cognizable', 'Interim Order'), explain it simply in brackets.
+        - Be direct, compassionate, and practical. Think "Legal advice for a friend".
+        
+        CRITICAL RULE: DO NOT provide "theory" or generic advice. You MUST provide:
+        1. Real Official Links (e.g., cybercrime.gov.in, shebox.nic.in).
+        2. Real Helpline Numbers (e.g., 1930, 1091, 112).
+        3. Specific Step-by-Step actions (e.g., "Go to X portal", "Dial Y number", "Ask for Z officer").
+        
+        LEGAL KNOWLEDGE BASE (JSON) - USE THIS DATA RIGIDLY:
+        {kb_context}
+        
+        {past_context}
+        
+        TASK:
+        1. Classify the user's query: "{request.query}" into a domain from the KB.
+        2. Assess Severity: Low, Medium, High, or Critical.
+        3. Generate highly empathetic, simple, and ACTIONABLE advice.
+        4. In the "steps" section, include the EXACT procedures and links from the Knowledge Base.
+        
+        RETURN ONLY A VALID JSON OBJECT:
+        {{
+          "query": "original query",
+          "explanation": "2-3 paragraphs of simple, clear reasoning. Explain the situation like the user is a non-lawyer. Focus on 'What this means for you'.",
+          "laws": ["Specific IPC/BNS mappings from KB"],
+          "rights": ["Specific rights from KB (explained simply)"],
+          "severity": "Detected Severity",
+          "domain": "Detected Domain Name",
+          "steps": [
+            {{"title": "Step 1: Immediate Action (Helplines/Numbers)", "content": "Must include real numbers from KB"}},
+            {{"title": "Step 2: Official Filing (Links/Portals)", "content": "Must include real URLs from KB"}},
+            {{"title": "Step 3: Legal/Evidence", "content": "Actionable evidence advice"}}
+          ],
+          "suggested_questions": ["What is the next step?", "How to track my FIR?"]
+        }}
+        """
+
+        # Generate using Flash (Fastest model)
+        response = gemini_model.generate_content(system_instruction)
+        result_text = response.text.strip()
+        
+        import re
+        match = re.search(r'```(?:json)?(.*?)```', result_text, re.DOTALL)
+        if match:
+            result_text = match.group(1).strip()
+            
+        parsed = json.loads(result_text)
+        
+        # 5. Background Tasks (No user wait)
+        async def create_and_store_memory(aid, query, explanation, domain):
+            try:
+                # If it's a new ID, we might need to create the real assistant first
+                memory_content = f"Domain: {domain} | Query: {query} | Advice: {explanation[:150]}"
+                await client.add_memory(assistant_id=aid, content=memory_content)
+            except:
+                pass
+
+        background_tasks.add_task(create_and_store_memory, assistant_id, request.query, parsed.get('explanation', ''), parsed.get('domain', ''))
+        
+        parsed["thread_id"] = assistant_id
+        return parsed
+    except Exception as e:
+        logger.error(f"Error in Optimized Intelligent Legal Agent: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process legal reasoning.")
+
+@app.get("/legal-assistant/history/{user_id}")
+async def get_legal_history(user_id: str):
+    from backboard import BackboardClient
+    backboard_key = os.getenv("BACKBOARD_API_KEY")
+    if not backboard_key:
+        return {"history": []}
+        
+    client = BackboardClient(api_key=backboard_key)
+    try:
+        assistant_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, user_id))
+        # Search for summaries
+        past_memories = await client.search_memories(assistant_id=assistant_id, query="legal advice summary history interaction")
+        memory_list = past_memories.get('memories', [])
+        
+        history = []
+        for m in memory_list:
+            content = m.get('content', '')
+            if "Advice Summary:" not in content: continue # Only show summaries
+            
+            parts = content.split(" | ")
+            domain = parts[0].replace("Domain: ", "") if len(parts) > 0 else "Consultation"
+            query = parts[2].replace("Issue: ", "") if len(parts) > 2 else "Previous Chat"
+            
+            history.append({
+                "id": m.get('id'),
+                "domain": domain,
+                "query": query,
+                "date": datetime.now().strftime("%d %b")
+            })
+            
+        return {"history": history[:8]}
+    except Exception as e:
+        logger.error(f"Error fetching legal history: {str(e)}")
+        return {"history": []}
+
+@app.get("/legal-assistant/messages/{user_id}")
+async def get_legal_messages(user_id: str):
+    from backboard import BackboardClient
+    backboard_key = os.getenv("BACKBOARD_API_KEY")
+    if not backboard_key:
+        return {"messages": []}
+        
+    client = BackboardClient(api_key=backboard_key)
+    try:
+        assistant_id = str(uuid.uuid5(uuid.NAMESPACE_DNS, user_id))
+        # Fetch all memories to reconstruct chat
+        past_memories = await client.search_memories(assistant_id=assistant_id, query="*")
+        memory_list = past_memories.get('memories', [])
+        
+        messages = []
+        for m in memory_list:
+            content = m.get('content', '')
+            if "Advice Summary:" in content:
+                # This is a stored interaction. Format it for the UI.
+                parts = content.split(" | ")
+                query = parts[2].replace("Issue: ", "") if len(parts) > 2 else ""
+                advice = parts[3].replace("Advice Summary: ", "") if len(parts) > 3 else ""
+                
+                if query: messages.append({"role": "user", "content": query})
+                if advice: messages.append({"role": "assistant", "data": {"explanation": advice, "laws": [], "rights": [], "steps": []}})
+        
+        return {"messages": messages}
+    except Exception as e:
+        logger.error(f"Error fetching legal messages: {str(e)}")
+        return {"messages": []}
 
 class PrecedentSearchRequest(BaseModel):
     query: str
