@@ -14,7 +14,7 @@
 /* Role Selection Container */
 .role-selection-container {
   width: 100%;
-  max-width: 1100px;
+  max-width: 1400px;
   animation: authSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -43,9 +43,15 @@
 /* Role Grid - Neo-Brutalist Cards */
 .role-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 24px;
   margin-bottom: 60px;
+}
+
+@media (max-width: 1200px) {
+  .role-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
 }
 
 .role-card {
