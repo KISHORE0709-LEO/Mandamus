@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -69,8 +69,14 @@ const AuthPage = () => {
   const [errors, setErrors] = useState({});
   const { setRole } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const unauthorizedError = location.state?.error;
 
   const toggleMode = () => {
+    if (formData.role === 'admin' && authMode === 'signin') {
+      // Prevent signup for admin role
+      return;
+    }
     setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
     setErrors({});
   };
@@ -114,7 +120,16 @@ const AuthPage = () => {
       if (role === 'public') {
         navigate('/public-dashboard');
       } else if (role === 'admin') {
-        navigate('/admin-dashboard');
+        // Double check Firestore for admin role - extra security
+        const freshUserDoc = await getDoc(doc(db, 'users', result.user.uid));
+        if (freshUserDoc.exists() && freshUserDoc.data().role === 'admin') {
+          setRole('admin');
+          navigate('/admin-dashboard');
+        } else {
+          await auth.signOut();
+          setRole(null);
+          throw { code: 'custom/not-admin', message: 'Access denied. You do not have administrative privileges.' };
+        }
       } else {
         navigate('/dashboard');
       }
@@ -138,6 +153,7 @@ const AuthPage = () => {
     setErrors({});
 
     try {
+      let cred;
       if (authMode === 'signup') {
         // Check if email already exists with a different role before creating
         const userDoc = await getDoc(doc(db, 'users_by_email', formData.email.toLowerCase()));
@@ -146,7 +162,7 @@ const AuthPage = () => {
           throw { code: 'custom/role-mismatch', message: `This email is already registered as a ${existingRole.toUpperCase()} account.` };
         }
 
-        const cred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+        cred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
         await updateProfile(cred.user, { displayName: formData.fullName });
         saveUserRole(cred.user.uid, formData.role, formData.fullName, formData.email);
         
@@ -166,7 +182,7 @@ const AuthPage = () => {
           }
         }
 
-        const cred = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+        cred = await signInWithEmailAndPassword(auth, formData.email, formData.password);
         
         // Double check Firestore for role if mapping didn't exist (legacy users)
         const profileDoc = await getDoc(doc(db, 'users', cred.user.uid));
@@ -192,7 +208,16 @@ const AuthPage = () => {
       if (formData.role === 'public') {
         navigate('/public-dashboard');
       } else if (formData.role === 'admin') {
-        navigate('/admin-dashboard');
+        // Final sanity check for admin
+        const freshUserDoc = await getDoc(doc(db, 'users', cred.user.uid));
+        if (freshUserDoc.exists() && freshUserDoc.data().role === 'admin') {
+          setRole('admin');
+          navigate('/admin-dashboard');
+        } else {
+          await auth.signOut();
+          setRole(null);
+          throw { code: 'custom/not-admin', message: 'Access denied. You do not have administrative privileges.' };
+        }
       } else {
         navigate('/dashboard');
       }
@@ -285,6 +310,7 @@ const AuthPage = () => {
               {isLoading ? 'Connecting...' : 'Continue with Google'}
             </button>
 
+            {unauthorizedError && <div className="auth-error-main" style={{ marginBottom: '16px' }}>{unauthorizedError}</div>}
             {errors.google && <div className="auth-error-main" style={{ marginBottom: '16px' }}>{errors.google}</div>}
             {errors.auth && <div className="auth-error-main" style={{ marginBottom: '16px' }}>{errors.auth}</div>}
 
@@ -336,7 +362,9 @@ const AuthPage = () => {
             </form>
 
             <div className="auth-toggle">
-              {authMode === 'signin' ? (
+              {formData.role === 'admin' ? (
+                <span>Admin accounts must be authorized by the Super Admin.</span>
+              ) : authMode === 'signin' ? (
                 <>No identity? <span className="toggle-link" onClick={toggleMode}>Create Credentials</span></>
               ) : (
                 <>Existing member? <span className="toggle-link" onClick={toggleMode}>Login here</span></>

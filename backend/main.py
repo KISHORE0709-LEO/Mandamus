@@ -676,6 +676,77 @@ async def summarise_document(
 
     return StreamingResponse(generate(), media_type="application/x-ndjson")
 
+@app.post("/extract-text")
+async def extract_text_endpoint(
+    user_id: str = Form(...),
+    file: UploadFile = File(...)
+):
+    """Admin-only: High-performance OCR + Metadata Extraction."""
+    try:
+        filename = file.filename
+        file_bytes = await file.read()
+        
+        # 1. Try Digital Extraction
+        extracted_text, method = extract_text_from_bytes(file_bytes)
+        
+        # 2. Fallback to AWS Textract (Scanned)
+        if method == "needs_textract":
+            logger.info(f"Digital extraction failed for {filename}. Switching to AWS Textract...")
+            s3_client = get_s3_client()
+            bucket_name = os.getenv("AWS_STORAGE_BUCKET_NAME", "mandamus-cases")
+            s3_key = f"users/{user_id}/admin_ocr/{uuid.uuid4()}_{filename}"
+            
+            try:
+                await asyncio.to_thread(
+                    s3_client.put_object,
+                    Bucket=bucket_name,
+                    Key=s3_key,
+                    Body=file_bytes,
+                    ContentType="application/pdf"
+                )
+                extracted_text, method = await asyncio.to_thread(extract_text_via_textract, s3_key)
+            except Exception as e:
+                logger.error(f"Textract/S3 failed: {e}")
+                # Last resort: Try to read whatever we can or return error
+                if not extracted_text:
+                    raise Exception(f"AWS Textract failed and no digital text found. Error: {str(e)}")
+
+        # 3. Use Gemini to extract Metadata from the text for Auto-Fill
+        metadata = {"title": "", "petitioner": "", "respondent": "", "type": "criminal"}
+        if extracted_text and len(extracted_text) > 100 and gemini_model:
+            try:
+                prompt = f"""Extract legal metadata from this case text. 
+                Return ONLY JSON: {{"title": "Case Title", "petitioner": "Name", "respondent": "Name", "type": "criminal/civil"}}
+                
+                TEXT:
+                {extracted_text[:4000]}"""
+                
+                resp = await asyncio.to_thread(gemini_model.generate_content, prompt)
+                meta_json = resp.text.strip()
+                if "```json" in meta_json:
+                    meta_json = meta_json.split("```json")[1].split("```")[0].strip()
+                metadata = json.loads(meta_json)
+            except Exception as e:
+                logger.warning(f"Metadata extraction failed: {e}")
+
+        return {
+            "status": "success",
+            "text": extracted_text,
+            "method": method,
+            "metadata": metadata,
+            "filename": filename
+        }
+    except Exception as e:
+        logger.error(f"OCR Endpoint failed: {str(e)}")
+        # Return partial success if we have text but metadata failed
+        return {
+            "status": "partial_success",
+            "error": str(e),
+            "text": locals().get('extracted_text', ""),
+            "metadata": {"title": "", "petitioner": "", "respondent": "", "type": "criminal"}
+        }
+
+
 # Generate embeddings for precedents_db using AWS Titan — cached to disk
 EMBEDDINGS_CACHE = "precedents_embeddings_cache.json"
 precedents_embeddings = []

@@ -27,11 +27,12 @@ import SilentJustice from './components/SilentJustice';
 import JudgeDashboard from './components/JudgeDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import CaseDetailPage from './components/CaseDetailPage';
+import { initializeSuperAdmin } from './utils/initAdmin';
 
 
 const GlobalBackground = () => {
   const location = useLocation();
-  const isFeatureRoute = ['/dashboard', '/public-dashboard', '/advisor', '/modern-advisor', '/vault'].some(path => location.pathname.startsWith(path));
+  const isFeatureRoute = ['/dashboard', '/public-dashboard', '/advisor', '/modern-advisor', '/vault', '/admin-dashboard'].some(path => location.pathname.startsWith(path));
   
   if (isFeatureRoute) return null;
   
@@ -47,9 +48,15 @@ const GlobalBackground = () => {
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
   
-  if (loading) return null; 
-  if (!user) return <Navigate to="/login" />;
+  if (loading) return (
+    <div style={{ height: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="btn-spinner" style={{ width: '40px', height: '40px', border: '3px solid rgba(224, 32, 32, 0.3)', borderTopColor: '#e02020', borderRadius: '50%', animation: 'authSpin 1s linear infinite' }}></div>
+    </div>
+  );
+  
+  if (!user) return <Navigate to="/login" state={{ from: location }} />;
   
   return children;
 };
@@ -57,8 +64,15 @@ const ProtectedRoute = ({ children }) => {
 const AdminRoute = ({ children }) => {
   const { user, loading, role } = useAuth();
   
-  if (loading) return null;
-  if (!user || role !== 'admin') return <Navigate to="/" />;
+  if (loading) return (
+    <div style={{ height: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="btn-spinner" style={{ width: '40px', height: '40px', border: '3px solid rgba(224, 32, 32, 0.3)', borderTopColor: '#e02020', borderRadius: '50%', animation: 'authSpin 1s linear infinite' }}></div>
+    </div>
+  );
+  
+  if (!user || role !== 'admin') {
+    return <Navigate to="/login" state={{ error: "Unauthorized access. Admin privileges required." }} />;
+  }
   
   return children;
 };
@@ -122,6 +136,9 @@ function App() {
   const [activeFeature, setActiveFeature] = React.useState(defaultRole === 'judge' ? 'judge-dashboard' : 'summariser');
 
   React.useEffect(() => {
+    // Initialize Super Admin if needed
+    initializeSuperAdmin();
+
     const handleStorageChange = () => {
       const role = localStorage.getItem('userRole');
       if (role === 'judge') {

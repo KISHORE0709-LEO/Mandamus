@@ -1,24 +1,40 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../lib/firebase';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [role, setRoleState] = useState(() => localStorage.getItem('userRole') || null);
+  const [role, setRoleState] = useState(null);
 
   const setRole = (r) => {
     setRoleState(r);
-    if (r) localStorage.setItem('userRole', r);
-    else localStorage.removeItem('userRole');
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
-      if (!currentUser) setRole(null);
+      
+      if (currentUser) {
+        // Fetch role from Firestore
+        try {
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists()) {
+            setRole(userDoc.data().role || 'citizen');
+          } else {
+            setRole('citizen');
+          }
+        } catch (error) {
+          console.error("Error fetching user role:", error);
+          setRole('citizen');
+        }
+      } else {
+        setRole(null);
+      }
+      
       setLoading(false);
     });
     return () => unsubscribe();
@@ -28,10 +44,8 @@ export const AuthProvider = ({ children }) => {
     try {
       await auth.signOut();
       setRole(null);
-      // Clear all possible persistence layers completely
       sessionStorage.clear();
       localStorage.clear();
-      // Force reload to clear in-memory state
       window.location.href = '/login';
     } catch (e) {
       console.error("Logout failed", e);
