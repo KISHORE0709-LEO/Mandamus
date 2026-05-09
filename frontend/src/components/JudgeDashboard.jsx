@@ -1,33 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, ShieldCheck, FileText, CheckCircle2, PlayCircle, AlertCircle } from 'lucide-react';
+import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
+import { 
+  ShieldCheck, 
+  FileText, 
+  Calendar,
+  AlertTriangle,
+  Gavel,
+  Briefcase,
+  Users,
+  Search,
+  BookOpen
+} from 'lucide-react';
 import './JudgeDashboard.css';
-
-const MOCK_APPROVALS = [
-  { id: 'app-1', title: 'State v. Sharma Enterprises', type: 'CORPORATE FRAUD', time: '14:30', clerk: 'Clerk ID-942' },
-];
-
-const MOCK_DOCKET = [
-  { id: 'doc-1', title: 'Verma Property Dispute', type: 'CIVIL MATTERS', time: '10:00 AM', score: 98, status: 'READY' },
-  { id: 'doc-2', title: 'Republic v. Rajan', type: 'CRIMINAL APPEAL', time: '11:30 AM', score: 100, status: 'ADJOURNED' },
-  { id: 'doc-3', title: 'TechCorp v. Innovate', type: 'IP TRIBUNAL', time: '16:00 PM', score: 85, status: 'PENDING DOCS' }
-];
 
 export default function JudgeDashboard({ setActiveFeature }) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [approvals, setApprovals] = useState(MOCK_APPROVALS);
-  const [scheduled, setScheduled] = useState([]);
+  const [cases, setCases] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [filterType, setFilterType] = useState('all');
 
-  const handleApprove = (app) => {
-    // Generate secure mock codes
-    const roomId = `room-${Math.random().toString(36).substring(2, 8)}`;
-    const judgeCode = Math.floor(100000 + Math.random() * 900000);
-    const lawyerCode = Math.floor(100000 + Math.random() * 900000);
-    
-    setScheduled([...scheduled, { ...app, roomId, judgeCode, lawyerCode }]);
-    setApprovals(approvals.filter(a => a.id !== app.id));
+  useEffect(() => {
+    if (user?.email) {
+      fetchJudgeCases();
+    }
+  }, [user]);
+
+  const fetchJudgeCases = async () => {
+    setIsLoading(true);
+    try {
+      // Query cases where assigned_judge_email matches the logged in user
+      const casesQuery = query(
+        collection(db, 'cases'),
+        where('assigned_judge_email', '==', user.email)
+      );
+      
+      const snapshot = await getDocs(casesQuery);
+      const fetchedCases = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      
+      // Sort in memory by createdAt descending (Firestore index requirement avoidance for now)
+      fetchedCases.sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis());
+      
+      setCases(fetchedCases);
+    } catch (error) {
+      console.error("Error fetching cases:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const navigateToWorkspace = (feature, caseId) => {
@@ -38,119 +63,133 @@ export default function JudgeDashboard({ setActiveFeature }) {
     }
   };
 
-  const startHearing = (roomId) => {
-    navigate(`/hearing/${roomId}`);
-  };
+  const filteredCases = filterType === 'all' 
+    ? cases 
+    : cases.filter(c => c.type === filterType);
+
+  const urgentCount = cases.filter(c => c.undertrial).length;
+  const civilCount = cases.filter(c => c.type === 'civil').length;
+  const criminalCount = cases.filter(c => c.type === 'criminal').length;
 
   return (
     <div className="jd-page">
       {/* HEADER */}
       <div className="jd-header">
         <div className="jd-title-group">
-          <h1 className="jd-title">JUDICIAL_COMMAND_CENTER</h1>
-          <span className="jd-sub">AUTHENTICATED ROLE: HON'BLE JUDGE · ID: {user?.uid?.substring(0,8) || 'JDG-001'}</span>
+          <h1>Judicial Chambers</h1>
+          <span className="jd-sub">Presiding Officer: {user?.displayName || user?.email}</span>
         </div>
         <div className="jd-user-badge">
-          SECURE SESSION
+          <ShieldCheck size={18} />
+          SECURE SESSION ENCLAVE
         </div>
       </div>
 
       {/* METRICS */}
       <div className="jd-metrics">
-        <div className="jd-metric-card jd-metric-red">
-          <span className="jd-metric-val">02</span>
-          <span className="jd-metric-lbl">URGENT MATTERS</span>
+        <div className="jd-metric-card">
+          <Briefcase size={24} className="jd-metric-icon" />
+          <span className="jd-metric-val">{cases.length < 10 ? `0${cases.length}` : cases.length}</span>
+          <span className="jd-metric-lbl">Total Active Cases</span>
         </div>
         <div className="jd-metric-card">
-          <span className="jd-metric-val">04</span>
-          <span className="jd-metric-lbl">HEARINGS TODAY</span>
+          <AlertTriangle size={24} className="jd-metric-icon" />
+          <span className="jd-metric-val">{urgentCount < 10 ? `0${urgentCount}` : urgentCount}</span>
+          <span className="jd-metric-lbl">Undertrial / Urgent</span>
         </div>
         <div className="jd-metric-card">
-          <span className="jd-metric-val">12</span>
-          <span className="jd-metric-lbl">PENDING DRAFTS</span>
+          <Users size={24} className="jd-metric-icon" />
+          <span className="jd-metric-val">{civilCount < 10 ? `0${civilCount}` : civilCount}</span>
+          <span className="jd-metric-lbl">Civil Disputes</span>
         </div>
         <div className="jd-metric-card">
-          <span className="jd-metric-val">96%</span>
-          <span className="jd-metric-lbl">AVG READINESS SCORE</span>
+          <Gavel size={24} className="jd-metric-icon" />
+          <span className="jd-metric-val">{criminalCount < 10 ? `0${criminalCount}` : criminalCount}</span>
+          <span className="jd-metric-lbl">Criminal Matters</span>
         </div>
       </div>
 
-      <div className="jd-grid">
-        {/* LEFT COLUMN: APPROVALS */}
-        <div className="jd-col">
-          <h2 className="jd-section-title"><ShieldCheck size={18} /> PENDING APPROVALS</h2>
-          
-          {approvals.length === 0 && scheduled.length === 0 && (
-             <div style={{ color: '#888', fontSize: '0.8rem', padding: '20px', border: '1px dashed #333' }}>No pending approvals.</div>
-          )}
-
-          {approvals.map(app => (
-            <div key={app.id} className="jd-approval-card">
-              <div className="jd-approval-header">
-                <span className="jd-approval-type">{app.type}</span>
-                <span className="jd-approval-time"><Clock size={12} style={{ display:'inline', marginBottom:'-2px' }}/> {app.time}</span>
-              </div>
-              <div className="jd-approval-title">{app.title}</div>
-              <div className="jd-approval-info">Proposed by: {app.clerk}</div>
-              <button className="jd-approve-btn" onClick={() => handleApprove(app)}>
-                <CheckCircle2 size={14} /> APPROVE & SCHEDULE
-              </button>
-            </div>
-          ))}
-
-          {scheduled.map(app => (
-            <div key={`sched-${app.id}`} className="jd-scheduled-panel">
-              <div className="jd-scheduled-title">✓ HEARING SECURED & SCHEDULED</div>
-              <div className="jd-creds">
-                <div>JUDGE_CODE: <span className="jd-cred-val">{app.judgeCode}</span></div>
-                <div>LAWYER_CODE: <span className="jd-cred-val">{app.lawyerCode}</span></div>
-                <div>ROOM_ID: <span className="jd-cred-val">{app.roomId}</span></div>
-              </div>
-              <button className="jd-start-hearing-btn" onClick={() => startHearing(app.roomId)}>
-                <PlayCircle size={14} /> START VIRTUAL HEARING
-              </button>
-            </div>
-          ))}
+      {/* MAIN CONTENT */}
+      <div className="jd-main-content">
+        <div className="jd-section-header">
+          <h2 className="jd-section-title">
+            <BookOpen size={24} color="#e02020" />
+            Active Docket
+          </h2>
+          <div className="jd-filters">
+            <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
+              <option value="all">All Cases</option>
+              <option value="civil">Civil Only</option>
+              <option value="criminal">Criminal Only</option>
+            </select>
+          </div>
         </div>
 
-        {/* RIGHT COLUMN: DOCKET */}
-        <div className="jd-col">
-          <h2 className="jd-section-title"><FileText size={18} /> TODAY'S DOCKET</h2>
-          <div className="jd-docket-list">
-            {MOCK_DOCKET.map(doc => (
-              <div key={doc.id} className="jd-docket-card">
-                <div className="jd-docket-time">
-                  <span className="jd-docket-time-val">{doc.time.split(' ')[0]}</span>
-                  <span className="jd-docket-time-lbl">{doc.time.split(' ')[1]}</span>
-                </div>
-                <div className="jd-docket-main">
+        {isLoading ? (
+          <div className="jd-loading">
+            <div className="spinner"></div>
+            <p>Loading assigned cases...</p>
+          </div>
+        ) : filteredCases.length === 0 ? (
+          <div className="jd-empty">
+            <FileText size={48} opacity={0.5} />
+            <p>No cases are currently assigned to your docket.</p>
+          </div>
+        ) : (
+          <div className="jd-docket-grid">
+            {filteredCases.map(c => (
+              <div key={c.id} className="jd-case-card">
+                <div className="jd-case-header">
                   <div>
-                    <div className="jd-docket-header">
-                      <h3 className="jd-docket-title">{doc.title}</h3>
-                      <span className="jd-docket-score">RS: {doc.score}%</span>
+                    <h3 className="jd-case-title">{c.title}</h3>
+                    <div className="jd-case-badges">
+                      <span className={`badge ${c.type}`}>{c.type}</span>
+                      {c.undertrial && <span className="badge undertrial">UNDERTRIAL</span>}
                     </div>
-                    <span className="jd-docket-type">{doc.type} · STATUS: {doc.status}</span>
                   </div>
-                  
-                  <div className="jd-docket-actions">
-                    <button 
-                      className="jd-action-btn jd-action-summarize"
-                      onClick={() => navigateToWorkspace('summariser', doc.id)}
-                    >
-                      <AlertCircle size={14} /> SUMMARIZE CASE
-                    </button>
-                    <button 
-                      className="jd-action-btn jd-action-draft"
-                      onClick={() => navigateToWorkspace('draft', doc.id)}
-                    >
-                      <FileText size={14} /> VIEW DRAFT
-                    </button>
+                </div>
+                
+                <div className="jd-case-details">
+                  <div className="detail-item">
+                    <span className="detail-label">Petitioner</span>
+                    <span className="detail-value">{c.petitioner}</span>
                   </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Respondent</span>
+                    <span className="detail-value">{c.respondent}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Filed Date</span>
+                    <span className="detail-value">
+                      <Calendar size={14} /> {c.filedDate || 'N/A'}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Next Hearing</span>
+                    <span className="detail-value">
+                      <Calendar size={14} /> {c.hearingDate || 'Unscheduled'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="jd-case-actions">
+                  <button 
+                    className="jd-btn jd-btn-primary"
+                    onClick={() => navigateToWorkspace('summariser', c.id)}
+                  >
+                    <Search size={16} /> Analyze Case
+                  </button>
+                  <button 
+                    className="jd-btn jd-btn-secondary"
+                    onClick={() => navigateToWorkspace('draft', c.id)}
+                  >
+                    <FileText size={16} /> Draft Orders
+                  </button>
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

@@ -1,11 +1,11 @@
 .jd-page {
-  background: #000;
-  color: #fff;
   font-family: 'Inter', sans-serif;
-  padding: 40px 50px 80px;
+  padding: 40px;
   max-width: 1400px;
   margin: 0 auto;
   min-height: 100vh;
+  color: #fff;
+  background: #000;
 }
 
 /* ── HEADER ── */
@@ -15,36 +15,39 @@
   align-items: flex-end;
   border-bottom: 2px solid #1a1a1a;
   padding-bottom: 24px;
-  margin-bottom: 32px;
+  margin-bottom: 40px;
 }
-.jd-title-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.jd-title {
-  font-size: 2.2rem;
+
+.jd-title-group h1 {
+  font-size: 36px;
   font-weight: 900;
-  letter-spacing: 0.05em;
-  margin: 0;
-  line-height: 1;
+  margin: 0 0 8px 0;
   color: #fff;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
+
 .jd-sub {
-  font-size: 0.7rem;
+  font-size: 13px;
   color: #888;
-  letter-spacing: 0.15em;
+  font-weight: 600;
   font-family: monospace;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
+
 .jd-user-badge {
   background: #0a0a0a;
   border: 1px solid #e02020;
   color: #e02020;
-  font-size: 0.7rem;
+  padding: 10px 20px;
+  font-size: 13px;
   font-weight: 700;
-  padding: 8px 16px;
-  letter-spacing: 0.1em;
   font-family: monospace;
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* ── METRICS ── */
@@ -54,227 +57,288 @@
   gap: 20px;
   margin-bottom: 40px;
 }
+
 .jd-metric-card {
-  background: #0d0d0d;
+  background: #0a0a0a;
   border: 1px solid #2a2a2a;
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: border-color 0.2s;
+  transition: border-color 0.3s ease;
+  position: relative;
 }
-.jd-metric-card:hover { border-color: #444; }
+
+.jd-metric-card:hover {
+  border-color: #e02020;
+}
+
+.jd-metric-icon {
+  position: absolute;
+  right: 20px;
+  top: 24px;
+  color: #333;
+  transition: color 0.3s ease;
+}
+
+.jd-metric-card:hover .jd-metric-icon {
+  color: rgba(224, 32, 32, 0.5);
+}
+
 .jd-metric-val {
-  font-size: 2.5rem;
+  font-size: 42px;
   font-weight: 900;
   color: #fff;
   line-height: 1;
+  font-family: monospace;
 }
-.jd-metric-lbl {
-  font-size: 0.65rem;
-  color: #888;
-  letter-spacing: 0.1em;
-  font-weight: 600;
-}
-.jd-metric-red .jd-metric-val { color: #e02020; }
 
-/* ── MAIN GRID ── */
-.jd-grid {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 40px;
+.jd-metric-card:nth-child(2) .jd-metric-val {
+  color: #e02020;
+}
+
+.jd-metric-lbl {
+  font-size: 11px;
+  color: #888;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* ── MAIN LAYOUT ── */
+.jd-main-content {
+  border-top: 1px solid #1a1a1a;
+  padding-top: 32px;
+}
+
+.jd-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
 }
 
 .jd-section-title {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #fff;
-  letter-spacing: 0.1em;
-  margin-bottom: 20px;
+  font-size: 16px;
+  font-weight: 800;
   display: flex;
   align-items: center;
-  gap: 10px;
-  border-bottom: 1px solid #2a2a2a;
-  padding-bottom: 12px;
+  gap: 12px;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
-/* ── PENDING APPROVALS ── */
-.jd-approval-card {
+.jd-filters select {
   background: #0a0a0a;
-  border: 1px solid #e02020;
-  padding: 20px;
-  margin-bottom: 16px;
-  position: relative;
-  overflow: hidden;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 10px 20px;
+  outline: none;
+  font-size: 12px;
+  font-family: monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
 }
-.jd-approval-header {
+
+.jd-filters select:hover {
+  border-color: #e02020;
+}
+
+/* ── CASE CARDS ── */
+.jd-docket-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+.jd-case-card {
+  background: #0a0a0a;
+  border: 1px solid #2a2a2a;
+  padding: 24px;
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 12px;
+  flex-direction: column;
+  transition: all 0.2s ease;
+  position: relative;
 }
-.jd-approval-type {
-  font-size: 0.6rem;
+
+.jd-case-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: #333;
+  transition: background 0.2s ease;
+}
+
+.jd-case-card:hover {
+  border-color: #555;
+  transform: translateY(-2px);
+}
+
+.jd-case-card:hover::before {
+  background: #e02020;
+}
+
+.jd-case-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed #2a2a2a;
+}
+
+.jd-case-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.jd-case-badges {
+  display: flex;
+  gap: 8px;
+}
+
+.badge {
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-family: monospace;
+}
+
+.badge.civil {
+  background: #111;
+  color: #aaa;
+  border: 1px solid #333;
+}
+
+.badge.criminal {
   background: rgba(224, 32, 32, 0.1);
   color: #e02020;
-  padding: 4px 8px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  border: 1px solid rgba(224, 32, 32, 0.3);
 }
-.jd-approval-time {
-  font-size: 0.7rem;
-  color: #ccc;
-  font-family: monospace;
-}
-.jd-approval-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-bottom: 8px;
-}
-.jd-approval-info {
-  font-size: 0.75rem;
-  color: #888;
-  margin-bottom: 16px;
-}
-.jd-approve-btn {
-  width: 100%;
+
+.badge.undertrial {
   background: #e02020;
   color: #fff;
-  border: none;
-  padding: 12px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  cursor: pointer;
-  transition: filter 0.2s;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
 }
-.jd-approve-btn:hover { filter: brightness(1.2); }
 
-.jd-scheduled-panel {
-  background: rgba(0, 255, 100, 0.05);
-  border: 1px solid #00aa44;
-  padding: 16px;
-  margin-top: 16px;
-}
-.jd-scheduled-title {
-  color: #00aa44;
-  font-size: 0.7rem;
-  font-weight: 700;
-  margin-bottom: 10px;
-  letter-spacing: 0.05em;
-}
-.jd-creds {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-family: monospace;
-  font-size: 0.75rem;
-  color: #ccc;
-  margin-bottom: 16px;
-}
-.jd-cred-val { color: #fff; font-weight: bold; background: #111; padding: 2px 6px; }
-
-.jd-start-hearing-btn {
-  background: #00aa44;
-  color: #000;
-  border: none;
-  padding: 10px;
-  width: 100%;
-  font-size: 0.75rem;
-  font-weight: 800;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-}
-.jd-start-hearing-btn:hover { background: #00cc55; }
-
-/* ── DOCKET CARDS ── */
-.jd-docket-list {
-  display: flex;
-  flex-direction: column;
+.jd-case-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 16px;
+  margin-bottom: 24px;
 }
-.jd-docket-card {
-  background: #0d0d0d;
-  border: 1px solid #2a2a2a;
-  display: flex;
-  align-items: stretch;
-  transition: border-color 0.2s;
-}
-.jd-docket-card:hover { border-color: #555; }
 
-.jd-docket-time {
-  width: 120px;
-  background: #111;
-  border-right: 1px solid #2a2a2a;
+.detail-item {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
   gap: 6px;
 }
-.jd-docket-time-val { font-size: 1.2rem; font-weight: 900; font-family: monospace; color: #fff; }
-.jd-docket-time-lbl { font-size: 0.6rem; color: #666; letter-spacing: 0.1em; }
 
-.jd-docket-main {
-  flex: 1;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-.jd-docket-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 10px;
-}
-.jd-docket-title { font-size: 1.2rem; font-weight: 700; margin: 0 0 6px 0; color: #fff; }
-.jd-docket-type { font-size: 0.7rem; color: #888; }
-.jd-docket-score {
-  font-family: monospace;
-  font-size: 0.9rem;
+.detail-label {
+  font-size: 10px;
+  color: #666;
   font-weight: 700;
-  color: #00aa44;
-  background: rgba(0, 255, 100, 0.1);
-  padding: 4px 8px;
-  border: 1px solid #00aa44;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.jd-docket-actions {
+.detail-value {
+  font-size: 14px;
+  color: #ccc;
+  font-weight: 500;
+}
+
+.jd-case-actions {
   display: flex;
   gap: 12px;
-  margin-top: 16px;
+  margin-top: auto;
 }
-.jd-action-btn {
-  background: transparent;
-  border: 1px solid #333;
-  color: #ccc;
-  padding: 8px 16px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  cursor: pointer;
+
+.jd-btn {
+  flex: 1;
+  padding: 12px;
+  font-size: 11px;
+  font-weight: 800;
+  font-family: monospace;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 6px;
-  transition: all 0.2s;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
 }
-.jd-action-btn:hover { border-color: #888; color: #fff; }
-.jd-action-summarize:hover { border-color: #e02020; color: #e02020; }
-.jd-action-draft:hover { border-color: #f39c12; color: #f39c12; }
+
+.jd-btn-primary {
+  color: #e02020;
+  border: 1px solid #e02020;
+}
+
+.jd-btn-primary:hover {
+  background: #e02020;
+  color: #fff;
+}
+
+.jd-btn-secondary {
+  color: #888;
+  border: 1px solid #333;
+}
+
+.jd-btn-secondary:hover {
+  border-color: #888;
+  color: #fff;
+}
+
+/* Loading & Empty States */
+.jd-loading, .jd-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #555;
+  gap: 16px;
+  font-family: monospace;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #222;
+  border-top-color: #e02020;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.jd-empty {
+  border: 1px dashed #222;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
 @media (max-width: 1024px) {
-  .jd-grid { grid-template-columns: 1fr; }
   .jd-metrics { grid-template-columns: repeat(2, 1fr); }
+  .jd-docket-grid { grid-template-columns: 1fr; }
 }
+
 @media (max-width: 768px) {
-  .jd-docket-card { flex-direction: column; }
-  .jd-docket-time { width: 100%; border-right: none; border-bottom: 1px solid #2a2a2a; padding: 12px; flex-direction: row; justify-content: space-between; }
+  .jd-header { flex-direction: column; align-items: flex-start; gap: 20px; }
+  .jd-case-actions { flex-direction: column; }
 }
