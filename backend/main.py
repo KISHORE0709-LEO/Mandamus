@@ -861,7 +861,11 @@ async def legal_assistant(request: LegalAssistantRequest, background_tasks: Back
         
         LANGUAGE REQUIREMENT:
         - You MUST respond ENTIRELY in {request.language}.
-        - If {request.language} is 'Hindi', you MUST use the Devanagari script (हिंदी लिपि). DO NOT use Romanized Hindi (Hinglish) in your response.
+        - If {request.language} is 'Hindi', you MUST use the Devanagari script (हिंदी लिपि). DO NOT use Romanized Hindi (Hinglish).
+        - If {request.language} is 'Telugu', you MUST use the Telugu script (తెలుగు లిపి). DO NOT use Romanized Telugu.
+        - If {request.language} is 'Kannada', you MUST use the Kannada script (ಕನ್ನಡ ಲಿಪಿ). DO NOT use Romanized Kannada.
+        - If {request.language} is 'Tamil', you MUST use the Tamil script (தமிழ் எழுத்து). DO NOT use Romanized Tamil.
+        - If {request.language} is 'Malayalam', you MUST use the Malayalam script (മലയാളം ലിപി). DO NOT use Romanized Malayalam.
         - If {request.language} is not English, translate all fields including "explanation", "laws", "rights", and "steps" into the selected language script.
         - Technical identifiers like URL links and Phone numbers MUST remain as they are.
         
@@ -1784,10 +1788,10 @@ class SilentJusticeReport(BaseModel):
     contact: Optional[str] = None
     location: str
     description: str
-    contactMethod: str
-    contactTime: str
-    onlySafeContact: bool
     isAnonymous: bool
+    user_id: Optional[str] = None
+    category: Optional[str] = None
+    assigned_officer: Optional[dict] = None
 
 @app.post("/silent-justice/report")
 async def create_silent_justice_report(report: SilentJusticeReport):
