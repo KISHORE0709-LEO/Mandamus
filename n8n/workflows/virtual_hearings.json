@@ -1,0 +1,69 @@
+{
+  "name": "Virtual Hearings Automator",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "virtual-hearings",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [ 250, 300 ],
+      "webhookId": "virtual-hearings-webhook-id"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "meeting_token",
+              "value": "={{$json.body.meeting_id || $execution.id}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2",
+      "name": "Generate Token",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [ 450, 300 ]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "status",
+              "value": "scheduled"
+            },
+            {
+              "name": "meeting_url",
+              "value": "https://meet.mandamus.app/{{$json.meeting_token}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3",
+      "name": "Schedule Hearing",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 1,
+      "position": [ 650, 300 ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [ [ { "node": "Generate Token", "type": "main", "index": 0 } ] ]
+    },
+    "Generate Token": {
+      "main": [ [ { "node": "Schedule Hearing", "type": "main", "index": 0 } ] ]
+    }
+  },
+  "active": false,
+  "settings": {}
+}
