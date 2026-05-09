@@ -733,6 +733,7 @@ class LegalAssistantRequest(BaseModel):
     user_id: str
     thread_id: Optional[str] = None
     messages: Optional[List[dict]] = []
+    language: Optional[str] = "English"
 
 
 
@@ -787,9 +788,15 @@ async def legal_assistant(request: LegalAssistantRequest, background_tasks: Back
         system_instruction = f"""You are the 'Mandamus Intelligent Legal Agent'.
         You are a high-speed, ACTION-ORIENTED legal expert for Indian citizens powered by AWS Bedrock.
         
+        LANGUAGE REQUIREMENT:
+        - You MUST respond ENTIRELY in {request.language}.
+        - If {request.language} is 'Hindi', you MUST use the Devanagari script (हिंदी लिपि). DO NOT use Romanized Hindi (Hinglish) in your response.
+        - If {request.language} is not English, translate all fields including "explanation", "laws", "rights", and "steps" into the selected language script.
+        - Technical identifiers like URL links and Phone numbers MUST remain as they are.
+        
         TONE & STYLE:
-        - Use simple, 'layperson-friendly' English. Avoid heavy legal jargon.
-        - If you must use a legal term (e.g., 'Cognizable', 'Interim Order'), explain it simply in brackets.
+        - Use simple, 'layperson-friendly' {request.language}. Avoid heavy legal jargon.
+        - If you must use a legal term, explain it simply in brackets in {request.language}.
         - Be direct, compassionate, and practical. Think "Legal advice for a friend".
         
         CRITICAL RULE: DO NOT provide "theory" or generic advice. You MUST provide:
@@ -860,7 +867,7 @@ async def legal_assistant(request: LegalAssistantRequest, background_tasks: Back
                 try:
                     await client.get_assistant(assistant_id=aid)
                 except:
-                    await client.create_assistant(id=aid, name=f"Legal Thread {aid[:4]}")
+                    await client.create_assistant(assistant_id=aid, name=f"Legal Thread {aid[:4]}")
                 
                 await client.add_memory(assistant_id=aid, content=f"User: {query} | AI: {explanation[:300]}")
             except Exception as e:

@@ -19,12 +19,23 @@ import {
   Square,
   Loader2,
   Trash2,
-  Edit2
+  Edit2,
+  Globe,
+  Mic
 } from 'lucide-react';
 
 const ModernLegalAssistant = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [isListening, setIsListening] = useState(false);
+  const languages = [
+    { name: 'English', code: 'English' },
+    { name: 'Hindi (हिंदी)', code: 'Hindi' },
+    { name: 'Spanish (Español)', code: 'Spanish' },
+    { name: 'French (Français)', code: 'French' },
+    { name: 'German (Deutsch)', code: 'German' }
+  ];
   const [silentMode, setSilentMode] = useState(false);
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
@@ -109,6 +120,53 @@ const ModernLegalAssistant = () => {
     } finally {
       setIsTtsLoading(false);
     }
+  };
+
+  const [autoPlayNext, setAutoPlayNext] = useState(false);
+
+  const handleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    if (isListening) return;
+
+    const recognition = new SpeechRecognition();
+    const langMap = {
+      'English': 'en-US',
+      'Hindi': 'hi-IN',
+      'Spanish': 'es-ES',
+      'French': 'fr-FR',
+      'German': 'de-DE'
+    };
+    
+    recognition.lang = langMap[selectedLanguage] || 'en-US';
+    recognition.continuous = false;
+    recognition.interimResults = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setInput(transcript);
+      setAutoPlayNext(true); // Flag to auto-play the next AI response
+      
+      // Auto-submit after 500ms so user can see what was captured
+      setTimeout(() => {
+        const form = document.querySelector('form');
+        if (form) form.requestSubmit();
+      }, 500);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech Error:", event.error);
+      setIsListening(false);
+    };
+
+    recognition.start();
   };
 
   const renderTextWithLinks = (text) => {
@@ -251,7 +309,8 @@ const ModernLegalAssistant = () => {
           query: userQuery, 
           user_id: user?.uid || 'guest',
           thread_id: threadId,
-          messages: messages
+          messages: messages,
+          language: selectedLanguage
         }),
       });
 
@@ -267,6 +326,12 @@ const ModernLegalAssistant = () => {
 
       setMessages(prev => [...prev, botMessage]);
       setLastAnalysis({ severity: data.severity, domain: data.domain });
+
+      // Handle Auto-Play for Voice mode
+      if (autoPlayNext) {
+        handleTTS(data.explanation, messages.length + 1);
+        setAutoPlayNext(false);
+      }
 
       // Refresh history sidebar
       if (user?.uid) {
@@ -366,6 +431,20 @@ const ModernLegalAssistant = () => {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          {/* Language Selector */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '100px' }}>
+            <Globe size={16} color="#e02020" />
+            <select 
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '14px', fontWeight: '600', outline: 'none', cursor: 'pointer' }}
+            >
+              {languages.map(lang => (
+                <option key={lang.code} value={lang.code} style={{ background: '#111', color: '#fff' }}>{lang.name}</option>
+              ))}
+            </select>
+          </div>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px 16px', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '100px' }}>
             <span style={{ fontSize: '16px', fontWeight: '500', color: '#fff' }}>{user?.displayName || 'User'}</span>
             <div style={{ width: '32px', height: '32px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
@@ -569,12 +648,21 @@ const ModernLegalAssistant = () => {
                       type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      placeholder="Describe your situation or ask a follow-up question..."
-                      style={{ width: '100%', padding: '14px 60px 14px 20px', fontSize: '15px', color: '#fff', background: '#1a1a1a', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '12px', outline: 'none' }}
+                      placeholder={isListening ? "Listening..." : "Describe your situation or ask a follow-up question..."}
+                      style={{ width: '100%', padding: '14px 100px 14px 20px', fontSize: '15px', color: '#fff', background: '#1a1a1a', border: `1px solid ${isListening ? '#e02020' : 'rgba(255, 255, 255, 0.1)'}`, borderRadius: '12px', outline: 'none', transition: 'all 0.3s ease' }}
                     />
-                    <button type="submit" style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', padding: '10px', background: '#e02020', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Send size={18} />
-                    </button>
+                    <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: '8px' }}>
+                      <button 
+                        type="button" 
+                        onClick={handleVoiceInput}
+                        style={{ padding: '10px', background: isListening ? '#ff0000' : 'rgba(255, 255, 255, 0.05)', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.3s ease', animation: isListening ? 'pulse 1.5s infinite' : 'none' }}
+                      >
+                        <Mic size={18} />
+                      </button>
+                      <button type="submit" style={{ padding: '10px', background: '#e02020', color: '#fff', border: 'none', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Send size={18} />
+                      </button>
+                    </div>
                   </div>
                 </form>
               </div>
@@ -719,6 +807,14 @@ const ModernLegalAssistant = () => {
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #ff3030;
+        }
+        @keyframes pulse {
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(224, 32, 32, 0.4); }
+          70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(224, 32, 32, 0); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(224, 32, 32, 0); }
+        }
+        @keyframes authSpin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </div>

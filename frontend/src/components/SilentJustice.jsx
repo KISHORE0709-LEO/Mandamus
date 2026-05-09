@@ -45,10 +45,7 @@ const SilentJustice = () => {
     name: '',
     contact: '',
     location: '',
-    description: '',
-    contactMethod: 'call',
-    contactTime: 'morning',
-    onlySafeContact: true
+    description: ''
   });
 
   const [authorityCases, setAuthorityCases] = useState([]);
@@ -539,53 +536,7 @@ const SilentJustice = () => {
                 )}
               </div>
 
-              <div className="sj-row">
-                <div className="sj-form-group">
-                  <label className="sj-label">Preferred Contact Method</label>
-                  <select 
-                    name="contactMethod"
-                    className="sj-select"
-                    value={formData.contactMethod}
-                    onChange={handleInputChange}
-                  >
-                    <option value="call">Voice Call</option>
-                    <option value="message">Secure Message</option>
-                    <option value="email">Encrypted Email</option>
-                  </select>
-                </div>
-                <div className="sj-form-group">
-                  <label className="sj-label">Preferred Contact Time</label>
-                  <select 
-                    name="contactTime"
-                    className="sj-select"
-                    value={formData.contactTime}
-                    onChange={handleInputChange}
-                  >
-                    <option value="morning">Morning (9 AM - 12 PM)</option>
-                    <option value="afternoon">Afternoon (12 PM - 5 PM)</option>
-                    <option value="evening">Evening (5 PM - 9 PM)</option>
-                    <option value="anytime">Anytime</option>
-                  </select>
-                </div>
-              </div>
 
-              <div className="sj-form-group">
-                <div 
-                  className={`sj-checkbox-group ${formData.onlySafeContact ? 'active' : ''}`}
-                  onClick={() => handleInputChange({ target: { name: 'onlySafeContact', value: !formData.onlySafeContact }})}
-                >
-                  <input 
-                    type="checkbox" 
-                    className="sj-checkbox" 
-                    checked={formData.onlySafeContact}
-                    onChange={() => {}}
-                  />
-                  <div className="sj-checkbox-label">
-                    <span style={{ display: 'block', fontWeight: '800' }}>Only contact me when safe</span>
-                    <span style={{ fontSize: '0.8rem', color: '#888' }}>Our agents will use a neutral opening to ensure your safety.</span>
-                  </div>
-                </div>
-              </div>
 
               <button type="submit" className="sj-submit-btn">
                 <Lock size={20} />
@@ -724,7 +675,7 @@ const SilentJustice = () => {
               <div style={{ marginTop: '20px', padding: '20px', background: '#111', borderRadius: '12px' }}>
                 <h4 style={{ marginBottom: '10px', color: '#d62828' }}>Latest Update</h4>
                 <p style={{ color: '#888' }}>
-                  Your report has been safely received. A verified legal advisor will review your case and contact you via {formData.contactMethod} during your preferred time.
+                  Your report has been safely received. A verified legal advisor will review your case securely and provide updates via the vault.
                 </p>
               </div>
 
