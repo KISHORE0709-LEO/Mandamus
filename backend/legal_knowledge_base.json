@@ -1,0 +1,69 @@
+{
+  "domains": {
+    "domestic_violence": {
+      "display_name": "Domestic Violence & Cruelty",
+      "laws": [
+        {"ipc": "498A", "bns": "85, 86", "description": "Cruelty by husband or relatives"},
+        {"ipc": "N/A", "bns": "DV Act 2005", "description": "Protection of Women from Domestic Violence Act"}
+      ],
+      "rights": [
+        "Right to reside in the shared household (Sec 17 DV Act)",
+        "Right to protection orders (Sec 18)",
+        "Right to free legal aid via NALSA (15100)",
+        "Right to emergency shelter/medical aid"
+      ],
+      "procedures": [
+        "Step 1: Emergency - Dial 1091 (Women Helpline) or 112 for immediate police dispatch.",
+        "Step 2: Filing - Visit the nearest Protection Officer or 'Mahila Thana' (Women Police Station). You can also file an Online FIR on your state's Citizen Portal.",
+        "Step 3: Protection - Request an 'Interim Protection Order' under Section 23 of the DV Act to ensure your immediate safety.",
+        "Step 4: Evidence - Save photos of injuries, medical bills, and record abusive calls/messages."
+      ],
+      "helplines": ["Women Helpline: 1091", "Domestic Violence Helpline: 181", "Police: 100/112", "NCW Helpline: 7827170170"]
+    },
+    "cybercrime": {
+      "display_name": "Cybercrime & Digital Scams",
+      "laws": [
+        {"ipc": "420", "bns": "318", "description": "Cheating and Fraud"},
+        {"ipc": "354D", "bns": "78", "description": "Stalking (Electronic)"},
+        {"ipc": "N/A", "bns": "IT Act 66D", "description": "Cheating by personation using computer resource"}
+      ],
+      "rights": [
+        "Right to block/report unauthorized transactions immediately",
+        "Right to file a complaint at www.cybercrime.gov.in anonymously",
+        "Right to have sexually explicit content removed within 24 hours (IT Rules)"
+      ],
+      "procedures": [
+        "Step 1: Financial Fraud - Call 1930 (National Cybercrime Helpline) within the 'Golden Hour' to freeze the criminal's bank account.",
+        "Step 2: Official Portal - File a formal complaint at https://www.cybercrime.gov.in. Keep the 'Acknowledgment Number' for tracking.",
+        "Step 3: Evidence - Do NOT delete chats. Export WhatsApp chats as .txt, save URL links of profiles, and take screenshots of transaction IDs.",
+        "Step 4: Bank Contact - Inform your bank's Nodal Officer or visit the branch to file a 'Chargeback' request."
+      ],
+      "helplines": ["National Cybercrime Helpline: 1930", "Portal: www.cybercrime.gov.in"]
+    },
+    "workplace_harassment": {
+      "display_name": "Workplace Harassment & POSH",
+      "laws": [
+        {"ipc": "354A", "bns": "75", "description": "Sexual Harassment"},
+        {"ipc": "N/A", "bns": "POSH Act 2013", "description": "Sexual Harassment at Workplace Act"}
+      ],
+      "rights": [
+        "Right to an Internal Committee (IC) in any organization with 10+ employees",
+        "Right to 'SHe-Box' reporting for Central/State employees",
+        "Right to leave/transfer during inquiry to avoid retaliation"
+      ],
+      "procedures": [
+        "Step 1: Internal Filing - Submit a written complaint to your company's Internal Committee (IC). If they ignore it, you can approach the Local Committee (LC) at the District Collector's office.",
+        "Step 2: SHe-Box - File an online complaint on the Ministry of WCD portal: https://shebox.nic.in/",
+        "Step 3: Police Case - Simultaneously file an FIR under BNS Section 75 at the nearest police station.",
+        "Step 4: Support - Contact the National Commission for Women (NCW) at 011-26237700 for legal assistance."
+      ],
+      "helplines": ["NCW Helpline: 7827170170", "SHe-Box Portal: shebox.nic.in"]
+    }
+  },
+  "general_rights": [
+    "Right to free legal aid under Article 39A",
+    "Right to be informed of the grounds of arrest",
+    "Right to consult a legal practitioner of choice",
+    "Right to be produced before a magistrate within 24 hours"
+  ]
+}
