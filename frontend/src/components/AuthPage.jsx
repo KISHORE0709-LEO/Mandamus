@@ -17,8 +17,8 @@ import {
   User, 
   ArrowLeft,
   ChevronRight,
-  ShieldCheck
-
+  ShieldCheck,
+  Settings
 } from 'lucide-react';
 import './AuthPage.css';
 
@@ -47,6 +47,12 @@ const ROLES = [
     desc: 'Access public records and receive free AI legal guidance.',
     icon: <User size={40} strokeWidth={1.5} /> 
   },
+  {
+    value: 'admin',
+    label: 'Admin Portal',
+    desc: 'Manage users, assign cases, and monitor platform operations.',
+    icon: <Settings size={40} strokeWidth={1.5} />
+  }
 ];
 
 
@@ -107,6 +113,8 @@ const AuthPage = () => {
       window.dispatchEvent(new Event('roleChanged'));
       if (role === 'public') {
         navigate('/public-dashboard');
+      } else if (role === 'admin') {
+        navigate('/admin-dashboard');
       } else {
         navigate('/dashboard');
       }
@@ -183,6 +191,8 @@ const AuthPage = () => {
       window.dispatchEvent(new Event('roleChanged'));
       if (formData.role === 'public') {
         navigate('/public-dashboard');
+      } else if (formData.role === 'admin') {
+        navigate('/admin-dashboard');
       } else {
         navigate('/dashboard');
       }

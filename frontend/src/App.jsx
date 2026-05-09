@@ -25,6 +25,7 @@ import { MandamusProvider } from './context/MandamusContext';
 import { HistoryProvider } from './context/HistoryContext';
 import SilentJustice from './components/SilentJustice';
 import JudgeDashboard from './components/JudgeDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 
 
 const GlobalBackground = () => {
@@ -48,6 +49,15 @@ const ProtectedRoute = ({ children }) => {
   
   if (loading) return null; 
   if (!user) return <Navigate to="/login" />;
+  
+  return children;
+};
+
+const AdminRoute = ({ children }) => {
+  const { user, loading, role } = useAuth();
+  
+  if (loading) return null;
+  if (!user || role !== 'admin') return <Navigate to="/" />;
   
   return children;
 };
@@ -144,6 +154,11 @@ function App() {
                   <ProtectedRoute>
                     <Dashboard activeFeature={activeFeature} setActiveFeature={setActiveFeature} />
                   </ProtectedRoute>
+                } />
+                <Route path="/admin-dashboard" element={
+                  <AdminRoute>
+                    <AdminDashboard />
+                  </AdminRoute>
                 } />
                 <Route path="/hearing/:roomId" element={
                   <ProtectedRoute>
