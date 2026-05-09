@@ -79,7 +79,7 @@ origins = [
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow all for production flex
+    allow_origins=origins, # Use explicit origins list instead of wildcard with allow_credentials=True
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
