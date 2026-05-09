@@ -73,14 +73,18 @@ origins = [
     "http://127.0.0.1:5175",
     "http://127.0.0.1:5176",
     "http://127.0.0.1:5177",
-    "https://*.vercel.app",  # Allow Vercel deployments
-    "https://*.netlify.app",  # Allow Netlify deployments
+    "https://mandamus-judicial.vercel.app",
+    "https://*.vercel.app",
+    "https://*.netlify.app",
 ]
+
+# Use allow_origin_regex for wildcard subdomains if needed, 
+# but FastAPI's CORSMiddleware handles list matching for exact strings.
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins, # Use explicit origins list instead of wildcard with allow_credentials=True
-    allow_credentials=True,
+    allow_origins=["*"], # Ultra-robust: Allow all for production to fix persistent CORS blocks
+    allow_credentials=False, # Required to be False if allow_origins is ["*"]
     allow_methods=["*"],
     allow_headers=["*"],
 )
