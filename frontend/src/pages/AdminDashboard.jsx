@@ -243,7 +243,7 @@ ${extData.text || "[No searchable text layers found. Verify document integrity.]
         });
 
         const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("CORS_TIMEOUT")), 2500)
+          setTimeout(() => reject(new Error("CORS_TIMEOUT")), 8000)
         );
 
         fileUrl = await Promise.race([uploadPromise, timeoutPromise]);
