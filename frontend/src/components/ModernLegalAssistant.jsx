@@ -111,6 +111,37 @@ const ModernLegalAssistant = () => {
     }
   };
 
+  const renderTextWithLinks = (text) => {
+    if (!text) return null;
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    
+    return parts.map((part, i) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a 
+            key={i} 
+            href={part} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            style={{ 
+              color: '#e02020', 
+              textDecoration: 'none', 
+              fontWeight: '600',
+              borderBottom: '1px solid rgba(224, 32, 32, 0.3)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => { e.target.style.borderBottomColor = '#e02020'; e.target.style.background = 'rgba(224, 32, 32, 0.05)'; }}
+            onMouseLeave={(e) => { e.target.style.borderBottomColor = 'rgba(224, 32, 32, 0.3)'; e.target.style.background = 'transparent'; }}
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   const handleNewChat = () => {
     setMessages([]);
     setThreadId(null);
@@ -449,7 +480,7 @@ const ModernLegalAssistant = () => {
                             <div style={{ padding: '24px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '20px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
                               {/* Explanation */}
                               <p style={{ color: '#ccc', lineHeight: '1.8', fontSize: '15px', marginBottom: '32px' }}>
-                                {msg.data.explanation}
+                                {renderTextWithLinks(msg.data.explanation)}
                               </p>
 
                               {/* Grid for Laws and Rights */}
@@ -460,7 +491,7 @@ const ModernLegalAssistant = () => {
                                     {(msg.data.laws || []).map((law, idx) => (
                                       <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px', padding: '10px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
                                         <CheckCircle size={14} style={{ color: '#e02020', marginTop: '2px' }} />
-                                        <span style={{ color: '#bbb', fontSize: '13px' }}>{law}</span>
+                                        <span style={{ color: '#bbb', fontSize: '13px' }}>{renderTextWithLinks(law)}</span>
                                       </li>
                                     ))}
                                   </ul>
@@ -471,7 +502,7 @@ const ModernLegalAssistant = () => {
                                     {(msg.data.rights || []).map((right, idx) => (
                                       <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px', padding: '10px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
                                         <CheckCircle size={14} style={{ color: '#e02020', marginTop: '2px' }} />
-                                        <span style={{ color: '#bbb', fontSize: '13px' }}>{right}</span>
+                                        <span style={{ color: '#bbb', fontSize: '13px' }}>{renderTextWithLinks(right)}</span>
                                       </li>
                                     ))}
                                   </ul>
@@ -489,7 +520,7 @@ const ModernLegalAssistant = () => {
                                       </span>
                                       <div>
                                         <strong style={{ color: '#fff', fontSize: '14px', display: 'block', marginBottom: '4px' }}>{step.title}</strong>
-                                        <span style={{ color: '#999', fontSize: '13px', lineHeight: '1.5' }}>{step.content}</span>
+                                        <span style={{ color: '#999', fontSize: '13px', lineHeight: '1.5' }}>{renderTextWithLinks(step.content)}</span>
                                       </div>
                                     </div>
                                   ))}
