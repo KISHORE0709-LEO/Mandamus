@@ -1123,7 +1123,7 @@ CONFIDENCE: ${summaryData.confidenceScore}%`;
                         <tr key={i}>
                           <td className="sr-td-item">{item.item}</td>
                           <td className="sr-td-cat">{item.category}</td>
-                          <td className={`sr-td-str sr-str-${item.strength?.toLowerCase()}`}>{item.strength}</td>
+                          <td className={`sr-td-str sr-str-${String(item.strength || '').toLowerCase()}`}>{item.strength}</td>
                           <td className="sr-td-notes">{item.notes}</td>
                         </tr>
                       ))}
