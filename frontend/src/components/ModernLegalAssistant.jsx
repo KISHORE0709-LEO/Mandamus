@@ -75,7 +75,7 @@ const ModernLegalAssistant = () => {
 
     try {
       // 1. Fetch the audio stream
-      const response = await fetch('http://127.0.0.1:8000/legal-assistant/tts', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/legal-assistant/tts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: text.substring(0, 1000) }), // ElevenLabs limit safety
@@ -166,6 +166,13 @@ const ModernLegalAssistant = () => {
     recognition.onerror = (event) => {
       console.error("Speech Error:", event.error);
       setIsListening(false);
+      if (event.error === 'network') {
+        alert("Speech Recognition Error: Network connection lost. Please check your internet or try again.");
+      } else if (event.error === 'not-allowed') {
+        alert("Speech Recognition Error: Microphone access denied. Please enable microphone permissions.");
+      } else {
+        alert(`Speech Recognition Error: ${event.error}`);
+      }
     };
 
     recognition.start();
@@ -213,7 +220,7 @@ const ModernLegalAssistant = () => {
     const fetchHistory = async () => {
       if (!user?.uid) return;
       try {
-        const response = await fetch(`http://127.0.0.1:8000/legal-assistant/history/${user.uid}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/legal-assistant/history/${user.uid}`);
         const data = await response.json();
         if (data.history) setHistory(data.history);
       } catch (err) {
@@ -236,7 +243,7 @@ const ModernLegalAssistant = () => {
   const handleDeleteChat = async (e, threadIdToDel) => {
     e.stopPropagation();
     try {
-      await fetch(`http://127.0.0.1:8000/legal-assistant/history/${user.uid}/${threadIdToDel}`, {
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/legal-assistant/history/${user.uid}/${threadIdToDel}`, {
         method: 'DELETE'
       });
       setHistory(prev => prev.filter(t => t.id !== threadIdToDel));
@@ -253,7 +260,7 @@ const ModernLegalAssistant = () => {
     e.stopPropagation();
     if (!editTitle.trim()) return;
     try {
-      await fetch(`http://127.0.0.1:8000/legal-assistant/history/${user.uid}/${threadIdToRename}`, {
+      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/legal-assistant/history/${user.uid}/${threadIdToRename}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: editTitle })
@@ -279,7 +286,7 @@ const ModernLegalAssistant = () => {
     setThreadId(thread.id);
     setIsLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/legal-assistant/messages/${user.uid}/${thread.id}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/legal-assistant/messages/${user.uid}/${thread.id}`);
       const data = await response.json();
       if (data.messages) {
         setMessages(data.messages);
@@ -304,7 +311,7 @@ const ModernLegalAssistant = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://127.0.0.1:8000/legal-assistant', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/legal-assistant`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -337,7 +344,7 @@ const ModernLegalAssistant = () => {
 
       // Refresh history sidebar
       if (user?.uid) {
-        const hRes = await fetch(`http://127.0.0.1:8000/legal-assistant/history/${user.uid}`);
+        const hRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/legal-assistant/history/${user.uid}`);
         const hData = await hRes.json();
         if (hData.history) setHistory(hData.history);
       }
@@ -368,7 +375,7 @@ const ModernLegalAssistant = () => {
     if (!user?.uid) return;
     setIsLoading(true);
     try {
-      const response = await fetch(`http://127.0.0.1:8000/legal-assistant/messages/${user.uid}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/legal-assistant/messages/${user.uid}`);
       const data = await response.json();
       if (data.messages && data.messages.length > 0) {
         setMessages(data.messages);

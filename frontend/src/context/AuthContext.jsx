@@ -12,6 +12,11 @@ export const AuthProvider = ({ children }) => {
 
   const setRole = (r) => {
     setRoleState(r);
+    if (r) {
+      localStorage.setItem('userRole', r);
+    } else {
+      localStorage.removeItem('userRole');
+    }
   };
 
   useEffect(() => {

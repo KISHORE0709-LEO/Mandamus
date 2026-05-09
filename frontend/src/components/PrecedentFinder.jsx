@@ -146,7 +146,7 @@ export default function PrecedentFinder({ onTabChange }) {
 
   const selected = new Set(state.selected_precedents ? state.selected_precedents.map(c => c.case_id) : []);
 
-  // ── SESSION RESTORE: On mount, load cached results from MandamusContext ──
+  // ── SESSION RESTORE: On mount or when summariser completes, load/trigger search ──
   useEffect(() => {
     if (state.precedent_results?.allCases?.length > 0) {
       // Results already cached — restore instantly, no API call
@@ -157,10 +157,13 @@ export default function PrecedentFinder({ onTabChange }) {
       const q = parsed.legalQuestions?.[0] || parsed.caseName || '';
       if (q) {
         setQuery(q);
-        searchPrecedents(q, parsed);
+        // Only trigger if not already loading and no results yet
+        if (!loading && allCases.length === 0) {
+          searchPrecedents(q, parsed);
+        }
       }
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [state.summariser_status, state.summariser_output, state.precedent_results]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (cases.length > 0) {
