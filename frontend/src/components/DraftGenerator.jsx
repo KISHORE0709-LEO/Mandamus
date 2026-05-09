@@ -106,7 +106,8 @@ export default function DraftGenerator({ onTabChange }) {
           query: q,
           selected_cases: cases,
           summary: summary,
-          draft_type: dType
+          draft_type: dType,
+          case_id: summary.caseId || summary.case_id
         })
       });
       const data = await res.json();

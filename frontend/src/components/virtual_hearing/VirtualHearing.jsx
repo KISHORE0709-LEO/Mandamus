@@ -104,6 +104,7 @@ const VirtualHearing = ({ initialRoomId }) => {
           role={role}
           caseData={selectedCase}
           roomId={roomId}
+          user={user}
           userId={user?.uid || 'guest-' + Math.random().toString(36).slice(2)}
           userName={user?.displayName || role}
           setStage={setStage}

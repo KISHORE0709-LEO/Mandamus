@@ -64,7 +64,7 @@ const VideoTile = ({ stream, name, role, isLocal, isJudge, isSpeaking, color }) 
   );
 };
 
-const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
+const LiveRoom = ({ role, caseData, roomId, user, userId, userName, setStage }) => {
   const [micOn,          setMicOn]          = useState(true);
   const [cameraOn,       setCameraOn]       = useState(true);
   const [activeTab,      setActiveTab]      = useState('transcript');
@@ -115,6 +115,34 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
 
   const [interimText, setInterimText] = useState('');
 
+  // ── MONGODB INTEGRATION (HEARING LIFECYCLE) ──
+  useEffect(() => {
+    const initMongoSession = async () => {
+      if (role === 'judge' && roomId && caseData) {
+        try {
+          const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+          await fetch(`${baseUrl}/virtual-hearing/sessions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              hearing_id: roomId,
+              case_id: caseData.id || caseData.caseId || 'UNKNOWN',
+              judge_email: user?.email || 'admin@mandamus.gov',
+              hearing_date: new Date().toISOString().split('T')[0],
+              room_id: roomId,
+              status: 'in_progress',
+              participants: [{ email: user?.email, name: userName || role, role: role }]
+            })
+          });
+          console.log("MongoDB Hearing Session Initialized");
+        } catch (err) {
+          console.error("Failed to init MongoDB session:", err);
+        }
+      }
+    };
+    initMongoSession();
+  }, [roomId, role, caseData, user, userName]);
+
   // ── SPEECH RECOGNITION (LIVE TRANSCRIPT) ──
   useEffect(() => {
     if (!('webkitSpeechRecognition' in window) || !micOn) return;
@@ -138,6 +166,26 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
           
           setTranscript(prev => [...prev, newEntry]);
           setInterimText('');
+
+          // ── SYNC TO MONGODB ──
+          const syncUtterance = async () => {
+            try {
+              const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+              await fetch(`${baseUrl}/virtual-hearing/sessions/${roomId}/transcript`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  timestamp: newEntry.timestamp,
+                  speaker_role: role,
+                  speaker_name: userName || role,
+                  text: text.trim()
+                })
+              });
+            } catch (err) {
+              console.error("Failed to sync transcript to MongoDB:", err);
+            }
+          };
+          syncUtterance();
           
           // AI DETECTION
           if (text.toLowerCase().includes('objection') || text.toLowerCase().includes('contradict') || text.toLowerCase().includes('wrong')) {
@@ -230,7 +278,17 @@ const LiveRoom = ({ role, caseData, roomId, userId, userName, setStage }) => {
             <h3>End Session?</h3>
             <p>This will close the hearing for all participants and seal the session record.</p>
             <div className="vh-confirm-actions">
-              <button className="vh-btn-danger" onClick={() => { if (isRecording) stopRecording(); setStage('post-hearing'); }}>
+              <button className="vh-btn-danger" onClick={async () => { 
+                if (isRecording) stopRecording(); 
+                // Signal completion to MongoDB Intelligence Layer
+                try {
+                  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                  await fetch(`${baseUrl}/virtual-hearing/sessions/${roomId}/complete`, { method: 'POST' });
+                } catch (err) {
+                  console.error("Failed to complete hearing in MongoDB:", err);
+                }
+                setStage('post-hearing'); 
+              }}>
                 Yes, End Session
               </button>
               <button className="vh-btn-secondary" onClick={() => setShowEndConfirm(false)}>Cancel</button>

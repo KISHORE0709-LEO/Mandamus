@@ -23,6 +23,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 
+# MongoDB Integration
+from mongodb.client import connect_to_mongo, close_mongo_connection
+from routes import virtual_hearing
+
 # Load environment variables from .env
 load_dotenv(override=True)
 
@@ -96,6 +100,17 @@ app.add_middleware(
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
 socket_app = socketio.ASGIApp(sio)
 app.mount("/socket.io", socket_app)
+
+@app.on_event("startup")
+async def startup_db_client():
+    await connect_to_mongo()
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    await close_mongo_connection()
+
+# Include Virtual Hearing Routes
+app.include_router(virtual_hearing.router)
 
 # Room storage: { roomId: { socketId: { userId, role, name } } }
 rooms = {}
@@ -1320,6 +1335,7 @@ class DraftRequest(BaseModel):
     selected_cases: list
     summary: dict = {}
     draft_type: str = "Petition"
+    case_id: Optional[str] = None
 
 class ValidateRequest(BaseModel):
     draft_sections: list
@@ -1338,6 +1354,17 @@ async def generate_draft(request: DraftRequest):
 
         summary_json = json.dumps(request.summary, indent=2)
 
+        # ── INJECT VIRTUAL HEARING CONTEXT ──
+        hearing_context = ""
+        if request.case_id:
+            from mongodb import context_repository
+            ctx = await context_repository.get_case_context(request.case_id)
+            if ctx and ctx.get("hearing_summaries"):
+                latest_hearing = ctx["hearing_summaries"][-1]
+                hearing_context = f"\n\nLATEST VIRTUAL HEARING INTELLIGENCE ({latest_hearing.get('date')}):\n{latest_hearing.get('summary')}\n"
+                if ctx.get("important_arguments"):
+                    hearing_context += "KEY ARGUMENTS FROM HEARING:\n- " + "\n- ".join(ctx["important_arguments"][:5])
+
         prompt = f"""You are a senior Indian legal advocate. Generate a formal {request.draft_type} based on the following:
 
 CASE SUMMARY & EXTRACTED DATA:
@@ -1348,6 +1375,8 @@ PRIMARY LEGAL QUESTION:
 
 SELECTED PRECEDENTS TO APPLY:
 {precedents_context}
+
+{hearing_context}
 
 Return ONLY a valid JSON object with a 'sections' key. Each section in the array must have:
 - num (string, e.g., 'I.', 'II.')
