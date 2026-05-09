@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FileUp, CheckCircle2, Search, ChevronRight, Download, Edit3, ThumbsUp, RotateCcw, FileText, Save, ArrowRight, X, ChevronUp, ChevronDown, ShieldCheck, AlertTriangle, Languages } from 'lucide-react';
 import { useMandamus } from '../context/MandamusContext';
 import { useAuth } from '../context/AuthContext';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import './Summarizer.css';
 import LegalChat from './LegalChat';
 
@@ -340,6 +342,23 @@ export default function Summarizer({ onTabChange }) {
   const fileInputRef = useRef(null);
   const abortControllerRef = useRef(null);
   const [selectedFiles, setSelectedFiles] = useState([]);
+  const [autoStartPending, setAutoStartPending] = useState(false);
+
+  useEffect(() => {
+    if (state.active_case && state.active_case.case_text && selectedFiles.length === 0) {
+      const blob = new Blob([state.active_case.case_text], { type: 'text/plain' });
+      const file = new File([blob], `${state.active_case.id || 'Case'}_Document.txt`, { type: 'text/plain' });
+      setSelectedFiles([file]);
+      setAutoStartPending(true);
+    }
+  }, [state.active_case]);
+
+  useEffect(() => {
+    if (autoStartPending && selectedFiles.length > 0) {
+      setAutoStartPending(false);
+      startProcessing();
+    }
+  }, [autoStartPending, selectedFiles]);
 
   // Auto-calculate pending duration if backend returns N/A
   const computePendingDuration = (filing) => {
@@ -482,6 +501,21 @@ export default function Summarizer({ onTabChange }) {
                    };
                    updateState({ summariser_output: parsedData, case_id: parsedData.caseId });
                    setCurrentStage('done');
+                   
+                   // Update Firestore if active case exists
+                   if (state.active_case) {
+                     try {
+                       const caseRef = doc(db, 'cases', state.active_case.id);
+                       updateDoc(caseRef, {
+                         summariser_output: parsedData,
+                         pipeline_stage: 'precedent'
+                       });
+                       updateState({ active_case: { ...state.active_case, pipeline_stage: 'precedent' } });
+                     } catch (err) {
+                       console.error("Failed to update case pipeline stage", err);
+                     }
+                   }
+
                    setTimeout(() => updateState({ summariser_status: 'complete' }), 1500);
                 } else {
                    const stageMap = {

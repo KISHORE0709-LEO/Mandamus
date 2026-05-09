@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
+import { useMandamus } from '../context/MandamusContext';
 import { 
   ShieldCheck, 
   FileText, 
@@ -18,6 +19,7 @@ import './JudgeDashboard.css';
 
 export default function JudgeDashboard({ setActiveFeature }) {
   const { user } = useAuth();
+  const { updateState } = useMandamus();
   const navigate = useNavigate();
   const [cases, setCases] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,8 +46,14 @@ export default function JudgeDashboard({ setActiveFeature }) {
         ...doc.data()
       }));
       
-      // Sort in memory by createdAt descending (Firestore index requirement avoidance for now)
-      fetchedCases.sort((a, b) => b.createdAt?.toMillis() - a.createdAt?.toMillis());
+      // Intelligent sorting: Undertrial first, then criminal, then by date
+      fetchedCases.sort((a, b) => {
+        if (a.undertrial && !b.undertrial) return -1;
+        if (!a.undertrial && b.undertrial) return 1;
+        if (a.type === 'criminal' && b.type !== 'criminal') return -1;
+        if (a.type !== 'criminal' && b.type === 'criminal') return 1;
+        return b.createdAt?.toMillis() - a.createdAt?.toMillis();
+      });
       
       setCases(fetchedCases);
     } catch (error) {
@@ -55,11 +63,12 @@ export default function JudgeDashboard({ setActiveFeature }) {
     }
   };
 
-  const navigateToWorkspace = (feature, caseId) => {
+  const navigateToCaseDetail = (c) => {
+    updateState({ active_case: c });
     if (setActiveFeature) {
-      setActiveFeature(feature);
+      setActiveFeature('case-detail');
     } else {
-      navigate(`/dashboard?feature=${feature}&caseId=${caseId}`);
+      navigate(`/dashboard?feature=case-detail&caseId=${c.id}`);
     }
   };
 
@@ -136,54 +145,38 @@ export default function JudgeDashboard({ setActiveFeature }) {
             <p>No cases are currently assigned to your docket.</p>
           </div>
         ) : (
-          <div className="jd-docket-grid">
+          <div className="jd-docket-list">
             {filteredCases.map(c => (
-              <div key={c.id} className="jd-case-card">
-                <div className="jd-case-header">
-                  <div>
+              <div key={c.id} className={`jd-case-row ${c.undertrial ? 'jd-case-urgent' : ''}`}>
+                <div className="jd-row-main">
+                  <div className="jd-row-header">
+                    <span className="jd-case-id-badge">{c.id || 'CASE'}</span>
                     <h3 className="jd-case-title">{c.title}</h3>
-                    <div className="jd-case-badges">
-                      <span className={`badge ${c.type}`}>{c.type}</span>
-                      {c.undertrial && <span className="badge undertrial">UNDERTRIAL</span>}
-                    </div>
                   </div>
-                </div>
-                
-                <div className="jd-case-details">
-                  <div className="detail-item">
-                    <span className="detail-label">Petitioner</span>
-                    <span className="detail-value">{c.petitioner}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Respondent</span>
-                    <span className="detail-value">{c.respondent}</span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Filed Date</span>
-                    <span className="detail-value">
-                      <Calendar size={14} /> {c.filedDate || 'N/A'}
-                    </span>
-                  </div>
-                  <div className="detail-item">
-                    <span className="detail-label">Next Hearing</span>
-                    <span className="detail-value">
-                      <Calendar size={14} /> {c.hearingDate || 'Unscheduled'}
-                    </span>
+                  <div className="jd-case-badges">
+                    <span className={`badge ${c.type}`}>{c.type}</span>
+                    {c.undertrial && <span className="badge undertrial">HIGH PRIORITY (UNDERTRIAL)</span>}
+                    <span className="badge pipeline-stage">STAGE: {c.pipeline_stage ? c.pipeline_stage.toUpperCase() : 'PENDING'}</span>
                   </div>
                 </div>
 
-                <div className="jd-case-actions">
+                <div className="jd-row-details">
+                  <div className="jd-cell">
+                    <span className="jd-cell-lbl">VS</span>
+                    <span className="jd-cell-val">{c.petitioner} <br/> {c.respondent}</span>
+                  </div>
+                  <div className="jd-cell">
+                    <span className="jd-cell-lbl">Dates</span>
+                    <span className="jd-cell-val">Filed: {c.filedDate || 'N/A'}<br/>Hearing: {c.hearingDate || 'TBD'}</span>
+                  </div>
+                </div>
+
+                <div className="jd-row-action">
                   <button 
                     className="jd-btn jd-btn-primary"
-                    onClick={() => navigateToWorkspace('summariser', c.id)}
+                    onClick={() => navigateToCaseDetail(c)}
                   >
-                    <Search size={16} /> Analyze Case
-                  </button>
-                  <button 
-                    className="jd-btn jd-btn-secondary"
-                    onClick={() => navigateToWorkspace('draft', c.id)}
-                  >
-                    <FileText size={16} /> Draft Orders
+                    OPEN CASE <Search size={16} />
                   </button>
                 </div>
               </div>

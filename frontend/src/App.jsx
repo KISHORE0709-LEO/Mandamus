@@ -26,6 +26,7 @@ import { HistoryProvider } from './context/HistoryContext';
 import SilentJustice from './components/SilentJustice';
 import JudgeDashboard from './components/JudgeDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import CaseDetailPage from './components/CaseDetailPage';
 
 
 const GlobalBackground = () => {
@@ -96,6 +97,8 @@ const Dashboard = ({ activeFeature, setActiveFeature }) => {
         return <ProfilePage />;
       case 'virtual':
         return <VirtualHearing />;
+      case 'case-detail':
+        return <CaseDetailPage onTabChange={setActiveFeature} />;
       default:
         return (
           <div style={{ padding: '40px', textAlign: 'center' }}>

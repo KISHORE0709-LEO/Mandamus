@@ -580,11 +580,6 @@ async def summarise_document(
                 if filename.lower().endswith('.pdf'):
                     extracted_text, extraction_method = await asyncio.to_thread(extract_text_from_bytes, file_bytes)
                     if extraction_method == "needs_textract":
-                        # Scanned/Handwritten PDF processing via AWS Textract
-                        # We notify the frontend that OCR is starting for this specific file
-                        # Note: yielding here is tricky inside a task, so we'll just log and proceed
-                        # The overall status will be 'extracting'
-                        
                         s3_client = get_s3_client()
                         bucket_name = "mandamus-cases"
                         s3_key = f"users/{user_id}/ocr_temp/{uuid.uuid4()}_{filename}"
@@ -601,6 +596,9 @@ async def summarise_document(
                 elif filename.lower().endswith('.docx'):
                     extracted_text = await asyncio.to_thread(extract_text_from_docx, file_bytes)
                     extraction_method = "python-docx"
+                elif filename.lower().endswith('.txt'):
+                    extracted_text = file_bytes.decode('utf-8', errors='ignore')
+                    extraction_method = "plain-text"
                 else:
                     return None
                 

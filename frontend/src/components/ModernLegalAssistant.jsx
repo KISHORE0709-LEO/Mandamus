@@ -132,7 +132,9 @@ const ModernLegalAssistant = () => {
           explanation: "Sorry, the AI Legal Assistant is currently unavailable. Please try again later.",
           laws: [],
           rights: [],
-          steps: []
+          steps: [],
+          severity: 'Medium',
+          domain: 'System'
         } 
       }]);
     } finally {
@@ -285,12 +287,12 @@ const ModernLegalAssistant = () => {
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                                   <span style={{ fontSize: '14px', fontWeight: '700', color: '#fff', letterSpacing: '1px' }}>MANDAMUS ADVISOR</span>
-                                  <span style={{ fontSize: '11px', color: '#888', fontWeight: '600', textTransform: 'uppercase' }}>{msg.data.domain}</span>
+                                  <span style={{ fontSize: '11px', color: '#888', fontWeight: '600', textTransform: 'uppercase' }}>{msg.data.domain || 'General'}</span>
                                 </div>
                               </div>
-                              <div style={{ padding: '4px 12px', background: 'rgba(0,0,0,0.5)', borderRadius: '20px', border: `1px solid ${getSeverityColor(msg.data.severity)}`, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: getSeverityColor(msg.data.severity), boxShadow: `0 0 10px ${getSeverityColor(msg.data.severity)}` }} />
-                                <span style={{ fontSize: '11px', fontWeight: '800', color: getSeverityColor(msg.data.severity) }}>{msg.data.severity.toUpperCase()}</span>
+                              <div style={{ padding: '4px 12px', background: 'rgba(0,0,0,0.5)', borderRadius: '20px', border: `1px solid ${getSeverityColor(msg.data.severity || 'Medium')}`, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: getSeverityColor(msg.data.severity || 'Medium'), boxShadow: `0 0 10px ${getSeverityColor(msg.data.severity || 'Medium')}` }} />
+                                <span style={{ fontSize: '11px', fontWeight: '800', color: getSeverityColor(msg.data.severity || 'Medium') }}>{(msg.data.severity || 'Medium').toUpperCase()}</span>
                               </div>
                             </div>
 
@@ -306,7 +308,7 @@ const ModernLegalAssistant = () => {
                                 <div>
                                   <h4 style={{ fontSize: '12px', fontWeight: '800', color: '#e02020', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Applicable Laws</h4>
                                   <ul style={{ listStyle: 'none', padding: 0 }}>
-                                    {msg.data.laws.map((law, idx) => (
+                                    {(msg.data.laws || []).map((law, idx) => (
                                       <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px', padding: '10px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
                                         <CheckCircle size={14} style={{ color: '#e02020', marginTop: '2px' }} />
                                         <span style={{ color: '#bbb', fontSize: '13px' }}>{law}</span>
@@ -317,7 +319,7 @@ const ModernLegalAssistant = () => {
                                 <div>
                                   <h4 style={{ fontSize: '12px', fontWeight: '800', color: '#e02020', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>Your Rights</h4>
                                   <ul style={{ listStyle: 'none', padding: 0 }}>
-                                    {msg.data.rights.map((right, idx) => (
+                                    {(msg.data.rights || []).map((right, idx) => (
                                       <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '8px', padding: '10px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
                                         <CheckCircle size={14} style={{ color: '#e02020', marginTop: '2px' }} />
                                         <span style={{ color: '#bbb', fontSize: '13px' }}>{right}</span>
@@ -331,7 +333,7 @@ const ModernLegalAssistant = () => {
                               <div>
                                 <h4 style={{ fontSize: '12px', fontWeight: '800', color: '#e02020', marginBottom: '16px', textTransform: 'uppercase', letterSpacing: '1px' }}>Step-by-Step Procedure</h4>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                  {msg.data.steps.map((step, idx) => (
+                                  {(msg.data.steps || []).map((step, idx) => (
                                     <div key={idx} style={{ display: 'flex', gap: '16px', padding: '16px', background: 'rgba(255, 255, 255, 0.03)', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
                                       <span style={{ width: '28px', height: '28px', background: '#e02020', color: '#fff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '800', flexShrink: 0 }}>
                                         {idx + 1}
@@ -459,11 +461,11 @@ const ModernLegalAssistant = () => {
 
           {/* Severity & Domain Indicators (Smaller, at bottom of sidebar) */}
           <div style={{ background: 'rgba(255, 255, 255, 0.03)', borderRadius: '16px', padding: '20px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-            <div style={{ padding: '10px', background: 'rgba(224, 32, 32, 0.1)', color: getSeverityColor(lastAnalysis.severity), border: `1px solid ${getSeverityColor(lastAnalysis.severity)}`, borderRadius: '8px', textAlign: 'center', fontWeight: '800', fontSize: '11px', letterSpacing: '1px', marginBottom: '12px' }}>
-              SEVERITY: {lastAnalysis.severity.toUpperCase()}
+            <div style={{ padding: '10px', background: 'rgba(224, 32, 32, 0.1)', color: getSeverityColor(lastAnalysis.severity || 'Medium'), border: `1px solid ${getSeverityColor(lastAnalysis.severity || 'Medium')}`, borderRadius: '8px', textAlign: 'center', fontWeight: '800', fontSize: '11px', letterSpacing: '1px', marginBottom: '12px' }}>
+              SEVERITY: {(lastAnalysis.severity || 'Medium').toUpperCase()}
             </div>
             <div style={{ fontSize: '10px', color: '#888', textAlign: 'center', fontWeight: '600' }}>
-              DOMAIN: <span style={{ color: '#fff' }}>{lastAnalysis.domain.toUpperCase()}</span>
+              DOMAIN: <span style={{ color: '#fff' }}>{(lastAnalysis.domain || 'General').toUpperCase()}</span>
             </div>
           </div>
 

@@ -12,7 +12,9 @@ const defaultState = {
   case_id: null,
   scheduler_status: 'idle',
   scheduled_date: null,
-  virtual_hearing_status: 'idle'
+  virtual_hearing_status: 'idle',
+  active_case: null,
+  pipeline_stage: 'summarise'
 };
 
 export const MandamusProvider = ({ children }) => {
