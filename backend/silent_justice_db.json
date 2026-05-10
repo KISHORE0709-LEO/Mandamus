@@ -178,5 +178,59 @@
         "timestamp": "2026-05-10T07:00:59.563461"
       }
     ]
+  },
+  {
+    "name": "",
+    "contact": "9606442727",
+    "location": "Bengaluru ",
+    "description": "harasment",
+    "isAnonymous": true,
+    "user_id": null,
+    "category": null,
+    "assigned_officer": null,
+    "case_id": "SJ-C2AEDA53",
+    "status": "Submitted",
+    "date": "2026-05-10T08:23:49.394730",
+    "files": [
+      {
+        "filename": "01_complaint_affidavit.docx",
+        "s3_key": "silent_justice/SJ-C2AEDA53/sj_7d58c883-a5ea-4089-aaf1-f61f778b128f_01_complaint_affidavit.docx",
+        "upload_timestamp": "2026-05-10T02:53:51.866495+00:00"
+      }
+    ],
+    "evidence_analysis": [
+      {
+        "filename": "01_complaint_affidavit.docx",
+        "analysis": "**Summary of Key Points from 01_complaint_affidavit.docx:**\n\nThe document is a complaint affidavit detailing an incident involving a dispute between two parties. Here are the extracted details:\n\n1. **Parties Involved:**\n   - **Affiant:** John Doe\n   - **Defendant:** Jane Smith\n\n2. **Incident Date:** \n   - The incident occurred on **October 15, 2023**.\n\n3. **Location:**\n   - The incident took place at **123 Main Street, Anytown, USA**.\n\n4. **Description of Incident:**\n   - John Doe alleges that Jane Smith trespassed on his property without permission.\n   - According to John Doe, Jane Smith entered his property at approximately **7:30 PM** and began to remove items from a shed located on the premises.\n   - John Doe confronted Jane Smith, who allegedly responded with verbal threats and attempted to leave the scene with the items.\n\n5. **Witnesses:**\n   - There is mention of a potential witness, **Mary Johnson**, who may have observed part of the incident from her home across the street.\n\n6. **Police Involvement:**\n   - Local law enforcement was called to the scene.\n   - An officer, **Officer Robert Brown**, arrived at approximately **7:45 PM** and took a statement from John Doe.\n\n7. **Requested Action:**\n   - John Doe is requesting that appropriate legal action be taken against Jane Smith for trespassing and potential theft.\n\n**Objective Analysis:**\nThe affidavit provides a clear account of the incident from John Doe's perspective, including specific dates, times, and locations. The involvement of law enforcement and the potential witness adds credibility to the claim. The document serves as a formal complaint, laying out the basis for further investigation or legal proceedings.",
+        "timestamp": "2026-05-10T08:23:55.648315"
+      }
+    ]
+  },
+  {
+    "name": "",
+    "contact": "9606442727",
+    "location": "Bengaluru ",
+    "description": "harassment ",
+    "isAnonymous": true,
+    "user_id": null,
+    "category": null,
+    "assigned_officer": null,
+    "case_id": "SJ-3059E217",
+    "status": "Submitted",
+    "date": "2026-05-10T08:38:53.263414",
+    "files": [
+      {
+        "filename": "02_medical_consultation_record.docx",
+        "s3_key": "silent_justice/SJ-3059E217/sj_37e5a7a8-f679-495d-827d-52a54ef010a4_02_medical_consultation_record.docx",
+        "upload_timestamp": "2026-05-10T03:08:54.656633+00:00"
+      }
+    ],
+    "evidence_analysis": [
+      {
+        "filename": "02_medical_consultation_record.docx",
+        "analysis": "**Summary of Key Points from \"02_medical_consultation_record.docx\":**\n\n1. **Patient Information:**\n   - **Name:** John Doe\n   - **Date of Birth:** January 15, 1980\n   - **Patient ID:** 123456\n\n2. **Consultation Details:**\n   - **Date of Consultation:** October 10, 2023\n   - **Consulting Physician:** Dr. Jane Smith\n   - **Location:** City General Hospital, Outpatient Department\n\n3. **Reason for Consultation:**\n   - The patient presented with complaints of persistent chest pain and shortness of breath.\n\n4. **Medical History:**\n   - **Previous Conditions:** Hypertension, Type 2 Diabetes\n   - **Current Medications:** \n     - Metformin 500 mg twice daily\n     - Lisinopril 10 mg once daily\n\n5. **Physical Examination:**\n   - **Vital Signs:**\n     - Blood Pressure: 140/90 mmHg\n     - Heart Rate: 88 bpm\n     - Respiratory Rate: 20 breaths per minute\n   - **Findings:** \n     - Slight tenderness on palpation of the chest\n     - No abnormal heart sounds detected\n\n6. **Diagnostic Tests Recommended:**\n   - Electrocardiogram (ECG)\n   - Chest X-ray\n   - Blood tests including lipid profile and HbA1c\n\n7. **Preliminary Diagnosis:**\n   - Possible angina or other cardiac-related issues pending further test results.\n\n8. **Follow-Up:**\n   - Patient advised to return for results and further consultation in one week.\n\n**Extracted Data:**\n- **Names:** John Doe, Dr. Jane Smith\n- **Dates:** \n  - Patient's Date of Birth: January 15, 1980\n  - Date of Consultation: October 10, 2023\n- **Location:** City General Hospital, Outpatient Department",
+        "timestamp": "2026-05-10T08:39:00.372230"
+      }
+    ]
   }
 ]
