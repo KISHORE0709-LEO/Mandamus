@@ -13,7 +13,7 @@ db = None
 async def connect_to_mongo():
     global client, db
     if MONGO_URI:
-        # tlsAllowInvalidCertificates=True handles the common Mac SSL certificate issue
+        # tlsAllowInvalidCertificates=True handles the common Render/Mac SSL certificate handshake issues
         client = AsyncIOMotorClient(
             MONGO_URI, 
             tls=True,
