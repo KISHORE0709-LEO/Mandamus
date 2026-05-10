@@ -113,9 +113,9 @@ app.mount("/socket.io", socket_app)
 
 @app.on_event("startup")
 async def startup_db_client():
-    # Run in background to avoid blocking server start
-    asyncio.create_task(connect_to_mongo())
-    asyncio.create_task(otp_repository.ensure_ttl_index())
+    # MUST await this so the DB is ready before any requests come in
+    await connect_to_mongo()
+    await otp_repository.ensure_ttl_index()
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
@@ -1049,6 +1049,7 @@ async def legal_assistant(request: LegalAssistantRequest, background_tasks: Back
                 logger.error(f"History storage error: {e}")
                 pass
 
+        await save_to_history(request.user_id, assistant_id, parsed, request.messages + [{"role": "user", "content": request.query}, {"role": "assistant", "content": parsed.get('explanation', '')}])
         background_tasks.add_task(create_and_store_memory, assistant_id, user_master_id, request.query, parsed.get('explanation', ''), parsed.get('domain', ''), request.user_id, request.messages + [{"role": "user", "content": request.query}])
         
         parsed["thread_id"] = assistant_id
@@ -1057,46 +1058,13 @@ async def legal_assistant(request: LegalAssistantRequest, background_tasks: Back
         logger.error(f"Error in Optimized Intelligent Legal Agent: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to process legal reasoning.")
 
-HISTORY_FILE = "legal_history_db.json"
-
-def save_to_history_file(user_id, thread_id, thread_data, messages=None):
+async def save_to_history(user_id, thread_id, thread_data, messages=None):
     try:
-        history_db = {}
-        if os.path.exists(HISTORY_FILE):
-            with open(HISTORY_FILE, "r") as f:
-                history_db = json.load(f)
-        
-        user_data = history_db.get(user_id, {"threads": [], "thread_messages": {}})
-        
-        # 1. Update Thread Metadata (for sidebar list)
-        threads = user_data.get("threads", [])
-        exists = False
-        for i, t in enumerate(threads):
-            if t['id'] == thread_id:
-                threads[i] = thread_data
-                exists = True
-                break
-        if not exists:
-            threads.insert(0, thread_data)
-        user_data["threads"] = threads[:25]
-
-        # 2. Update Thread Messages (for full conversation recall)
-        if messages:
-            msg_store = user_data.get("thread_messages", {})
-            msg_store[thread_id] = messages
-            user_data["thread_messages"] = msg_store
-
-        history_db[user_id] = user_data
-        with open(HISTORY_FILE, "w") as f:
-            json.dump(history_db, f)
+        await legal_history_repository.save_full_history(user_id, thread_id, thread_data, messages)
     except Exception as e:
-        logger.error(f"Error saving history file: {e}")
+        logger.error(f"Error saving to MongoDB history: {e}")
 
-@app.get("/legal-assistant/history/{user_id}")
-async def get_legal_history(user_id: str):
-    try:
-        if os.path.exists(HISTORY_FILE):
-            with open(HISTORY_FILE, "r") as f:
+# ─── LEGAL ASSISTANT HISTORY ───
 # ─── LEGAL ASSISTANT HISTORY ───
 @app.get("/legal-assistant/history/{user_id}")
 async def get_history(user_id: str):

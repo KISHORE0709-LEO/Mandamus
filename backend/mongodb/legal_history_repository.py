@@ -13,13 +13,27 @@ async def get_user_threads(user_id: str):
         return user_data.get("threads", [])
     return []
 
-async def save_thread(user_id: str, thread_data: dict):
+async def save_full_history(user_id: str, thread_id: str, thread_data: dict, messages: list = None):
     collection = get_history_collection()
+    
+    # 1. Update Thread Metadata in the 'threads' list
     await collection.update_one(
         {"user_id": user_id},
-        {"$push": {"threads": thread_data}},
+        {"$pull": {"threads": {"id": thread_id}}},
         upsert=True
     )
+    
+    await collection.update_one(
+        {"user_id": user_id},
+        {"$push": {"threads": {"$each": [thread_data], "$position": 0, "$slice": 25}}}
+    )
+    
+    # 2. Update Thread Messages
+    if messages:
+        await collection.update_one(
+            {"user_id": user_id},
+            {"$set": {f"thread_messages.{thread_id}": messages}}
+        )
 
 async def delete_thread(user_id: str, thread_id: str):
     collection = get_history_collection()
