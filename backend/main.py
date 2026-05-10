@@ -1843,8 +1843,8 @@ Return only valid JSON object."""
         logger.error(f"Adjournment request error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- SILENT JUSTICE DATABASE ---
-silent_justice_reports = db["silent_justice_reports"]
+# --- SILENT JUSTICE SYSTEM ---
+# Uses silent_justice_repository
 
 class SilentJusticeEvalRequest(BaseModel):
     description: str
@@ -1886,15 +1886,12 @@ async def analyze_sj_evidence(case_id: str, filename: str, content: bytes, conte
         
         analysis = response['output']['message']['content'][0]['text'].strip()
         
-        # Update MongoDB record with the analysis
-        await silent_justice_reports.update_one(
-            {"case_id": case_id},
-            {"$push": {"evidence_analysis": {
-                "filename": filename,
-                "analysis": analysis,
-                "timestamp": datetime.now().isoformat()
-            }}}
-        )
+        # Update MongoDB record with the analysis via repository
+        await silent_justice_repository.add_evidence_analysis(case_id, {
+            "filename": filename,
+            "analysis": analysis,
+            "timestamp": datetime.now().isoformat()
+        })
             
     except Exception as e:
         logger.error(f"Evidence analysis failed: {e}")
@@ -1967,22 +1964,17 @@ class SilentJusticeReport(BaseModel):
 
 @app.post("/silent-justice/report")
 async def create_silent_justice_report(report: SilentJusticeReport):
-    case_id = f"SJ-{uuid.uuid4().hex[:8].upper()}"
-    case_data = report.dict()
-    case_data.update({
-        "case_id": case_id,
-        "status": "Submitted",
-        "date": datetime.now().isoformat(),
-        "files": [],
-        "evidence_analysis": []
-    })
-    await silent_justice_reports.insert_one(case_data)
-    return {"status": "success", "case_id": case_id}
+    try:
+        case_id = await silent_justice_repository.create_report(report.dict())
+        return {"status": "success", "case_id": case_id}
+    except Exception as e:
+        logger.error(f"Failed to create SJ report: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/silent-justice/evidence/{case_id}")
 async def upload_sj_evidence(case_id: str, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
-    # Check if case exists in MongoDB
-    case = await silent_justice_reports.find_one({"case_id": case_id})
+    # Check if case exists via repository
+    case = await silent_justice_repository.get_report_by_id(case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
@@ -2014,25 +2006,21 @@ async def upload_sj_evidence(case_id: str, background_tasks: BackgroundTasks, fi
         "upload_timestamp": datetime.now(timezone.utc).isoformat()
     }
     
-    # Update MongoDB record
-    await silent_justice_reports.update_one(
-        {"case_id": case_id},
-        {"$push": {"files": file_info}}
-    )
+    # Update MongoDB record via repository
+    await silent_justice_repository.add_evidence_file(case_id, file_info)
     
     return {"status": "success", "file": file_info}
 
 @app.get("/silent-justice/track/{case_id}")
 async def track_sj_case(case_id: str):
-    case = await silent_justice_reports.find_one({"case_id": case_id}, {"_id": 0})
+    case = await silent_justice_repository.get_report_by_id(case_id)
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     return {"status": "success", "case": case}
 
 @app.get("/silent-justice/authority/cases")
 async def get_sj_cases():
-    cursor = silent_justice_reports.find({}, {"_id": 0})
-    cases = await cursor.to_list(length=100)
+    cases = await silent_justice_repository.get_all_reports()
     return {"status": "success", "cases": cases}
 
 class SilentJusticeUpdate(BaseModel):
@@ -2040,14 +2028,9 @@ class SilentJusticeUpdate(BaseModel):
 
 @app.patch("/silent-justice/authority/cases/{case_id}")
 async def update_sj_case(case_id: str, update: SilentJusticeUpdate):
-    result = await silent_justice_reports.update_one(
-        {"case_id": case_id},
-        {"$set": {"status": update.status}}
-    )
-    if result.matched_count == 0:
+    updated_case = await silent_justice_repository.update_report_status(case_id, update.status)
+    if not updated_case:
         raise HTTPException(status_code=404, detail="Case not found")
-    
-    updated_case = await silent_justice_reports.find_one({"case_id": case_id}, {"_id": 0})
     return {"status": "success", "case": updated_case}
 
 if __name__ == "__main__":
