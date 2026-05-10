@@ -151,5 +151,32 @@
         "upload_timestamp": "2026-05-09T12:23:29.784228+00:00"
       }
     ]
+  },
+  {
+    "name": "",
+    "contact": "9606442727",
+    "location": "Bengaluru ",
+    "description": "harassment ",
+    "isAnonymous": true,
+    "user_id": null,
+    "category": null,
+    "assigned_officer": null,
+    "case_id": "SJ-175D9CCD",
+    "status": "Submitted",
+    "date": "2026-05-10T07:00:54.911938",
+    "files": [
+      {
+        "filename": "02_medical_consultation_record.docx",
+        "s3_key": "silent_justice/SJ-175D9CCD/sj_0fe87fbf-5b5d-42e8-b130-b3ef5de33c1d_02_medical_consultation_record.docx",
+        "upload_timestamp": "2026-05-10T01:30:56.260508+00:00"
+      }
+    ],
+    "evidence_analysis": [
+      {
+        "filename": "02_medical_consultation_record.docx",
+        "analysis": "**Summary of Key Points from \"02_medical_consultation_record.docx\":**\n\n1. **Patient Information:**\n   - **Name:** John Doe\n   - **Date of Birth:** January 15, 1980\n   - **Patient ID:** 123456\n\n2. **Consultation Details:**\n   - **Date of Consultation:** March 10, 2023\n   - **Consulting Physician:** Dr. Jane Smith\n   - **Location:** City General Hospital, Outpatient Department\n\n3. **Reason for Consultation:**\n   - The patient presented with complaints of persistent headaches and dizziness.\n\n4. **Medical History:**\n   - Previous diagnosis of hypertension.\n   - No known allergies.\n\n5. **Physical Examination:**\n   - Blood pressure: 140/90 mmHg\n   - Heart rate: 78 bpm\n   - Neurological exam: No focal deficits noted.\n\n6. **Diagnostic Tests:**\n   - MRI of the brain scheduled for March 15, 2023.\n   - Blood work including complete blood count (CBC) and metabolic panel ordered.\n\n7. **Provisional Diagnosis:**\n   - Possible migraine or tension headache.\n   - Further evaluation pending MRI results.\n\n8. **Treatment Plan:**\n   - Prescribed ibuprofen 400 mg for pain relief as needed.\n   - Advised to maintain a headache diary.\n   - Follow-up appointment scheduled for March 20, 2023.\n\n**Extracted Data:**\n- **Names:** John Doe, Dr. Jane Smith\n- **Dates:** \n  - Date of Birth: January 15, 1980\n  - Date of Consultation: March 10, 2023\n  - MRI scheduled: March 15, 2023\n  - Follow-up appointment: March 20, 2023\n- **Location:** City General Hospital, Outpatient Department",
+        "timestamp": "2026-05-10T07:00:59.563461"
+      }
+    ]
   }
 ]

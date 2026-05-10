@@ -668,16 +668,38 @@ const SilentJustice = () => {
                 </div>
                 <div style={{ flex: 1, padding: '20px', background: '#111', borderRadius: '12px' }}>
                   <h4 style={{ marginBottom: '10px', color: '#d62828' }}>Assigned To</h4>
-                  <p>Legal Aid Cell - Women's Wing</p>
+                  <p>{trackedCase?.primary_connection?.name || 'Legal Aid Cell - Women\'s Wing'}</p>
+                  <div style={{ fontSize: '0.75rem', color: '#d62828', fontWeight: '800', marginTop: '5px' }}>
+                    {trackedCase?.primary_connection?.type || 'AUTHORITY'} • {trackedCase?.primary_connection?.status || 'Active'}
+                  </div>
                 </div>
               </div>
               
               <div style={{ marginTop: '20px', padding: '20px', background: '#111', borderRadius: '12px' }}>
                 <h4 style={{ marginBottom: '10px', color: '#d62828' }}>Latest Update</h4>
                 <p style={{ color: '#888' }}>
-                  Your report has been safely received. A verified legal advisor will review your case securely and provide updates via the vault.
+                  {trackedCase?.status === 'Submitted' 
+                    ? 'Your report has been safely received. A verified legal advisor will review your case securely and provide updates via the vault.'
+                    : `Case status has been updated to: ${trackedCase?.status}. The assigned unit is reviewing your details.`
+                  }
                 </p>
               </div>
+
+              {trackedCase?.evidence_analysis && trackedCase.evidence_analysis.length > 0 && (
+                <div style={{ marginTop: '20px', padding: '20px', background: 'rgba(214, 40, 40, 0.05)', border: '1px solid rgba(214, 40, 40, 0.2)', borderRadius: '12px' }}>
+                  <h4 style={{ marginBottom: '15px', color: '#d62828', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Eye size={16} /> Evidence Intelligence
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                    {trackedCase.evidence_analysis.map((analysis, i) => (
+                      <div key={i} style={{ borderLeft: '2px solid #d62828', paddingLeft: '15px' }}>
+                        <div style={{ fontSize: '0.8rem', color: '#fff', fontWeight: '600', marginBottom: '5px' }}>{analysis.filename}</div>
+                        <p style={{ color: '#aaa', fontSize: '0.85rem', lineHeight: '1.4' }}>{analysis.analysis}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div style={{ marginTop: '30px', display: 'flex', gap: '15px' }}>
                 <button className="sj-back-btn" style={{ flex: 1, justifyContent: 'center' }}>
