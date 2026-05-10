@@ -1428,13 +1428,16 @@ async def generate_draft(request: DraftRequest):
         # ── INJECT VIRTUAL HEARING CONTEXT ──
         hearing_context = ""
         if request.case_id:
-            from mongodb import context_repository
-            ctx = await context_repository.get_case_context(request.case_id)
-            if ctx and ctx.get("hearing_summaries"):
-                latest_hearing = ctx["hearing_summaries"][-1]
-                hearing_context = f"\n\nLATEST VIRTUAL HEARING INTELLIGENCE ({latest_hearing.get('date')}):\n{latest_hearing.get('summary')}\n"
-                if ctx.get("important_arguments"):
-                    hearing_context += "KEY ARGUMENTS FROM HEARING:\n- " + "\n- ".join(ctx["important_arguments"][:5])
+            try:
+                from mongodb import context_repository
+                ctx = await context_repository.get_case_context(request.case_id)
+                if ctx and ctx.get("hearing_summaries"):
+                    latest_hearing = ctx["hearing_summaries"][-1]
+                    hearing_context = f"\n\nLATEST VIRTUAL HEARING INTELLIGENCE ({latest_hearing.get('date')}):\n{latest_hearing.get('summary')}\n"
+                    if ctx.get("important_arguments"):
+                        hearing_context += "KEY ARGUMENTS FROM HEARING:\n- " + "\n- ".join(ctx["important_arguments"][:5])
+            except Exception as e:
+                logger.warning(f"Could not load hearing context: {e}")
 
         prompt = f"""You are a senior Indian legal advocate. Generate a formal {request.draft_type} based on the following:
 
@@ -1465,18 +1468,34 @@ You MUST include these exact sections in this order, formatted properly for a {r
 
 Keep the tone formal, academic, and highly professional. Return only the JSON, no markdown, no explanation."""
 
-        response = bedrock.converse(
-            modelId="us.amazon.nova-pro-v1:0",
-            messages=[{"role": "user", "content": [{"text": prompt}]}],
-            inferenceConfig={"maxTokens": 4000, "temperature": 0.1}
-        )
+        # ── FAST PATH: Try Nova Lite first (less likely to timeout on Vercel/Render) ──
+        try:
+            response = bedrock.converse(
+                modelId="us.amazon.nova-lite-v1:0",
+                messages=[{"role": "user", "content": [{"text": prompt}]}],
+                inferenceConfig={"maxTokens": 4000, "temperature": 0.1}
+            )
+            raw_text = response['output']['message']['content'][0]['text'].strip()
+        except Exception as e:
+            logger.error(f"Bedrock Nova Lite failed: {e}. Falling back to Gemini.")
+            # FALLBACK TO GEMINI (More robust in Vercel environments)
+            import google.generativeai as genai
+            gen_model = genai.GenerativeModel('gemini-1.5-flash')
+            response = gen_model.generate_content(prompt)
+            raw_text = response.text.strip()
         
-        raw_text = response['output']['message']['content'][0]['text'].strip()
+        # Robust JSON cleaning
         if "```json" in raw_text:
             raw_text = raw_text.split("```json")[1].split("```")[0].strip()
         elif "```" in raw_text:
             raw_text = raw_text.split("```")[1].split("```")[0].strip()
             
+        # Clean potential leading/trailing garbage
+        start = raw_text.find('{')
+        end = raw_text.rfind('}')
+        if start != -1 and end != -1:
+            raw_text = raw_text[start:end+1]
+
         data = json.loads(raw_text)
         return data
 
@@ -1524,13 +1543,21 @@ Evaluate the draft and return ONLY a valid JSON object with the following struct
 
 Keep inconsistencies and suggestions brief and actionable (max 3 each). Return only the JSON, no markdown."""
 
-        response = bedrock.converse(
-            modelId="us.amazon.nova-pro-v1:0",
-            messages=[{"role": "user", "content": [{"text": prompt}]}],
-            inferenceConfig={"maxTokens": 1000, "temperature": 0.0}
-        )
-        
-        raw_text = response['output']['message']['content'][0]['text'].strip()
+        # ── FAST PATH: Try Nova Lite first ──
+        try:
+            response = bedrock.converse(
+                modelId="us.amazon.nova-lite-v1:0",
+                messages=[{"role": "user", "content": [{"text": prompt}]}],
+                inferenceConfig={"maxTokens": 2000, "temperature": 0.0}
+            )
+            raw_text = response['output']['message']['content'][0].get('text', '').strip()
+        except Exception as e:
+            logger.error(f"Bedrock Nova Lite failed: {e}. Falling back to Gemini.")
+            import google.generativeai as genai
+            gen_model = genai.GenerativeModel('gemini-1.5-flash')
+            response = gen_model.generate_content(prompt)
+            raw_text = response.text.strip()
+
         if "```json" in raw_text:
             raw_text = raw_text.split("```json")[1].split("```")[0].strip()
         elif "```" in raw_text:

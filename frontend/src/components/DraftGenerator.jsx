@@ -74,8 +74,9 @@ export default function DraftGenerator({ onTabChange }) {
 
   const handleValidateDraft = async (sections, summary, cases, currentDraftType) => {
     setIsValidating(true);
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/draft/validate`, {
+      const res = await fetch(`${API_BASE}/draft/validate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -84,22 +85,36 @@ export default function DraftGenerator({ onTabChange }) {
           selected_cases: cases
         })
       });
-      const data = await res.json();
       
+      if (!res.ok) throw new Error(`Validation failed: ${res.status}`);
+      
+      const data = await res.json();
       updateState({
         draft_output: { type: currentDraftType, sections, validation: data },
         draft_status: 'complete'
       });
     } catch (err) {
       console.error("Validation error:", err);
+      // Fallback: still show sections but without validation
+      updateState({
+        draft_output: { type: currentDraftType, sections, validation: null },
+        draft_status: 'complete'
+      });
     }
     setIsValidating(false);
   };
 
   const handleGenerateDraft = async (q = query, cases = selectedCases, summary = fullSummary, dType = draftType) => {
     setLoading(true);
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    
+    // Help debug missing environment variables in Vercel
+    if (!import.meta.env.VITE_API_URL && window.location.hostname !== 'localhost') {
+       console.warn("WARNING: VITE_API_URL is not set. Defaulting to localhost:8000 which will likely fail on production.");
+    }
+
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/draft/generate`, {
+      const res = await fetch(`${API_BASE}/draft/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -110,19 +125,28 @@ export default function DraftGenerator({ onTabChange }) {
           case_id: summary.caseId || summary.case_id
         })
       });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Generation failed (${res.status}): ${errText}`);
+      }
+
       const data = await res.json();
       
-      updateState({
-        draft_output: { type: dType, sections: data.sections || [], validation: null },
-        draft_status: 'generating' // Will be complete after validation
-      });
-      
       if (data.sections && data.sections.length > 0) {
+        updateState({
+          draft_output: { type: dType, sections: data.sections, validation: null },
+          draft_status: 'generating'
+        });
         saveVersion(data.sections, 'AI_GENERATED');
         handleValidateDraft(data.sections, summary, cases, dType);
+      } else {
+        throw new Error("AI returned empty sections.");
       }
     } catch (err) {
       console.error("Drafting error:", err);
+      alert(`DRAFT_GENERATION_FAILED: ${err.message}`);
+      updateState({ draft_status: 'idle' });
     }
     setLoading(false);
   };
