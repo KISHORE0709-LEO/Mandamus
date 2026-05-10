@@ -232,5 +232,32 @@
         "timestamp": "2026-05-10T08:39:00.372230"
       }
     ]
+  },
+  {
+    "name": "",
+    "contact": "9606442727",
+    "location": "Bengaluru ",
+    "description": "harassment",
+    "isAnonymous": true,
+    "user_id": null,
+    "category": null,
+    "assigned_officer": null,
+    "case_id": "SJ-D1749EAA",
+    "status": "Submitted",
+    "date": "2026-05-10T09:30:08.732213",
+    "files": [
+      {
+        "filename": "PHOTO-2026-05-01-11-49-48 2.jpg",
+        "s3_key": "silent_justice/SJ-D1749EAA/sj_02a2f817-436c-45c0-8b02-6a9c6b239c99_PHOTO-2026-05-01-11-49-48 2.jpg",
+        "upload_timestamp": "2026-05-10T04:00:10.838147+00:00"
+      }
+    ],
+    "evidence_analysis": [
+      {
+        "filename": "PHOTO-2026-05-01-11-49-48 2.jpg",
+        "analysis": "The image is a certificate of achievement from the Nitte Meenakshi Institute of Technology. The certificate is awarded to Mr./Ms. M Kishore (Team Kalki) for securing the second prize in the NIRMITH 2026 competition, specifically in the Hackathon (Software) category. The competition was held on April 28, 2026, at the Nitte Meenakshi Institute of Technology. The certificate is signed by Ms. Meghana A and Ms. Smitha B, who are faculty coordinators and assistant professors in the Department of EEE at the institute. Additionally, it is signed by Dr. N Samanvita, Professor & Head of the Department of EEE, and Dr. H C Nagaraj, Principal of the institute, both located in Bengaluru.",
+        "timestamp": "2026-05-10T09:30:14.713674"
+      }
+    ]
   }
 ]
