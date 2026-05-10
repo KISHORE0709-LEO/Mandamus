@@ -116,6 +116,59 @@ async def startup_db_client():
     # MUST await this so the DB is ready before any requests come in
     await connect_to_mongo()
     await otp_repository.ensure_ttl_index()
+    
+    # Run migration from JSON to MongoDB if the file exists
+    try:
+        await migrate_legal_history_to_mongo()
+        await migrate_silent_justice_to_mongo()
+    except Exception as e:
+        logger.error(f"Migration error: {e}")
+
+async def migrate_legal_history_to_mongo():
+    history_file = "legal_history_db.json"
+    if os.path.exists(history_file):
+        logger.info("Migrating Legal History from JSON to MongoDB...")
+        try:
+            with open(history_file, "r") as f:
+                history_db = json.load(f)
+            
+            for user_id, user_data in history_db.items():
+                threads = user_data.get("threads", [])
+                thread_messages = user_data.get("thread_messages", {})
+                
+                # Check if user already has data in Mongo
+                existing = await legal_history_repository.get_user_threads(user_id)
+                if not existing:
+                    # Save all threads and messages
+                    for thread in threads:
+                        thread_id = thread.get("id")
+                        messages = thread_messages.get(thread_id, [])
+                        await legal_history_repository.save_full_history(user_id, thread_id, thread, messages)
+            
+            # Optional: Rename file instead of deleting to be safe
+            # os.rename(history_file, f"{history_file}.bak")
+            logger.info("Legal History migration successful.")
+        except Exception as e:
+            logger.error(f"Failed to migrate legal history: {e}")
+
+async def migrate_silent_justice_to_mongo():
+    sj_file = "silent_justice_db.json"
+    if os.path.exists(sj_file):
+        logger.info("Migrating Silent Justice from JSON to MongoDB...")
+        try:
+            with open(sj_file, "r") as f:
+                sj_db = json.load(f)
+            
+            for case in sj_db:
+                case_id = case.get("case_id")
+                # Check if case already exists in Mongo
+                existing = await silent_justice_repository.get_report_by_id(case_id)
+                if not existing:
+                    await silent_justice_repository.reports_collection.insert_one(case)
+            
+            logger.info("Silent Justice migration successful.")
+        except Exception as e:
+            logger.error(f"Failed to migrate silent justice: {e}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
@@ -1069,10 +1122,11 @@ async def save_to_history(user_id, thread_id, thread_data, messages=None):
 @app.get("/legal-assistant/history/{user_id}")
 async def get_history(user_id: str):
     try:
-        return await legal_history_repository.get_user_threads(user_id)
+        threads = await legal_history_repository.get_user_threads(user_id)
+        return {"history": threads}
     except Exception as e:
         logger.error(f"Error fetching legal history: {str(e)}")
-        return []
+        return {"history": []}
 
 @app.get("/legal-assistant/messages/{user_id}/{thread_id}")
 async def get_thread_messages(user_id: str, thread_id: str):
