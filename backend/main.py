@@ -7,6 +7,7 @@ import logging
 import json
 import math
 from datetime import datetime, timezone
+import io
 
 import fitz  # PyMuPDF
 import boto3
@@ -1871,6 +1872,56 @@ class SilentJusticeEvalRequest(BaseModel):
     location: str
     evidence_list: List[str]
 
+async def analyze_sj_evidence(case_id: str, filename: str, content: bytes, content_type: str):
+    """Uses Bedrock Multimodal to 'read' the evidence (images/docs)"""
+    try:
+        bedrock = get_bedrock_client()
+        
+        # If it's an image, we can send it directly to Nova Pro
+        is_image = content_type.startswith("image/")
+        
+        prompt = "Analyze this evidence for a Silent Justice report. If it's an image, describe what is visible. If it's text/doc, summarize the key points. Extract any dates, names, or locations that prove the claim. Keep it objective and supportive."
+        
+        message_content = [{"text": prompt}]
+        
+        if is_image:
+            # Add image to message
+            img_format = content_type.split("/")[-1]
+            if img_format == "jpg": img_format = "jpeg"
+            message_content.append({
+                "image": {
+                    "format": img_format,
+                    "source": {"bytes": content}
+                }
+            })
+        else:
+            # For non-images, just send the first 4000 chars of text if possible
+            # (In a real app, we'd use Textract for PDFs, but for now we'll just description it)
+            message_content[0]["text"] += f"\n\n[File Metadata: {filename}, Type: {content_type}]"
+
+        response = bedrock.converse(
+            modelId="us.amazon.nova-pro-v1:0",
+            messages=[{"role": "user", "content": message_content}],
+            inferenceConfig={"maxTokens": 500, "temperature": 0.0}
+        )
+        
+        analysis = response['output']['message']['content'][0]['text'].strip()
+        
+        # Update the case with the analysis
+        case = next((c for c in silent_justice_db if c["case_id"] == case_id), None)
+        if case:
+            if "evidence_analysis" not in case:
+                case["evidence_analysis"] = []
+            case["evidence_analysis"].append({
+                "filename": filename,
+                "analysis": analysis,
+                "timestamp": datetime.now().isoformat()
+            })
+            _save_silent_justice_db()
+            
+    except Exception as e:
+        logger.error(f"Evidence analysis failed: {e}")
+
 @app.post("/silent-justice/evaluate")
 async def evaluate_silent_justice(request: SilentJusticeEvalRequest):
     import httpx
@@ -1892,17 +1943,20 @@ Location: {request.location}
 Evidence Files Provided: {", ".join(request.evidence_list) if request.evidence_list else "None"}
 
 Evaluate this case and return ONLY a valid JSON object with the following keys:
-- "case_category": string (e.g., "Financial Fraud", "Harassment", "Domestic Violence", "Cybercrime")
-- "extracted_dates": array of strings (list any dates or timeframes mentioned in the description)
-- "people_involved": array of strings (list any roles or names mentioned, e.g. ["Landlord", "John"])
-- "severity_level": string (e.g., "Low", "Medium", "High", "Critical")
-- "evidence_feedback": string (Is the evidence readable? Relevant? Suggest what else to add, e.g. "⚠️ Add transaction proof" or "✅ Strong evidence")
+- "case_category": string (e.g., "Financial Fraud", "Harassment", "Domestic Violence")
+- "extracted_dates": array of strings
+- "people_involved": array of strings
+- "severity_level": string ("Low", "Medium", "High", "Critical")
+- "evidence_feedback": string
+- "primary_connection": object (The main authority assigned):
+    - "name": string (e.g., "SHE TEAM - South Wing", "NGO: Sakhi Support", "Economic Offences Wing")
+    - "type": string ("Police", "NGO", "Authority")
+    - "status": string ("Pending Dispatch")
 - "support_options": array of objects, each containing:
-    - "name": string (e.g., "Local SHE Team", "Women Helpline 181", "Legal Services Authority")
-    - "type": string (e.g., "Police", "NGO", "Helpline")
-    - "contact_action": string (e.g., "Call", "Visit", "Contact")
-    - "contact_value": string (e.g., "100", "181", "Local Office")
-(Note: generate 2-3 appropriate mock verified support options based on the case category and the user's location)
+    - "name": string
+    - "type": string
+    - "contact_action": string
+    - "contact_value": string
 """
 
         response = bedrock.converse(
@@ -1949,7 +2003,7 @@ async def create_silent_justice_report(report: SilentJusticeReport):
     return {"status": "success", "case_id": case_id}
 
 @app.post("/silent-justice/evidence/{case_id}")
-async def upload_sj_evidence(case_id: str, file: UploadFile = File(...)):
+async def upload_sj_evidence(case_id: str, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     # Check if case exists
     case = next((c for c in silent_justice_db if c["case_id"] == case_id), None)
     if not case:
@@ -1962,12 +2016,17 @@ async def upload_sj_evidence(case_id: str, file: UploadFile = File(...)):
     s3_key = f"silent_justice/{case_id}/{unique_filename}"
     
     try:
+        content = await file.read()
         s3_client.upload_fileobj(
-            file.file,
+            io.BytesIO(content),
             bucket_name,
             s3_key,
             ExtraArgs={"ContentType": file.content_type or "application/octet-stream"}
         )
+        
+        # Trigger background analysis (using AWS)
+        background_tasks.add_task(analyze_sj_evidence, case_id, file.filename, content, file.content_type)
+        
     except Exception as e:
         logger.error(f"S3 Upload failed for SJ evidence: {str(e)}")
         raise HTTPException(status_code=500, detail=f"S3 Upload failed: {str(e)}")
