@@ -27,7 +27,7 @@ from dotenv import load_dotenv
 # MongoDB Integration
 from mongodb.client import connect_to_mongo, close_mongo_connection
 from routes import virtual_hearing, otp
-from mongodb import otp_repository
+from mongodb import otp_repository, silent_justice_repository, legal_history_repository
 
 # Load environment variables from .env
 load_dotenv(override=True)
@@ -1097,49 +1097,40 @@ async def get_legal_history(user_id: str):
     try:
         if os.path.exists(HISTORY_FILE):
             with open(HISTORY_FILE, "r") as f:
-                history_db = json.load(f)
-                # Defensive check for structure
-                if not isinstance(history_db, dict): return {"history": []}
-                user_data = history_db.get(user_id, {})
-                if not isinstance(user_data, dict): return {"history": []}
-                return {"history": user_data.get("threads", [])}
-        return {"history": []}
+# ─── LEGAL ASSISTANT HISTORY ───
+@app.get("/legal-assistant/history/{user_id}")
+async def get_history(user_id: str):
+    try:
+        return await legal_history_repository.get_user_threads(user_id)
     except Exception as e:
         logger.error(f"Error fetching legal history: {str(e)}")
-        return {"history": []}
+        return []
 
 @app.get("/legal-assistant/messages/{user_id}/{thread_id}")
 async def get_thread_messages(user_id: str, thread_id: str):
     try:
-        if os.path.exists(HISTORY_FILE):
-            with open(HISTORY_FILE, "r") as f:
-                history_db = json.load(f)
-                user_data = history_db.get(user_id, {})
-                messages = user_data.get("thread_messages", {}).get(thread_id, [])
-                return {"messages": messages}
-        return {"messages": []}
+        messages = await legal_history_repository.get_thread_messages(user_id, thread_id)
+        return {"messages": messages}
     except Exception as e:
         logger.error(f"Error fetching thread messages: {str(e)}")
         return {"messages": []}
 
+@app.post("/legal-assistant/history/{user_id}")
+async def save_history(user_id: str, request: dict):
+    try:
+        thread = request.get("thread")
+        if not thread:
+            raise HTTPException(status_code=400, detail="Thread data required")
+        await legal_history_repository.save_thread(user_id, thread)
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Error saving history: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.delete("/legal-assistant/history/{user_id}/{thread_id}")
 async def delete_thread(user_id: str, thread_id: str):
     try:
-        if os.path.exists(HISTORY_FILE):
-            with open(HISTORY_FILE, "r") as f:
-                history_db = json.load(f)
-                
-            user_data = history_db.get(user_id, {})
-            threads = user_data.get("threads", [])
-            user_data["threads"] = [t for t in threads if t.get("id") != thread_id]
-            
-            if "thread_messages" in user_data and thread_id in user_data["thread_messages"]:
-                del user_data["thread_messages"][thread_id]
-                
-            history_db[user_id] = user_data
-            with open(HISTORY_FILE, "w") as f:
-                json.dump(history_db, f)
-            return {"status": "success"}
+        await legal_history_repository.delete_thread(user_id, thread_id)
         return {"status": "success"}
     except Exception as e:
         logger.error(f"Error deleting thread: {str(e)}")
@@ -1151,23 +1142,8 @@ class RenameThreadRequest(BaseModel):
 @app.put("/legal-assistant/history/{user_id}/{thread_id}")
 async def rename_thread(user_id: str, thread_id: str, request: RenameThreadRequest):
     try:
-        if os.path.exists(HISTORY_FILE):
-            with open(HISTORY_FILE, "r") as f:
-                history_db = json.load(f)
-                
-            user_data = history_db.get(user_id, {})
-            threads = user_data.get("threads", [])
-            for t in threads:
-                if t.get("id") == thread_id:
-                    t["query"] = request.title
-                    break
-            
-            user_data["threads"] = threads
-            history_db[user_id] = user_data
-            with open(HISTORY_FILE, "w") as f:
-                json.dump(history_db, f)
-            return {"status": "success"}
-        raise HTTPException(status_code=404, detail="Thread not found")
+        await legal_history_repository.rename_thread(user_id, thread_id, request.title)
+        return {"status": "success"}
     except Exception as e:
         logger.error(f"Error renaming thread: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -1867,27 +1843,8 @@ Return only valid JSON object."""
         logger.error(f"Adjournment request error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- SILENT JUSTICE SYSTEM ---
-SILENT_JUSTICE_DB_FILE = "silent_justice_db.json"
-silent_justice_db = []
-
-def _load_silent_justice_db():
-    global silent_justice_db
-    if os.path.exists(SILENT_JUSTICE_DB_FILE):
-        try:
-            with open(SILENT_JUSTICE_DB_FILE, "r") as f:
-                silent_justice_db = json.load(f)
-        except Exception as e:
-            logger.error(f"Could not load silent justice DB: {e}")
-
-def _save_silent_justice_db():
-    try:
-        with open(SILENT_JUSTICE_DB_FILE, "w") as f:
-            json.dump(silent_justice_db, f, indent=2)
-    except Exception as e:
-        logger.error(f"Could not save silent justice DB: {e}")
-
-_load_silent_justice_db()
+# --- SILENT JUSTICE DATABASE ---
+silent_justice_reports = db["silent_justice_reports"]
 
 class SilentJusticeEvalRequest(BaseModel):
     description: str
@@ -1929,17 +1886,15 @@ async def analyze_sj_evidence(case_id: str, filename: str, content: bytes, conte
         
         analysis = response['output']['message']['content'][0]['text'].strip()
         
-        # Update the case with the analysis
-        case = next((c for c in silent_justice_db if c["case_id"] == case_id), None)
-        if case:
-            if "evidence_analysis" not in case:
-                case["evidence_analysis"] = []
-            case["evidence_analysis"].append({
+        # Update MongoDB record with the analysis
+        await silent_justice_reports.update_one(
+            {"case_id": case_id},
+            {"$push": {"evidence_analysis": {
                 "filename": filename,
                 "analysis": analysis,
                 "timestamp": datetime.now().isoformat()
-            })
-            _save_silent_justice_db()
+            }}}
+        )
             
     except Exception as e:
         logger.error(f"Evidence analysis failed: {e}")
@@ -2018,16 +1973,16 @@ async def create_silent_justice_report(report: SilentJusticeReport):
         "case_id": case_id,
         "status": "Submitted",
         "date": datetime.now().isoformat(),
-        "files": []
+        "files": [],
+        "evidence_analysis": []
     })
-    silent_justice_db.append(case_data)
-    _save_silent_justice_db()
+    await silent_justice_reports.insert_one(case_data)
     return {"status": "success", "case_id": case_id}
 
 @app.post("/silent-justice/evidence/{case_id}")
 async def upload_sj_evidence(case_id: str, background_tasks: BackgroundTasks, file: UploadFile = File(...)):
-    # Check if case exists
-    case = next((c for c in silent_justice_db if c["case_id"] == case_id), None)
+    # Check if case exists in MongoDB
+    case = await silent_justice_reports.find_one({"case_id": case_id})
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
 
@@ -2058,33 +2013,42 @@ async def upload_sj_evidence(case_id: str, background_tasks: BackgroundTasks, fi
         "s3_key": s3_key,
         "upload_timestamp": datetime.now(timezone.utc).isoformat()
     }
-    case["files"].append(file_info)
-    _save_silent_justice_db()
+    
+    # Update MongoDB record
+    await silent_justice_reports.update_one(
+        {"case_id": case_id},
+        {"$push": {"files": file_info}}
+    )
     
     return {"status": "success", "file": file_info}
 
 @app.get("/silent-justice/track/{case_id}")
 async def track_sj_case(case_id: str):
-    case = next((c for c in silent_justice_db if c["case_id"] == case_id), None)
+    case = await silent_justice_reports.find_one({"case_id": case_id}, {"_id": 0})
     if not case:
         raise HTTPException(status_code=404, detail="Case not found")
     return {"status": "success", "case": case}
 
 @app.get("/silent-justice/authority/cases")
 async def get_sj_cases():
-    return {"status": "success", "cases": silent_justice_db}
+    cursor = silent_justice_reports.find({}, {"_id": 0})
+    cases = await cursor.to_list(length=100)
+    return {"status": "success", "cases": cases}
 
 class SilentJusticeUpdate(BaseModel):
     status: str
 
 @app.patch("/silent-justice/authority/cases/{case_id}")
 async def update_sj_case(case_id: str, update: SilentJusticeUpdate):
-    case = next((c for c in silent_justice_db if c["case_id"] == case_id), None)
-    if not case:
+    result = await silent_justice_reports.update_one(
+        {"case_id": case_id},
+        {"$set": {"status": update.status}}
+    )
+    if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Case not found")
-    case["status"] = update.status
-    _save_silent_justice_db()
-    return {"status": "success", "case": case}
+    
+    updated_case = await silent_justice_reports.find_one({"case_id": case_id}, {"_id": 0})
+    return {"status": "success", "case": updated_case}
 
 if __name__ == "__main__":
     import uvicorn
