@@ -67,15 +67,22 @@ export default function LawyerDashboard({ setActiveFeature }) {
     );
 
     const unsubHearings = onSnapshot(qHearings, (snapshot) => {
+      console.log(`Lawyer Dashboard: Received ${snapshot.size} hearings from Firestore`);
       const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
       // Deduplicate by caseId (ensure only one invite per case shows up)
       const uniqueMap = new Map();
       fetched.forEach(h => {
-        if (h.caseId) uniqueMap.set(h.caseId, h);
+        if (h.caseId) {
+          console.log(`- Found hearing for case: ${h.caseId} (${h.caseName})`);
+          uniqueMap.set(h.caseId, h);
+        }
       });
       
       setHearings(Array.from(uniqueMap.values()));
+      setIsLoading(false);
+    }, (err) => {
+      console.error("Hearings Sync Error:", err);
       setIsLoading(false);
     });
 
