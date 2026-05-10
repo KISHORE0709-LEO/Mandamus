@@ -34,10 +34,20 @@ const VirtualHearing = ({ initialRoomId }) => {
     }
   }, [user]);
 
-  // Auto-load hearing if initialRoomId is provided
+  // Auto-load hearing if initialRoomId is provided or URL has roomId
   useEffect(() => {
-    if (initialRoomId && !selectedCase) {
-      handleJoinByCode(initialRoomId);
+    const params = new URLSearchParams(window.location.search);
+    const urlRoomId = params.get('roomId');
+    const isInvite = params.get('invite') === 'true';
+    
+    const rId = initialRoomId || urlRoomId;
+    
+    if (rId && !selectedCase) {
+      handleJoinByCode(rId).then(() => {
+        if (isInvite) {
+          setStage('verification');
+        }
+      });
     }
   }, [initialRoomId]);
 

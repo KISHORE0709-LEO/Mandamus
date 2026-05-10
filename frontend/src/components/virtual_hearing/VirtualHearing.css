@@ -666,6 +666,64 @@
   font-family: var(--font-mono);
 }
 
+.vh-invite-status-box {
+  background: rgba(224, 32, 32, 0.03);
+  border: 1px solid rgba(224, 32, 32, 0.15);
+  padding: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.vh-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.vh-status-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #e02020;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.vh-status-badge {
+  background: #e02020;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 900;
+  padding: 0.2rem 0.6rem;
+  letter-spacing: 1px;
+}
+
+.vh-status-body {
+  font-size: 0.8rem;
+  color: #888;
+  line-height: 1.4;
+}
+
+.vh-btn-mini {
+  background: transparent;
+  border: 1px solid #333;
+  color: #666;
+  font-size: 0.6rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: all 0.2s;
+  margin-top: 4px;
+}
+
+.vh-btn-mini:hover {
+  border-color: #e02020;
+  color: #e02020;
+}
+
 
 .vh-participant-row {
   display: flex;

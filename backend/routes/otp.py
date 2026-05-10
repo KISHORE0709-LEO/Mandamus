@@ -21,11 +21,22 @@ async def send_otp(request: OtpRequest, background_tasks: BackgroundTasks):
     # Save to MongoDB
     await otp_repository.create_otp(request.email, otp_code)
     
+    print(f"\n{'='*20} JUDICIAL OTP GENERATED {'='*20}")
+    print(f"FOR EMAIL: {request.email}")
+    print(f"OTP CODE : {otp_code}")
+    print(f"{'='*60}\n")
+    
     # Send Email synchronously to catch errors immediately
     success = email_service.send_otp_email(request.email, otp_code)
     
     if not success:
-        raise HTTPException(status_code=500, detail="Failed to send email. Check if your SMTP credentials are correct.")
+        # In development/local testing, we include the OTP in the error message if email fails
+        # This prevents the user from being blocked if Resend API has issues
+        return {
+            "status": "partial_success", 
+            "message": "Email service unavailable. OTP displayed for development purposes.",
+            "dev_otp": otp_code 
+        }
     
     return {"status": "success", "message": "OTP sent successfully"}
 

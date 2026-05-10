@@ -49,6 +49,10 @@ export default function Scheduler({ onTabChange }) {
     attachDraft: hasDraft,
     parties: summary.petitioner && summary.respondent
       ? `${summary.petitioner} · ${summary.respondent}` : '',
+    petitioner_lawyer_email: '1nt23cb012.sneha@nmit.ac.in',
+    petitioner_lawyer_name: 'arha',
+    respondent_lawyer_email: 'chvsneha23@gmail.com',
+    respondent_lawyer_name: 'CH V Sneha',
   });
 
   const [submitted, setSubmitted] = useState(false);
@@ -76,15 +80,20 @@ export default function Scheduler({ onTabChange }) {
 
   // Re-fill form when case data arrives
   useEffect(() => {
-    const caseName = summary.caseName || state.active_case?.title || '';
-    const petitioner = summary.petitioner || state.active_case?.petitioner || '';
-    const respondent = summary.respondent || state.active_case?.respondent || '';
+    const petitioner_lawyer_email = summary.petitioner_lawyer_email || state.active_case?.petitioner_lawyer_email || '1nt23cb012.sneha@nmit.ac.in';
+    const petitioner_lawyer_name = summary.petitioner_lawyer_name || state.active_case?.petitioner_lawyer_name || 'arha';
+    const respondent_lawyer_email = summary.respondent_lawyer_email || state.active_case?.respondent_lawyer_email || 'chvsneha23@gmail.com';
+    const respondent_lawyer_name = summary.respondent_lawyer_name || state.active_case?.respondent_lawyer_name || 'CH V Sneha';
     
     setForm(f => ({
       ...f,
-      title: f.title || (caseName ? `Hearing — ${caseName}` : ''),
+      title: f.title || (summary.caseName ? `Hearing — ${summary.caseName}` : ''),
       agenda: f.agenda || buildAgenda(state),
-      parties: f.parties || (petitioner && respondent ? `${petitioner} · ${respondent}` : ''),
+      parties: f.parties || (summary.petitioner && summary.respondent ? `${summary.petitioner} · ${summary.respondent}` : ''),
+      petitioner_lawyer_email,
+      petitioner_lawyer_name,
+      respondent_lawyer_email,
+      respondent_lawyer_name,
       attachDraft: hasDraft,
     }));
   }, [state.summariser_output, state.draft_output, state.active_case]);
@@ -117,6 +126,10 @@ export default function Scheduler({ onTabChange }) {
         scheduledTime: form.time,
         type: form.type,
         parties: form.parties,
+        petitioner_lawyer_email: form.petitioner_lawyer_email,
+        petitioner_lawyer_name: form.petitioner_lawyer_name,
+        respondent_lawyer_email: form.respondent_lawyer_email,
+        respondent_lawyer_name: form.respondent_lawyer_name,
         agenda: form.agenda,
         draftAttached: form.attachDraft && hasDraft,
         participants: [user.uid],
@@ -125,6 +138,30 @@ export default function Scheduler({ onTabChange }) {
       };
 
       await createHearing(hearingData);
+      
+      // DISPATCH NOTICES IMMEDIATELY (Resend API)
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const lawyers = [
+        { email: form.petitioner_lawyer_email, role: 'Petitioner' },
+        { email: form.respondent_lawyer_email, role: 'Respondent' }
+      ];
+
+      for (const lawyer of lawyers) {
+        if (lawyer.email) {
+          try {
+             await fetch(`${baseUrl}/resend-judicial-invite`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                email: lawyer.email,
+                case_name: form.title,
+                scheduled_time: form.time,
+                room_id: meetingCode
+              })
+            });
+          } catch (e) { console.error(`Failed to dispatch notice to ${lawyer.email}`, e); }
+        }
+      }
       
       // Reload hearings from Firestore
       const updated = state.active_case?.id 
@@ -139,6 +176,7 @@ export default function Scheduler({ onTabChange }) {
       });
       
       setSubmitted(true);
+      alert("Hearing scheduled and notices dispatched successfully!");
     } catch (error) {
       console.error('Error scheduling hearing:', error);
       alert('Failed to schedule hearing. Please try again.');
@@ -244,6 +282,8 @@ export default function Scheduler({ onTabChange }) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.95rem' }}>
                   <div><strong style={{ color: '#fff' }}>Case Title:</strong> {form.title || 'Pending Selection'}</div>
                   <div><strong style={{ color: '#fff' }}>Parties:</strong> {form.parties || 'Pending'}</div>
+                  <div><strong style={{ color: '#fff' }}>Petitioner Lawyer:</strong> <span style={{ color: '#81c995' }}>{form.petitioner_lawyer_name} ({form.petitioner_lawyer_email})</span></div>
+                  <div><strong style={{ color: '#fff' }}>Respondent Lawyer:</strong> <span style={{ color: '#81c995' }}>{form.respondent_lawyer_name} ({form.respondent_lawyer_email})</span></div>
                   <div><strong style={{ color: '#fff' }}>Proposed Date:</strong> {form.date}</div>
                   <div><strong style={{ color: '#fff' }}>Proposed Time:</strong> {form.time}</div>
                   <div><strong style={{ color: '#fff' }}>Type:</strong> {form.type}</div>
@@ -321,6 +361,50 @@ export default function Scheduler({ onTabChange }) {
                       onChange={e => setForm(f => ({ ...f, parties: e.target.value }))}
                       placeholder="Petitioner · Respondent"
                     />
+                  </div>
+
+                  <div className="sc-row-2">
+                    <div className="sc-field">
+                      <label className="sc-label">PETITIONER LAWYER EMAIL</label>
+                      <input
+                        className="sc-input"
+                        type="email"
+                        value={form.petitioner_lawyer_email}
+                        onChange={e => setForm(f => ({ ...f, petitioner_lawyer_email: e.target.value }))}
+                        placeholder="lawyer@petitioner.com"
+                      />
+                    </div>
+                    <div className="sc-field">
+                      <label className="sc-label">PETITIONER LAWYER NAME</label>
+                      <input
+                        className="sc-input"
+                        value={form.petitioner_lawyer_name}
+                        onChange={e => setForm(f => ({ ...f, petitioner_lawyer_name: e.target.value }))}
+                        placeholder="Arha"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="sc-row-2">
+                    <div className="sc-field">
+                      <label className="sc-label">RESPONDENT LAWYER EMAIL</label>
+                      <input
+                        className="sc-input"
+                        type="email"
+                        value={form.respondent_lawyer_email}
+                        onChange={e => setForm(f => ({ ...f, respondent_lawyer_email: e.target.value }))}
+                        placeholder="lawyer@respondent.com"
+                      />
+                    </div>
+                    <div className="sc-field">
+                      <label className="sc-label">RESPONDENT LAWYER NAME</label>
+                      <input
+                        className="sc-input"
+                        value={form.respondent_lawyer_name}
+                        onChange={e => setForm(f => ({ ...f, respondent_lawyer_name: e.target.value }))}
+                        placeholder="CH V Sneha"
+                      />
+                    </div>
                   </div>
 
                   <div className="sc-field">

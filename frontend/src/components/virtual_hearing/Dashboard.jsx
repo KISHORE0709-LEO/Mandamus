@@ -58,7 +58,34 @@ const Dashboard = ({ role, onCaseSelect }) => {
             agenda: h.agenda,
             draftAttached: h.draftAttached
           }));
-          setCases(transformed);
+
+          // DEDUPLICATION: Use caseId as the unique key to show only the LATEST schedule for a case
+          // First, sort all by date and time (descending) so the newest is first
+          const sortedAll = [...transformed].sort((a, b) => {
+            const dateA = a.date === 'TBD' ? '0' : a.date;
+            const dateB = b.date === 'TBD' ? '0' : b.date;
+            if (dateB !== dateA) return dateB.localeCompare(dateA);
+            return b.time.localeCompare(a.time);
+          });
+
+          const uniqueMap = new Map();
+          sortedAll.forEach(h => {
+            const key = h.caseId || h.roomId || h.id;
+            if (!uniqueMap.has(key)) {
+              uniqueMap.set(key, h);
+            }
+          });
+
+          const deduplicated = Array.from(uniqueMap.values());
+
+          // FINAL SORTING FOR DISPLAY: Ready/Active first, then by time (ascending)
+          deduplicated.sort((a, b) => {
+            if (a.status === 'Ready' && b.status !== 'Ready') return -1;
+            if (a.status !== 'Ready' && b.status === 'Ready') return 1;
+            return a.time.localeCompare(b.time);
+          });
+
+          setCases(deduplicated);
           setLoading(false);
         })
         .catch(err => {

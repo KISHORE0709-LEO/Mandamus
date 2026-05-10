@@ -17,7 +17,8 @@ import {
   Scale,
   Clock,
   ExternalLink,
-  Video
+  Video,
+  ChevronRight
 } from 'lucide-react';
 import './LawyerDashboard.css';
 
@@ -26,47 +27,59 @@ export default function LawyerDashboard({ setActiveFeature }) {
   const { updateState } = useMandamus();
   const navigate = useNavigate();
   const [cases, setCases] = useState([]);
+  const [hearings, setHearings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterType, setFilterType] = useState('all');
 
   useEffect(() => {
     if (!user?.email) return;
+    const email = user.email.toLowerCase().trim();
 
-    console.log(`Lawyer Dashboard: Synchronizing active litigations for ${user.email}`);
+    console.log(`Lawyer Dashboard: Syncing cases and hearings for ${email}`);
     setIsLoading(true);
 
-    // Fetch cases where user is either petitioner or respondent lawyer
-    const q = query(
+    // 1. Sync Cases
+    const qCases = query(
       collection(db, 'cases'),
       or(
-        where('petitioner_lawyer_email', '==', user.email.toLowerCase().trim()),
-        where('respondent_lawyer_email', '==', user.email.toLowerCase().trim())
+        where('petitioner_lawyer_email', '==', email),
+        where('respondent_lawyer_email', '==', email)
       )
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedCases = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+    const unsubCases = onSnapshot(qCases, (snapshot) => {
+      const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // Deduplicate by id (ensure unique cases only)
+      const uniqueMap = new Map();
+      fetched.forEach(c => uniqueMap.set(c.id, c));
+      
+      setCases(Array.from(uniqueMap.values()));
+    });
 
-      // Sort: Priority first, then newest
-      fetchedCases.sort((a, b) => {
-        const priorityScore = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
-        const scoreA = priorityScore[a.priority] || 0;
-        const scoreB = priorityScore[b.priority] || 0;
-        if (scoreA !== scoreB) return scoreB - scoreA;
-        return (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0);
+    // 2. Sync Hearings (The Invites)
+    const qHearings = query(
+      collection(db, 'hearings'),
+      or(
+        where('petitioner_lawyer_email', '==', email),
+        where('respondent_lawyer_email', '==', email)
+      )
+    );
+
+    const unsubHearings = onSnapshot(qHearings, (snapshot) => {
+      const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // Deduplicate by caseId (ensure only one invite per case shows up)
+      const uniqueMap = new Map();
+      fetched.forEach(h => {
+        if (h.caseId) uniqueMap.set(h.caseId, h);
       });
-
-      setCases(fetchedCases);
-      setIsLoading(false);
-    }, (error) => {
-      console.error("Litigation Sync Error:", error);
+      
+      setHearings(Array.from(uniqueMap.values()));
       setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => { unsubCases(); unsubHearings(); };
   }, [user]);
 
   const navigateToCaseDetail = (c) => {
@@ -131,6 +144,7 @@ export default function LawyerDashboard({ setActiveFeature }) {
 
       {/* MAIN CONTENT */}
       <div className="ld-main-content">
+
         <div className="ld-section-header">
           <h2 className="ld-section-title">
             <BookOpen size={24} color="#e02020" />
@@ -198,20 +212,36 @@ export default function LawyerDashboard({ setActiveFeature }) {
                     >
                       OPEN CASE <ExternalLink size={16} />
                     </button>
-                    <button 
-                      className="ld-btn ld-btn-secondary"
-                      onClick={() => {
-                        updateState({ active_case: c });
-                        if (setActiveFeature) {
-                          setActiveFeature('scheduler');
-                        } else {
-                          navigate(`/dashboard?feature=scheduler&caseId=${c.id}`);
-                        }
-                      }}
-                      style={{ marginLeft: '10px', backgroundColor: 'rgba(224, 32, 32, 0.2)', border: '1px solid #e02020', color: '#ffb3b3' }}
-                    >
-                      JOIN <Video size={16} />
-                    </button>
+                    {(() => {
+                      const activeHearing = hearings.find(h => h.caseId === c.id);
+                      return (
+                        <button 
+                          className="ld-btn ld-btn-secondary"
+                          onClick={() => {
+                            if (activeHearing) {
+                              updateState({ active_case: c });
+                              navigate(`/hearing/${activeHearing.roomId}`);
+                            } else {
+                              updateState({ active_case: c });
+                              if (setActiveFeature) {
+                                setActiveFeature('scheduler');
+                              } else {
+                                navigate(`/dashboard?feature=scheduler&caseId=${c.id}`);
+                              }
+                            }
+                          }}
+                          style={{ 
+                            marginLeft: '10px', 
+                            backgroundColor: activeHearing ? '#e02020' : 'rgba(224, 32, 32, 0.2)', 
+                            border: `1px solid #e02020`, 
+                            color: activeHearing ? '#fff' : '#ffb3b3',
+                            fontWeight: activeHearing ? 'bold' : 'normal'
+                          }}
+                        >
+                          {activeHearing ? 'JOIN LIVE HEARING' : 'JOIN'} <Video size={16} />
+                        </button>
+                      );
+                    })()}
                   </div>
                 </div>
               );
