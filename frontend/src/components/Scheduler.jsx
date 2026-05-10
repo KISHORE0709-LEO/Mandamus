@@ -3,6 +3,8 @@ import { Calendar, Clock, FileText, Plus, CheckCircle2, ChevronRight, Download, 
 import { useMandamus } from '../context/MandamusContext';
 import { useAuth } from '../context/AuthContext';
 import { createHearing, getHearingsByJudge, getHearingsByCase, deleteHearing } from '../lib/firestoreHelpers';
+import { onSnapshot, collection, query, where, or } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 import './Scheduler.css';
 
 const today = new Date();
@@ -60,22 +62,30 @@ export default function Scheduler({ onTabChange }) {
 
   // Load hearings from Firestore
   useEffect(() => {
-    if (user?.uid) {
-      setLoading(true);
-      const fetchHearings = state.active_case?.id 
-        ? getHearingsByCase(state.active_case.id)
-        : getHearingsByJudge(user.uid);
+    if (!user?.uid) return;
+    setLoading(true);
+
+    const caseId = state.active_case?.id || state.case_id || summary.caseId;
+    
+    // Listen for hearings where this user is the judge
+    const q = query(
+      collection(db, 'hearings'),
+      where('judgeId', '==', user.uid)
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetched = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // If we are looking at a specific case, filter it
+      const filtered = caseId 
+        ? fetched.filter(h => h.caseId === caseId)
+        : fetched;
         
-      fetchHearings
-        .then(hearings => {
-          setMeetings(hearings);
-          setLoading(false);
-        })
-        .catch(err => {
-          console.error('Error loading hearings:', err);
-          setLoading(false);
-        });
-    }
+      setMeetings(filtered);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [user, state.active_case?.id]);
 
   // Re-fill form when case data arrives

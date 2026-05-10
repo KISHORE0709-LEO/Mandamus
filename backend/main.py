@@ -1152,8 +1152,12 @@ async def rename_thread(user_id: str, thread_id: str, request: RenameThreadReque
 
 @app.post("/legal-assistant/tts")
 async def text_to_speech(data: dict):
-    from fastapi.responses import StreamingResponse
     import httpx
+    import base64
+    from dotenv import load_dotenv
+    
+    # Force reload of .env to pick up new keys immediately
+    load_dotenv(override=True)
     
     text = data.get("text", "")
     api_key = os.getenv("ELEVEN_LABS_API_KEY")
@@ -1161,9 +1165,8 @@ async def text_to_speech(data: dict):
     if not api_key or "your_eleven_labs_key" in api_key:
         raise HTTPException(status_code=400, detail="ElevenLabs API key is not configured yet.")
 
-    # Voice ID for 'Antoni' (Calm, professional male voice)
     voice_id = "ErXwobaYiN019PkySvjV" 
-    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}/stream"
+    url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
     headers = {
         "Accept": "audio/mpeg",
@@ -1173,24 +1176,25 @@ async def text_to_speech(data: dict):
 
     payload = {
         "text": text,
-        "model_id": "eleven_multilingual_v2", # Fixed: v1 is deprecated for free tier
+        "model_id": "eleven_multilingual_v2",
         "voice_settings": {
             "stability": 0.5,
             "similarity_boost": 0.5
         }
     }
 
-    async def stream_audio():
-        async with httpx.AsyncClient() as client:
-            async with client.stream("POST", url, json=payload, headers=headers, timeout=60.0) as response:
-                if response.status_code != 200:
-                    error_detail = await response.aread()
-                    logger.error(f"ElevenLabs Error: {error_detail}")
-                    return
-                async for chunk in response.aiter_bytes():
-                    yield chunk
-
-    return StreamingResponse(stream_audio(), media_type="audio/mpeg")
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(url, json=payload, headers=headers, timeout=30.0)
+            if response.status_code != 200:
+                return {"error": f"ElevenLabs API error: {response.text}"}
+            
+            # Encode to base64
+            audio_base64 = base64.b64encode(response.content).decode("utf-8")
+            return {"audio": audio_base64}
+            
+        except Exception as e:
+            return {"error": str(e)}
 
 class PrecedentSearchRequest(BaseModel):
     query: str

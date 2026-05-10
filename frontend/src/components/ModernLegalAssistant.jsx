@@ -68,13 +68,14 @@ const ModernLegalAssistant = () => {
     // Stop previous audio
     if (audioInstance) {
       audioInstance.pause();
+      audioInstance.currentTime = 0;
     }
 
     setIsTtsLoading(true);
     setPlayingId(msgId);
 
     try {
-      // 1. Fetch the audio stream
+      // 1. Fetch the audio as base64 JSON
       const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/legal-assistant/tts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -86,32 +87,21 @@ const ModernLegalAssistant = () => {
         throw new Error(errData.detail || 'TTS failed');
       }
 
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      
-      // 2. Create and play audio
-      const audio = new Audio();
-      audio.src = url;
-      audio.type = 'audio/mpeg';
-      
+      const data = await response.json();
+      if (data.error) throw new Error(data.error);
+
+      // 2. Play base64 audio directly
+      const audio = new Audio(`data:audio/mpeg;base64,${data.audio}`);
       setAudioInstance(audio);
       
-      // Attempt to play
-      const playPromise = audio.play();
-      
-      if (playPromise !== undefined) {
-        playPromise.then(() => {
-          console.log("Audio started playing");
-        }).catch(error => {
-          console.error("Playback failed:", error);
-          setPlayingId(null);
-        });
-      }
+      audio.play().catch(e => {
+        console.error("Playback failed:", e);
+        setPlayingId(null);
+      });
 
       audio.onended = () => {
         setPlayingId(null);
         setAudioInstance(null);
-        URL.revokeObjectURL(url);
       };
 
     } catch (err) {
