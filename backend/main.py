@@ -1231,63 +1231,72 @@ class PrecedentSearchRequest(BaseModel):
 @app.post("/precedent/search")
 async def search_precedent(request: PrecedentSearchRequest):
     try:
-        # Use Gemini for smarter semantic ranking if available
-        if not gemini_model:
-            raise HTTPException(status_code=500, detail="Gemini model not initialized for search.")
-
-        # 1. Construct rich query
+        bedrock_runtime = boto3.client(
+            "bedrock-runtime",
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            region_name=os.getenv("AWS_REGION")
+        )
+        
+        # 1. Construct rich query for semantic embedding (Facts + Situation + Laws)
         facts = " ".join(request.key_facts) if request.key_facts else ""
         laws = ", ".join(request.ipc_sections) if request.ipc_sections else ""
-        rich_query = f"User query: {request.query}. Case type: {request.case_type}. Facts: {facts}. Relevant laws: {laws}."
+        questions = " ".join(request.core_legal_questions) if request.core_legal_questions else ""
+        rich_query = f"{request.query} Case type: {request.case_type}. Facts: {facts}. Relevant laws: {laws}. Legal questions: {questions}"
 
-        # 2. Use Gemini to find top candidates from our local DB (since DB is small)
-        # In a real app, we'd use a vector DB, but for this hackathon, we'll use LLM-based ranking
-        db_sample = []
-        for case in precedents_db[:50]: # Sample top 50 for the LLM to rank
-            db_sample.append({
-                "id": case.get("id"),
-                "case_name": case.get("case_name"),
-                "summary": case.get("outcome_summary")[:300] # Snippet
-            })
+        # 2. Generate embedding for the query using AWS Titan
+        embed_response = bedrock_runtime.invoke_model(
+            body=json.dumps({"inputText": rich_query}),
+            modelId="amazon.titan-embed-text-v2:0",
+            accept="application/json",
+            contentType="application/json"
+        )
+        query_embedding = json.loads(embed_response.get('body').read()).get('embedding')
+
+        # 3. Compute vector similarity and filter
+        scored_cases = []
+        seen_case_names = set()
+
+        for item in precedents_embeddings:
+            case_data = item["case"]
             
-        prompt = f"""You are a legal search assistant. Given the user's case details, identify the most relevant precedents from the provided list.
-USER CASE: {rich_query}
+            # Apply court/time filters if needed
+            if request.court_level != "ALL" and request.court_level.lower() not in case_data.get("court", "").lower():
+                continue
+            if request.temporal_window == "LAST_5Y" and case_data.get("year", 0) < 2019:
+                continue
 
-PRECEDENT DATABASE (Sample):
-{json.dumps(db_sample)}
-
-Return a JSON array of the top 10 relevant case IDs, sorted by relevance. Return ONLY the JSON array, e.g. ["ID1", "ID2", ...]"""
-
-        response = gemini_model.generate_content(prompt)
-        raw_text = response.text.strip()
-        if "```json" in raw_text:
-            raw_text = raw_text.split("```json")[1].split("```")[0].strip()
-        elif "```" in raw_text:
-            raw_text = raw_text.split("```")[1].split("```")[0].strip()
+            # Prevent duplication strictly based on case_name (normalized to ignore punctuation/spacing)
+            import re
+            unique_key = re.sub(r'[^a-z0-9]', '', str(case_data.get('case_name', '')).lower())
+            if unique_key in seen_case_names:
+                continue
+            seen_case_names.add(unique_key)
             
-        top_ids = json.loads(raw_text)
-        
-        # 3. Fetch full case data for the top matches
-        results = []
-        for cid in top_ids:
-            case = next((c for c in precedents_db if c.get("id") == cid), None)
-            if case:
-                results.append({
-                    "id": case.get("id"),
-                    "case_name": case.get("case_name"),
-                    "citation": case.get("citation"),
-                    "year": case.get("year"),
-                    "court": case.get("court"),
-                    "outcome_summary": case.get("outcome_summary"),
-                    "ipc_sections": case.get("ipc_sections", []),
-                    "similarity": 95 # Mock similarity for UI
+            sim_score = cosine_sim(query_embedding, item["embedding"])
+            
+            # Keep if similarity is somewhat reasonable
+            if sim_score > 0.15:
+                scored_cases.append({
+                    "case": case_data,
+                    "score": sim_score
                 })
-                
-        return {"status": "success", "results": results}
 
-    except Exception as e:
-        logger.error(f"Search error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # 4. Sort strictly by similarity and get top 10
+        scored_cases.sort(key=lambda x: x["score"], reverse=True)
+        top_matches = scored_cases[:10]
+
+        # 5. Format to match frontend expectations
+        results = []
+        for match in top_matches:
+            c = match["case"]
+            
+            # Adjust raw similarity float (0 to 1) to a nice 70-99% score for UI
+            sim_percentage = int(match["score"] * 100)
+            ui_similarity = min(99, max(75, sim_percentage + 40)) 
+
+            # Format IPC Sections safely
+            raw_ipc = c.get("ipc_sections", [])
             ipc_formatted = []
             for sec in raw_ipc:
                 if isinstance(sec, dict):
@@ -1391,12 +1400,8 @@ class ValidateRequest(BaseModel):
 @app.post("/draft/generate")
 async def generate_draft(request: DraftRequest):
     try:
-        # Check if Gemini is available
-        if not gemini_model:
-            # Fallback to Bedrock if Gemini key is missing
-            bedrock = get_bedrock_client()
-            return await _generate_draft_bedrock(request, bedrock)
-
+        bedrock = get_bedrock_client()
+        
         precedents_context = ""
         for i, c in enumerate(request.selected_cases):
             reasoning = c.get('reason_for_match', '')
@@ -1444,9 +1449,13 @@ You MUST include these exact sections in this order, formatted properly for a {r
 
 Keep the tone formal, academic, and highly professional. Return only the JSON, no markdown, no explanation."""
 
-        response = gemini_model.generate_content(prompt)
-        raw_text = response.text.strip()
+        response = bedrock.converse(
+            modelId="us.amazon.nova-pro-v1:0",
+            messages=[{"role": "user", "content": [{"text": prompt}]}],
+            inferenceConfig={"maxTokens": 4000, "temperature": 0.1}
+        )
         
+        raw_text = response['output']['message']['content'][0]['text'].strip()
         if "```json" in raw_text:
             raw_text = raw_text.split("```json")[1].split("```")[0].strip()
         elif "```" in raw_text:
@@ -1455,14 +1464,6 @@ Keep the tone formal, academic, and highly professional. Return only the JSON, n
         data = json.loads(raw_text)
         return data
 
-    except Exception as e:
-        logger.error(f"Drafting error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-async def _generate_draft_bedrock(request, bedrock):
-    # (Original Bedrock logic moved here as a fallback if needed)
-    # For now, I'll just keep the main route clean with Gemini
-    raise HTTPException(status_code=500, detail="Gemini not configured and Bedrock fallback not implemented in this version.")
     except Exception as e:
         logger.error(f"Drafting error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
