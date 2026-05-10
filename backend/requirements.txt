@@ -16,3 +16,5 @@ motor
 pymongo
 resend
 redis
+certifi
+dnspython
