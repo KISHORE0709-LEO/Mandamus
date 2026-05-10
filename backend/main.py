@@ -112,6 +112,34 @@ async def shutdown_db_client():
 app.include_router(virtual_hearing.router)
 app.include_router(otp.router)
 
+class InviteRequest(BaseModel):
+    email: str
+    case_name: str
+    scheduled_time: str
+    room_id: str
+
+@app.post("/resend-judicial-invite")
+@app.post("/virtual-hearing/invites/send")
+@app.post("/api/invite")
+async def send_invite_direct(req: InviteRequest, background_tasks: BackgroundTasks):
+    logger.info(f"INVITE TRIGGERED for {req.email} via {req.room_id}")
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    join_url = f"{frontend_url}/dashboard?feature=virtual-hearing&roomId={req.room_id}&invite=true"
+    
+    from services import email_service
+    background_tasks.add_task(
+        email_service.send_hearing_invite,
+        req.email,
+        req.case_name,
+        req.scheduled_time,
+        join_url
+    )
+    return {"status": "success", "message": f"Invite sent to {req.email}"}
+
+@app.get("/api/invite/status")
+async def invite_status():
+    return {"status": "OK", "message": "Judicial Invite Pipeline is Active"}
+
 # Room storage: { roomId: { socketId: { userId, role, name } } }
 rooms = {}
 

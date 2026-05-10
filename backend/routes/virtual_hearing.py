@@ -2,7 +2,8 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel
 from typing import List, Optional
 from mongodb import hearing_repository, transcript_repository, context_repository
-from services import hearing_summary_service
+from services import hearing_summary_service, email_service
+import os
 
 router = APIRouter(prefix="/virtual-hearing", tags=["Virtual Hearing"])
 
@@ -11,9 +12,18 @@ class HearingSession(BaseModel):
     case_id: str
     judge_email: str
     hearing_date: str
+    scheduled_time: Optional[str] = "10:00 AM"
+    case_name: str
     room_id: str
     status: str = "scheduled"
     participants: List[dict] = []
+    participant_emails: List[str] = []
+
+class InviteRequest(BaseModel):
+    email: str
+    case_name: str
+    scheduled_time: str
+    room_id: str
 
 class Utterance(BaseModel):
     timestamp: str
@@ -22,11 +32,25 @@ class Utterance(BaseModel):
     text: str
 
 @router.post("/sessions")
-async def create_session(session: HearingSession):
+async def create_session(session: HearingSession, background_tasks: BackgroundTasks):
     session_id = await hearing_repository.create_hearing_session(session.dict())
+    
+    # Send invites to all participants in the background
+    frontend_url = os.getenv("FRONTEND_URL", "http://localhost:5173")
+    for email in session.participant_emails:
+        join_url = f"{frontend_url}/dashboard?feature=virtual-hearing&roomId={session.room_id}&invite=true"
+        background_tasks.add_task(
+            email_service.send_hearing_invite,
+            email,
+            session.case_name,
+            f"{session.hearing_date} at {session.scheduled_time}",
+            join_url
+        )
+    
     # Initialize transcript doc
     await transcript_repository.init_transcript(session.hearing_id, session.case_id, session.judge_email)
     return {"status": "success", "session_id": session_id}
+
 
 @router.get("/sessions/{hearing_id}")
 async def get_session(hearing_id: str):

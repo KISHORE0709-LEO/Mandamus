@@ -63,13 +63,16 @@ export const updateCase = async (caseId, updates) => {
 // ═══════════════════════════════════════════════════════════════════════
 
 export const createHearing = async (hearingData) => {
-  const docRef = await addDoc(collection(db, 'hearings'), {
+  const caseId = hearingData.caseId;
+  const docRef = doc(db, 'hearings', caseId);
+  await setDoc(docRef, {
     ...hearingData,
-    hearingId: 'HRG-' + Date.now(),
+    hearingId: hearingData.hearingId || 'HRG-' + Date.now(),
     status: 'scheduled',
-    createdAt: serverTimestamp()
-  });
-  return docRef.id;
+    updatedAt: serverTimestamp(),
+    createdAt: serverTimestamp() // merge: true handles this if we wanted, but we'll overwrite
+  }, { merge: true });
+  return caseId;
 };
 
 export const getHearing = async (hearingId) => {

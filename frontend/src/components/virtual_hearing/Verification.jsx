@@ -56,7 +56,15 @@ const Verification = ({ role, caseData, user, onVerified }) => {
       });
       
       if (res.ok) {
-        setOtpSent(true);
+        const data = await res.json();
+        if (data.status === 'partial_success') {
+          // Fallback if email failed but we want to allow testing
+          setOtpSent(true);
+          console.log("MANDAMUS DEBUG OTP:", data.dev_otp);
+          setOtpError(`DEBUG MODE: Email service failed. Check browser console (F12) or Server Logs for code.`);
+        } else {
+          setOtpSent(true);
+        }
       } else {
         const data = await res.json().catch(() => ({ detail: 'Unknown error' }));
         alert("Backend Error: " + data.detail);
@@ -183,6 +191,13 @@ const Verification = ({ role, caseData, user, onVerified }) => {
                         </button>
                         <button className="vh-btn-link" onClick={sendOtp} style={{ fontSize: '0.7rem', marginTop: '0.4rem', background: 'none', border: 'none', color: '#888', cursor: 'pointer' }}>
                           Resend Code
+                        </button>
+                        <button 
+                          className="vh-btn-link" 
+                          onClick={() => setOtpError(`DEBUG: Your OTP is visible in the Backend Terminal logs.`)} 
+                          style={{ fontSize: '0.7rem', marginTop: '0.2rem', background: 'none', border: 'none', color: '#555', cursor: 'pointer', display: 'block' }}
+                        >
+                          Didn't get it? (Check Server Logs)
                         </button>
                       </>
                     )}
