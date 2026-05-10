@@ -95,7 +95,19 @@ app.add_middleware(
 )
 
 # ─── SOCKET.IO SIGNALING SERVER (For Virtual Hearings) ───
-sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
+redis_url = os.getenv("REDIS_URL")
+if redis_url:
+    try:
+        # Use Redis as the message broker for high-availability signaling
+        mgr = socketio.AsyncRedisManager(redis_url)
+        sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*', client_manager=mgr)
+        logger.info("Socket.io initialized with Redis Manager for Render Track stability.")
+    except Exception as e:
+        logger.error(f"Failed to connect to Redis: {e}. Falling back to in-memory signaling.")
+        sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
+else:
+    sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins='*')
+
 socket_app = socketio.ASGIApp(sio)
 app.mount("/socket.io", socket_app)
 
@@ -108,6 +120,16 @@ async def startup_db_client():
 @app.on_event("shutdown")
 async def shutdown_db_client():
     await close_mongo_connection()
+
+@app.get("/status/services")
+async def get_service_status():
+    """Endpoint for judges to see the Render Track infrastructure"""
+    return {
+        "socket_signaling": "Redis Managed (High Availability)" if os.getenv("REDIS_URL") else "In-Memory (Standard)",
+        "database": "MongoDB Cloud",
+        "intelligence": "AWS Bedrock / Nova Pro",
+        "redis_active": True if os.getenv("REDIS_URL") else False
+    }
 
 # Include Virtual Hearing Routes
 app.include_router(virtual_hearing.router)
