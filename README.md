@@ -76,7 +76,7 @@ The judicial system operates heavily on *stare decisis* (the doctrine of precede
 flowchart LR
     A[Case Summary / Query] --> B[Generate Text Embeddings]
     B --> C[(Precedent Vector DB)]
-    C -->|Cosine Similarity Search| D[Ranked Legal Precedents]
+    C -->|Cosine Similarity Search| D[Ranked Legal ]
     D --> E[Highlight Similarity Score & Outcome]
 ```
 
