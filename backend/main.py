@@ -1094,34 +1094,32 @@ async def legal_assistant(request: LegalAssistantRequest, background_tasks: Back
             
         parsed = json.loads(result_text)
         
-        # 5. Background Tasks (No user wait)
-        async def create_and_store_memory(aid, master_id, query, explanation, domain, uid, full_msgs):
-            try:
-                # 1. Store locally for INSTANT UI RECALL (Highest Priority)
-                thread_data = {
-                    "id": aid,
-                    "domain": domain,
-                    "query": query,
-                    "date": datetime.now().strftime("%d %b %H:%M")
-                }
-                
-                # Append the latest turn to the full messages list
-                current_messages = full_msgs + [{"role": "assistant", "data": parsed}]
-                save_to_history_file(uid, aid, thread_data, current_messages)
+        # ─── SAVE TO MONGODB IMMEDIATELY (before returning response) ───
+        thread_data = {
+            "id": assistant_id,
+            "domain": parsed.get('domain', 'General'),
+            "query": request.query,
+            "date": datetime.now().strftime("%d %b %H:%M")
+        }
+        # Build the full message list for this thread
+        full_messages = request.messages + [
+            {"role": "user", "content": request.query},
+            {"role": "assistant", "data": parsed}
+        ]
+        await save_to_history(request.user_id, assistant_id, thread_data, full_messages)
 
-                # 2. Sync to Backboard
+        # ─── BACKGROUND: Sync to Backboard (non-critical) ───
+        async def sync_to_backboard(aid, master_id, query, explanation):
+            try:
                 try:
                     await client.get_assistant(assistant_id=aid)
                 except:
                     await client.create_assistant(assistant_id=aid, name=f"Legal Thread {aid[:4]}")
-                
                 await client.add_memory(assistant_id=aid, content=f"User: {query} | AI: {explanation[:300]}")
             except Exception as e:
-                logger.error(f"History storage error: {e}")
-                pass
+                logger.error(f"Backboard sync error: {e}")
 
-        await save_to_history(request.user_id, assistant_id, parsed, request.messages + [{"role": "user", "content": request.query}, {"role": "assistant", "content": parsed.get('explanation', '')}])
-        background_tasks.add_task(create_and_store_memory, assistant_id, user_master_id, request.query, parsed.get('explanation', ''), parsed.get('domain', ''), request.user_id, request.messages + [{"role": "user", "content": request.query}])
+        background_tasks.add_task(sync_to_backboard, assistant_id, user_master_id, request.query, parsed.get('explanation', ''))
         
         parsed["thread_id"] = assistant_id
         return parsed
@@ -1135,7 +1133,6 @@ async def save_to_history(user_id, thread_id, thread_data, messages=None):
     except Exception as e:
         logger.error(f"Error saving to MongoDB history: {e}")
 
-# ─── LEGAL ASSISTANT HISTORY ───
 # ─── LEGAL ASSISTANT HISTORY ───
 @app.get("/legal-assistant/history/{user_id}")
 async def get_history(user_id: str):
@@ -1193,13 +1190,15 @@ async def rename_thread(user_id: str, thread_id: str, request: RenameThreadReque
 async def text_to_speech(data: dict):
     import httpx
     import base64
-    from dotenv import load_dotenv
+    from dotenv import dotenv_values
     
-    # Force reload of .env to pick up new keys immediately
-    load_dotenv(override=True)
+    # Read DIRECTLY from .env file on disk — bypasses OS env cache completely
+    # This allows hot-swapping the API key without restarting the server
+    env_path = os.path.join(os.path.dirname(__file__), ".env")
+    fresh_env = dotenv_values(env_path)
+    api_key = fresh_env.get("ELEVEN_LABS_API_KEY") or os.getenv("ELEVEN_LABS_API_KEY")
     
     text = data.get("text", "")
-    api_key = os.getenv("ELEVEN_LABS_API_KEY")
     
     if not api_key or "your_eleven_labs_key" in api_key:
         raise HTTPException(status_code=400, detail="ElevenLabs API key is not configured yet.")
